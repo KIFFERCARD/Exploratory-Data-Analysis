@@ -1,0 +1,1293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 2: Linear Regression &mdash; HSCI 410</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+
+:root {
+  --teal: #0B7B6B;
+  --dark-teal: #065C50;
+  --light-teal: #6BB5A6;
+  --very-light-teal: #E6F3F0;
+  --dark: #042A25;
+  --text: #2D3436;
+  --text-light: #555;
+  --bg: #FFFFFF;
+  --white: #fff;
+  --accent: #CC0033;
+  --accent-dark: #A3002A;
+  --accent-light: #FDEAEF;
+  --amber: #CC0033;
+  --light-amber: #FDEAEF;
+  --green: #0B7B6B;
+  --light-green: #D1F0EA;
+  --blue: #0B7B6B;
+  --light-blue: #E6F3F0;
+  --rose: #CC0033;
+  --light-rose: #FDEAEF;
+  --purple: #065C50;
+  --light-purple: #E6F3F0;
+  --grey: #E8ECEE;
+  --radius: 12px;
+  --shadow: 0 2px 12px rgba(0,0,0,0.08);
+  --shadow-lg: 0 8px 30px rgba(0,0,0,0.12);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { font-family: 'Open Sans', 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; }
+.sidebar {
+  position: fixed; top: 0; left: 0; width: 280px; height: 100vh;
+  background: linear-gradient(180deg, rgba(6,92,80,0.92) 0%, rgba(4,42,37,0.95) 100%), url('bg_texture.jpg') center/cover no-repeat;
+  color: #fff; z-index: 100; display: flex; flex-direction: column;
+  transition: transform 0.3s ease; overflow: hidden;
+}
+.sidebar-header { padding: 24px 20px 16px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+.sidebar-header h2 { font-size: 16px; font-weight: 600; line-height: 1.4; opacity: 0.95; color: #fff; }
+.sidebar-header p { font-size: 11px; opacity: 0.6; margin-top: 4px; }
+.sidebar-nav { flex: 1; overflow-y: auto; padding: 12px 0; }
+.sidebar-nav::-webkit-scrollbar { width: 4px; }
+.sidebar-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 2px; }
+.nav-item {
+  display: flex; align-items: center; gap: 12px; padding: 10px 20px;
+  cursor: pointer; transition: all 0.2s; font-size: 13.5px; position: relative;
+  color: rgba(255,255,255,0.7);
+}
+.nav-item:hover:not(.locked) { background: rgba(255,255,255,0.08); color: #fff; }
+.nav-item.active { background: rgba(255,255,255,0.12); color: #fff; font-weight: 600; }
+.nav-item.active::before {
+  content: ''; position: absolute; left: 0; top: 6px; bottom: 6px; width: 3px;
+  background: var(--accent); border-radius: 0 2px 2px 0;
+}
+.nav-item .dot {
+  width: 22px; height: 22px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.3);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  font-size: 11px; transition: all 0.3s;
+}
+.nav-item.completed .dot { background: var(--green); border-color: var(--green); }
+.nav-item.completed .dot::after { content: '\2713'; color: #fff; font-weight: 700; }
+.nav-item.active .dot { border-color: var(--accent); background: rgba(204,0,51,0.2); }
+.sidebar-footer { padding: 16px 20px; border-top: 1px solid rgba(255,255,255,0.1); }
+.progress-bar-bg { height: 6px; background: rgba(255,255,255,0.15); border-radius: 3px; overflow: hidden; }
+.progress-bar-fill { height: 100%; background: var(--green); border-radius: 3px; transition: width 0.5s ease; }
+.progress-text { font-size: 11px; opacity: 0.6; margin-top: 6px; }
+.main { margin-left: 280px; min-height: 100vh; }
+.module-page { display: none; animation: fadeIn 0.4s ease; }
+.module-page.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.module-header {
+  background: linear-gradient(135deg, rgba(6,92,80,0.88) 0%, rgba(11,123,107,0.85) 100%), url('bg_texture.jpg') center/cover no-repeat;
+  color: #fff; padding: 60px 48px 48px; position: relative; overflow: hidden;
+}
+.module-header::after {
+  content: ''; position: absolute; right: -60px; top: -60px; width: 300px; height: 300px;
+  background: radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 70%); border-radius: 50%;
+}
+.module-tag { display: inline-block; background: var(--accent); padding: 4px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 12px; }
+.module-header h1 { font-size: 32px; font-weight: 700; line-height: 1.3; max-width: 700px; color: #fff; }
+.module-header .time { font-size: 14px; opacity: 0.7; margin-top: 8px; }
+.module-body { max-width: 800px; margin: 0 auto; padding: 40px 48px 80px; }
+h2 { font-size: 22px; color: var(--dark-teal); margin: 36px 0 16px; font-weight: 700; }
+h3 { font-size: 18px; color: var(--teal); margin: 24px 0 12px; font-weight: 600; }
+p { margin-bottom: 16px; }
+ul, ol { margin: 0 0 16px 24px; }
+li { margin-bottom: 8px; }
+.info-box { border-radius: var(--radius); padding: 24px; margin: 24px 0; border-left: 4px solid var(--teal); }
+.info-box.teal { background: var(--very-light-teal); border-color: var(--teal); }
+.info-box.rose { background: var(--light-rose); border-color: var(--accent); }
+.info-box.amber { background: #FFF8E1; border-color: #FFA000; }
+.info-box .box-title { font-weight: 700; margin-bottom: 6px; color: inherit; }
+.flip-card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin: 24px 0; }
+.flip-card {
+  background: var(--white); border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 24px; text-align: center; cursor: pointer; transition: all 0.3s;
+  border: 2px solid var(--grey); position: relative; min-height: 120px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.flip-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); border-color: var(--teal); }
+.flip-card .card-icon { font-size: 28px; margin-bottom: 8px; }
+.flip-card .card-label { font-weight: 600; font-size: 14px; color: var(--dark-teal); }
+.flip-card .card-hint { font-size: 11px; color: var(--text-light); margin-top: 6px; }
+.accordion { margin: 20px 0; }
+.accordion-item { border: 1px solid var(--grey); border-radius: var(--radius); margin-bottom: 8px; overflow: hidden; }
+.accordion-header {
+  padding: 16px 20px; background: var(--white); cursor: pointer; font-weight: 600;
+  display: flex; justify-content: space-between; align-items: center; font-size: 15px;
+  transition: background 0.2s;
+}
+.accordion-header:hover { background: var(--very-light-teal); }
+.accordion-header::after { content: '+'; font-size: 20px; font-weight: 300; color: var(--teal); transition: transform 0.3s; }
+.accordion-item.open .accordion-header::after { content: '\2212'; }
+.accordion-body { max-height: 0; overflow: hidden; transition: max-height 0.4s ease; }
+.accordion-body-inner { padding: 16px 20px 20px; border-top: 1px solid var(--grey); line-height: 1.7; }
+.tabs { margin: 24px 0; }
+.tab-row { display: flex; border-bottom: 2px solid var(--grey); margin-bottom: 0; overflow-x: auto; }
+.tab-btn {
+  padding: 10px 20px; border: none; background: none; cursor: pointer;
+  font-weight: 600; font-size: 14px; color: var(--text-light); border-bottom: 2px solid transparent;
+  margin-bottom: -2px; transition: all 0.2s; white-space: nowrap;
+}
+.tab-btn.active { color: var(--teal); border-bottom-color: var(--teal); }
+.tab-panel { display: none; padding: 20px 0; }
+.tab-panel.active { display: block; }
+.data-table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; }
+.data-table th { background: var(--dark-teal); color: #fff; padding: 12px 16px; text-align: left; font-weight: 600; }
+.data-table td { padding: 10px 16px; border-bottom: 1px solid var(--grey); }
+.data-table tr:nth-child(even) td { background: #f8fafa; }
+.data-table tr:hover td { background: var(--very-light-teal); }
+.formula-box {
+  background: #f8fafc; border: 2px solid var(--grey); border-radius: var(--radius);
+  padding: 20px 24px; margin: 16px 0; text-align: center; font-size: 16px;
+  font-family: 'Georgia', serif;
+}
+.formula-box .formula-label { font-size: 12px; color: var(--text-light); margin-bottom: 6px; font-family: 'Open Sans', sans-serif; }
+.scenario-card {
+  background: linear-gradient(135deg, #f0faf8 0%, #e6f3f0 100%);
+  border-radius: var(--radius); padding: 24px; margin: 20px 0;
+  border: 1px solid rgba(11,123,107,0.15);
+}
+.scenario-card .scenario-title { font-weight: 700; color: var(--dark-teal); margin-bottom: 8px; }
+.quiz-section { background: #f8fafa; border-radius: var(--radius); padding: 32px; margin: 40px 0; border: 2px solid var(--grey); }
+.quiz-section h3 { margin-top: 0; }
+.quiz-question { margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid var(--grey); }
+.quiz-question:last-of-type { border-bottom: none; margin-bottom: 16px; padding-bottom: 0; }
+.quiz-question p { font-weight: 600; margin-bottom: 12px; }
+.quiz-option { display: block; padding: 10px 16px; margin: 6px 0; border-radius: 8px; cursor: pointer; transition: all 0.2s; border: 1px solid var(--grey); }
+.quiz-option:hover { background: var(--very-light-teal); }
+.quiz-option input { margin-right: 10px; }
+.quiz-option.correct { background: var(--light-green); border-color: var(--green); }
+.quiz-option.incorrect { background: var(--light-rose); border-color: var(--accent); }
+.quiz-explanation { display: none; margin-top: 8px; padding: 10px 14px; background: var(--very-light-teal); border-radius: 8px; font-size: 13.5px; }
+.quiz-explanation.show { display: block; }
+.quiz-result { padding: 16px 20px; border-radius: 8px; font-weight: 600; margin-top: 16px; display: none; }
+.quiz-result.pass { background: var(--light-green); color: var(--dark-teal); }
+.quiz-result.fail { background: var(--light-rose); color: var(--accent-dark); }
+.quiz-retry { display: none; margin-top: 12px; }
+.quiz-retry.show { display: block; }
+.btn {
+  display: inline-block; padding: 12px 28px; border-radius: 8px; font-weight: 600;
+  font-size: 15px; border: none; cursor: pointer; transition: all 0.2s;
+}
+.btn-primary { background: var(--teal); color: #fff; }
+.btn-primary:hover { background: var(--dark-teal); }
+.btn-accent { background: var(--accent); color: #fff; }
+.btn-accent:hover { background: var(--accent-dark); }
+.btn-outline { background: transparent; border: 2px solid var(--teal); color: var(--teal); }
+.btn-outline:hover { background: var(--teal); color: #fff; }
+.btn.disabled { opacity: 0.5; pointer-events: none; }
+.reflection-box {
+  background: linear-gradient(135deg, #fdf6ff 0%, #f5f0ff 100%);
+  border: 2px solid #d4bfff; border-radius: var(--radius); padding: 24px; margin: 24px 0;
+}
+.reflection-box h3 { color: #6B21A8; margin-top: 0; }
+.reflection-box textarea {
+  width: 100%; min-height: 100px; border: 1px solid #d4bfff; border-radius: 8px;
+  padding: 12px; font-family: inherit; font-size: 14px; resize: vertical; margin: 8px 0;
+}
+.reflection-box .btn-save { background: #7C3AED; color: #fff; border: none; padding: 8px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; }
+.reflection-box .btn-save:hover { background: #6B21A8; }
+.reflection-status { font-size: 13px; margin-top: 6px; color: #6B21A8; display: none; }
+.reflection-status.show { display: block; }
+.section-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 48px; padding-top: 24px; border-top: 2px solid var(--grey); }
+.req-note { font-size: 13px; margin-top: 12px; }
+.req-check { color: var(--green); }
+.req-pending { color: var(--accent); }
+.completion-banner {
+  display: none; background: linear-gradient(135deg, var(--teal) 0%, var(--dark-teal) 100%);
+  color: #fff; padding: 48px; border-radius: var(--radius); text-align: center; margin: 40px 0;
+}
+.completion-banner h2 { color: #fff; margin: 0 0 12px; font-size: 28px; }
+.sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 99; }
+.card-modal-overlay {
+  display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.6); z-index: 1000; align-items: center; justify-content: center; padding: 20px;
+}
+.card-modal-overlay.show { display: flex; }
+.card-modal {
+  background: #fff; border-radius: var(--radius); max-width: 600px; width: 100%;
+  max-height: 80vh; overflow-y: auto; padding: 32px; position: relative;
+  box-shadow: var(--shadow-lg);
+}
+.card-modal h3 { color: var(--dark-teal); margin: 0 0 16px; padding-right: 30px; }
+.card-modal-close {
+  position: absolute; top: 16px; right: 16px; background: none; border: none;
+  font-size: 24px; cursor: pointer; color: var(--text-light); width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center; border-radius: 50%;
+}
+.card-modal-close:hover { background: var(--grey); }
+.welcome-hero {
+  min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, rgba(6,92,80,0.88) 0%, rgba(4,42,37,0.92) 100%), url('bg_texture.jpg') center/cover no-repeat;
+  color: #fff; text-align: center; padding: 48px 24px; position: relative; overflow: hidden;
+}
+.welcome-hero::before {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(circle at 30% 70%, rgba(11,123,107,0.25) 0%, transparent 50%),
+              radial-gradient(circle at 70% 30%, rgba(107,181,166,0.12) 0%, transparent 40%);
+}
+.welcome-hero > * { position: relative; z-index: 1; }
+.welcome-hero h1 { font-size: 48px; font-weight: 800; margin-bottom: 12px; line-height: 1.2; }
+.welcome-hero .subtitle { font-size: 20px; opacity: 0.8; margin-bottom: 32px; }
+.welcome-hero .start-btn {
+  background: var(--accent); color: #fff; padding: 16px 40px; border-radius: 50px;
+  font-size: 17px; font-weight: 700; border: none; cursor: pointer;
+  transition: all 0.3s; box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+.welcome-hero .start-btn:hover { background: var(--accent-dark); transform: translateY(-2px) scale(1.02); box-shadow: 0 8px 30px rgba(0,0,0,0.3); }
+.welcome-details { max-width: 560px; margin-top: 40px; text-align: left; background: rgba(255,255,255,0.08); border-radius: 16px; padding: 28px; backdrop-filter: blur(10px); }
+.welcome-details h3 { font-size: 16px; margin-bottom: 12px; opacity: 0.9; color: #fff; }
+.welcome-details ul { list-style: none; margin: 0; padding: 0; }
+.welcome-details li { padding: 4px 0; font-size: 14px; opacity: 0.8; }
+.welcome-details li::before { content: '\2726 '; color: #fff; opacity: 0.6; }
+.mobile-header {
+  display: none; position: fixed; top: 0; left: 0; right: 0; height: 56px;
+  background: var(--dark); color: #fff; z-index: 101;
+  padding: 0 16px; align-items: center; gap: 12px;
+}
+.mobile-header button { background: none; border: none; color: #fff; font-size: 24px; cursor: pointer; padding: 4px; }
+.mobile-header h3 { font-size: 14px; font-weight: 600; color: #fff; }
+@media (max-width: 768px) {
+  .sidebar { transform: translateX(-100%); width: 280px; }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar-overlay.show { display: block; }
+  .mobile-header { display: flex; }
+  .main { margin-left: 0; padding-top: 56px; }
+  .module-header { padding: 32px 20px 28px; }
+  .module-header h1 { font-size: 24px; }
+  .module-body { padding: 24px 20px 60px; }
+  .flip-card-grid { grid-template-columns: 1fr; }
+}
+
+</style>
+</head>
+<body>
+<div class="mobile-header">
+  <button onclick="toggleSidebar()">&#9776;</button>
+  <h3>HSCI 410 &mdash; Lesson 2</h3>
+</div>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <img src="sfu_logo_white.webp" alt="SFU &mdash; Simon Fraser University" style="width:100%;max-width:180px;margin-bottom:12px;">
+    <h2>Exploratory Data Analysis For Epidemiology</h2>
+    <p>Kiffer G. Card, PhD</p>
+  </div>
+  <div class="sidebar-nav" id="sidebarNav"></div>
+  <div class="sidebar-footer">
+    <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressFill" style="width:0%"></div></div>
+    <div class="progress-text" id="progressText">0% complete</div>
+  </div>
+</div>
+
+<div class="main" id="mainContent">
+
+<!-- ============ WELCOME ============ -->
+<div class="module-page active" id="page-welcome">
+<div class="welcome-hero">
+  <h1>Linear Regression</h1>
+  <p class="subtitle">Exploratory Data Analysis For Epidemiology</p>
+  <p style="font-size:15px;opacity:0.7;margin-bottom:32px;">Kiffer G. Card, PhD, Faculty of Health Sciences, Simon Fraser University</p>
+  <button class="start-btn" onclick="goToModule(0)">Begin Lesson &rarr;</button>
+  <div class="welcome-details">
+    <h3>Learning objectives for this lesson:</h3>
+    <ul>
+      <li>Identify when least squares regression is an appropriate analytical tool</li>
+      <li>Construct a linear model with control of confounding and identification of interaction</li>
+      <li>Interpret regression coefficients from both technical and causal perspectives</li>
+      <li>Convert nominal, ordinal, or continuous predictors into indicator variables</li>
+      <li>Assess model assumptions including linearity, homoscedasticity, and normality of residuals</li>
+      <li>Detect and address collinearity among predictor variables</li>
+      <li>Identify study designs that require a time-series approach to analysis</li>
+    </ul>
+  </div>
+  <p style="font-size:12px;opacity:0.5;margin-top:32px;max-width:560px;text-align:center;line-height:1.5;">Dohoo, I. R., Martin, S. W., &amp; Stryhn, H. (2012). <em>Methods in Epidemiologic Research.</em> VER Inc.</p>
+</div>
+</div>
+
+<!-- ============ SECTION 1: Introduction & Regression Analysis ============ -->
+<div class="module-page" id="page-0">
+<div class="module-header">
+  <div class="module-tag">Section 1</div>
+  <h1>Introduction &amp; Regression Analysis</h1>
+  <div class="time">Sections 14.1&ndash;14.2 of Dohoo, Martin &amp; Stryhn</div>
+</div>
+<div class="module-body">
+
+<h2>Why Linear Regression?</h2>
+<p>Up to this point, most examples of relating an outcome to an exposure have been based on qualitative outcome variables&mdash;that is, variables that are categorical or dichotomous. Linear regression is suitable for modelling the outcome when it is measured on a <strong>continuous</strong> or near-continuous scale. Examples include birth weight, blood pressure, body mass index, and disease frequency at a regional level.</p>
+
+<div class="info-box teal">
+  <div class="box-title">Key Concept</div>
+  <p>In regression analysis, the relationship between the outcome and the predictors is <strong>asymmetric</strong>&mdash;we think the value of the <strong>outcome</strong> is caused by (or we wish to predict it by) the value of another variable (the <strong>predictor</strong>). Using <em>X</em>-variables to predict <em>Y</em> does not necessarily imply causation; we might just be estimating predictive associations.</p>
+</div>
+
+<h2>The Simple Regression Model</h2>
+<p>When only one predictor variable is used, the model is called a <strong>simple regression model</strong>. The term &ldquo;model&rdquo; denotes the formal statistical formula that describes the relationship between the predictor and the outcome.</p>
+
+<div class="formula-box">
+  <div class="formula-label">Simple Linear Regression (Eq 14.1)</div>
+  <em>Y</em> = &beta;<sub>0</sub> + &beta;<sub>1</sub><em>X</em><sub>1</sub> + &epsilon;
+</div>
+
+<p>In this equation, &beta;<sub>0</sub> is the <strong>intercept</strong> (or constant), &beta;<sub>1</sub> is the <strong>regression coefficient</strong>, and &epsilon; is the <strong>error term</strong>. The errors are assumed to be normally and independently distributed (&epsilon; ~ N(0, &sigma;&sup2;)). We estimate these errors by <strong>residuals</strong>&mdash;the difference between the observed value and the value predicted by the model.</p>
+
+<div class="flip-card-grid">
+  <div class="flip-card" onclick="openCardModal('Intercept (&beta;\u2080)', 'The intercept (&beta;\u2080) represents the predicted value of Y when all X-variables in the model have the value 0. It is usually referred to as the &lt;strong&gt;constant&lt;/strong&gt;. The intercept is important for defining the baseline level of the outcome and should be interpretable when predictors are appropriately scaled.')">
+    <div class="card-icon">&#128205;</div>
+    <div class="card-label">Intercept (&beta;<sub>0</sub>)</div>
+    <div class="card-hint">Click to learn more</div>
+  </div>
+  <div class="flip-card" onclick="openCardModal('Regression Coefficient (&beta;\u2081)', 'The regression coefficient (&beta;\u2081) describes how the outcome Y changes for each one-unit increase in X\u2081. In a simple regression model, it represents the &lt;strong&gt;slope&lt;/strong&gt; of the regression line. In multivariable models, each &beta; represents the effect of its predictor after controlling for all other variables in the model.')">
+    <div class="card-icon">&#128200;</div>
+    <div class="card-label">Regression Coefficient (&beta;<sub>1</sub>)</div>
+    <div class="card-hint">Click to learn more</div>
+  </div>
+  <div class="flip-card" onclick="openCardModal('Error Term (&epsilon;)', 'The error term (&epsilon;) reflects the fact that the relationship between X\u2081 and Y is not exact. The errors are assumed to be &lt;strong&gt;normally and independently distributed&lt;/strong&gt; with mean 0 and constant variance &sigma;\u00B2. We estimate these errors by &lt;strong&gt;residuals&lt;/strong&gt;&mdash;the difference between observed and predicted values.')">
+    <div class="card-icon">&#128269;</div>
+    <div class="card-label">Error Term (&epsilon;)</div>
+    <div class="card-hint">Click to learn more</div>
+  </div>
+</div>
+
+<h2>The Multivariable Model</h2>
+<p>Almost without exception, the regression models used by epidemiologists will contain more than one predictor variable. These are known as <strong>multiple regression</strong> or <strong>multivariable</strong> models.</p>
+
+<div class="info-box amber">
+  <div class="box-title">Terminology Note</div>
+  <p><strong>Multivariate</strong> indicates 2 or more outcome variables; <strong>multivariable</strong> denotes more than 1 predictor. In epidemiology, we almost always mean multivariable models.</p>
+</div>
+
+<div class="formula-box">
+  <div class="formula-label">Multivariable Linear Regression (Eq 14.3)</div>
+  <em>Y</em> = &beta;<sub>0</sub> + &beta;<sub>1</sub><em>X</em><sub>1</sub> + &beta;<sub>2</sub><em>X</em><sub>2</sub> + &epsilon;
+</div>
+
+<p>A major difference from simple regression is that in the multivariable model, &beta;<sub>1</sub> is an estimate of the effect of <em>X</em><sub>1</sub> on <em>Y</em> <strong>after controlling for</strong> the effects of <em>X</em><sub>2</sub>. This is the key advantage of multivariable analysis&mdash;it accounts for confounding by extraneous variables.</p>
+
+<div class="accordion">
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">Why use multivariable models?</div>
+    <div class="accordion-body"><div class="accordion-body-inner">
+      <p>In observational studies, incorporating more than one predictor almost always leads to a more complete understanding of how the outcome varies, and it decreases the chance that the regression coefficients for exposures of interest are biased by confounding variables. The &beta;s are not biased by any variable included in the equation, but they can be biased if confounding variables are <strong>omitted</strong> from the equation.</p>
+    </div></div>
+  </div>
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">Confounders vs intervening variables</div>
+    <div class="accordion-body"><div class="accordion-body-inner">
+      <p>Assuming we have not included intervening variables or effects of the outcome in our model, the &beta;s are not confounded by any variable in the regression equation. However, from a <strong>causal perspective</strong>, if intervening variables are included, the coefficients do not estimate the causal effect. One can never be sure that there are no important unmeasured confounders that were omitted from the model.</p>
+    </div></div>
+  </div>
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">Trade-offs in model building</div>
+    <div class="accordion-body"><div class="accordion-body-inner">
+      <p>A major trade-off in model-building is to avoid omitting necessary confounding variables while not including variables of little importance. Including too many unimportant variables increases the number of &beta;s estimated and may lead to <strong>poor performance</strong> of the equation on future datasets. Also, having to measure unnecessary variables increases the cost of future work.</p>
+    </div></div>
+  </div>
+</div>
+
+<!-- Section 1 Quiz -->
+<div class="quiz-section" id="quiz-0">
+  <h3>Section 1 Knowledge Check</h3>
+  <div class="quiz-question" data-correct="b">
+    <p>1. What type of outcome variable is linear regression most suitable for?</p>
+    <label class="quiz-option"><input type="radio" name="q0-0" value="a"> Dichotomous outcomes</label>
+    <label class="quiz-option"><input type="radio" name="q0-0" value="b"> Continuous or near-continuous outcomes</label>
+    <label class="quiz-option"><input type="radio" name="q0-0" value="c"> Nominal categorical outcomes</label>
+    <div class="quiz-explanation">Linear regression is suitable for modelling the outcome when it is measured on a continuous or near-continuous scale, such as birth weight, blood pressure, or body mass index.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="c">
+    <p>2. In the equation Y = &beta;<sub>0</sub> + &beta;<sub>1</sub>X<sub>1</sub> + &epsilon;, what does &beta;<sub>1</sub> represent?</p>
+    <label class="quiz-option"><input type="radio" name="q0-1" value="a"> The predicted value of Y when X<sub>1</sub> = 0</label>
+    <label class="quiz-option"><input type="radio" name="q0-1" value="b"> The random error in the model</label>
+    <label class="quiz-option"><input type="radio" name="q0-1" value="c"> The change in Y for each one-unit increase in X<sub>1</sub></label>
+    <div class="quiz-explanation">&beta;<sub>1</sub> is the regression coefficient that describes how the mean value of Y changes for each one-unit increase in X<sub>1</sub>. The intercept (&beta;<sub>0</sub>) is the value of Y when X<sub>1</sub> = 0.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="a">
+    <p>3. What is the key advantage of a multivariable regression model over a simple regression model?</p>
+    <label class="quiz-option"><input type="radio" name="q0-2" value="a"> It can control for confounding by extraneous variables</label>
+    <label class="quiz-option"><input type="radio" name="q0-2" value="b"> It always produces larger R&sup2; values</label>
+    <label class="quiz-option"><input type="radio" name="q0-2" value="c"> It eliminates the need for the error term</label>
+    <div class="quiz-explanation">The key advantage is that each &beta; coefficient estimates the effect of its predictor after controlling for all other variables in the model, thereby reducing bias from confounding variables.</div>
+  </div>
+
+  <div class="quiz-result" id="quizResult-0"></div>
+  <div class="quiz-retry" id="quizRetry-0"><button class="btn btn-outline" onclick="retryQuiz(0)">Retry Quiz</button></div>
+  <button class="btn btn-primary" onclick="checkQuiz(0)" style="margin-top:12px;">Check Answers</button>
+</div>
+
+<div class="reflection-box">
+  <h3>Reflection</h3>
+  <p>Think of a continuous outcome variable in your field of interest. What predictors would you include in a regression model? How would you decide which variables are confounders versus intervening variables?</p>
+  <textarea id="reflection-1" placeholder="Type your reflection here..."></textarea>
+  <button class="btn-save" onclick="checkReflection(1)">Save Reflection</button>
+  <div class="reflection-status" id="reflectionStatus-1">Reflection saved!</div>
+</div>
+
+<div class="section-nav">
+  <button class="btn btn-outline" onclick="goToModule(-1)">&larr; Welcome</button>
+  <div>
+    <button class="btn btn-primary disabled" id="nextBtn-0" onclick="goToModule(1)">Next Section &rarr;</button>
+    <div class="req-note" id="reqNote-0"><span class="req-pending">*</span> Complete the quiz and reflection to continue.</div>
+  </div>
+</div>
+
+</div>
+</div>
+
+<!-- ============ SECTION 2: Hypothesis Testing & Effect Estimation ============ -->
+<div class="module-page" id="page-1">
+<div class="module-header">
+  <div class="module-tag">Section 2</div>
+  <h1>Hypothesis Testing &amp; Effect Estimation</h1>
+  <div class="time">Section 14.3 of Dohoo, Martin &amp; Stryhn</div>
+</div>
+<div class="module-body">
+
+<h2>The ANOVA Table</h2>
+<p>The idea behind regression is that information in the <em>X</em>-variables can be used to predict the value of <em>Y</em>. The formal way this is approached is to ascertain how much of the <strong>sums of squares (SS)</strong> of <em>Y</em> we can explain with knowledge of the <em>X</em>-variable(s).</p>
+
+<div class="data-table" style="overflow-x:auto;">
+<table class="data-table">
+  <thead>
+    <tr><th>Source</th><th>Sums of Squares</th><th>df</th><th>Mean Square</th><th>F-test</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Model (regression)</td><td>SSM = &Sigma;(&#374;<sub>i</sub> &minus; &#x232;Y)<sup>2</sup></td><td>dfM = k</td><td>MSM = SSM/dfM</td><td>MSM/MSE</td></tr>
+    <tr><td>Error (residual)</td><td>SSE = &Sigma;(Y<sub>i</sub> &minus; &#374;<sub>i</sub>)<sup>2</sup></td><td>dfE = n&minus;(k+1)</td><td>MSE = SSE/dfE</td><td></td></tr>
+    <tr><td>Total</td><td>SST = &Sigma;(Y<sub>i</sub> &minus; &#x232;Y)<sup>2</sup></td><td>dfT = n&minus;1</td><td>MST = SST/dfT</td><td></td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>Here, <em>k</em> is the number of predictor variables in the model (not counting the intercept). When the SS are divided by their degrees of freedom (df), the result is a <strong>mean square</strong>&mdash;denoted MSM (model), MSE (error), and MST (total). The MSE is our estimate of the error variance &sigma;&sup2;, and the square root of &sigma;&sup2; is called the <strong>root MSE</strong> or the <strong>standard error of prediction</strong>.</p>
+
+<h2>Assessing the Significance of a Linear Regression Model</h2>
+<p>We use the <strong>F-test</strong> from the ANOVA table to assess whether the predictors collectively have a statistically significant relationship with the outcome. The null hypothesis is H<sub>0</sub>: &beta;<sub>1</sub> = &beta;<sub>2</sub> = &hellip; = &beta;<sub>k</sub> = 0.</p>
+
+<div class="scenario-card">
+  <div class="scenario-title">Example 14.1: Birth Weight on Gestation Length</div>
+  <p>A simple linear regression model with birth weight (-bwt-) as the outcome and gestation length (-gest-) as the sole predictor was fit using the bw5k dataset (n = 5,000).</p>
+  <p><strong>Results:</strong> F(1, 4998) = 1,790.09, P &lt; 0.0001, R&sup2; = 0.2637. The coefficient for -gest- is 124.5 gm per week (95% CI: 118.7&ndash;130.3), meaning for each additional week of gestation, birth weight increases by approximately 124.5 gm.</p>
+</div>
+
+<h2>Testing Individual Regression Coefficients</h2>
+<p>A <strong>t-test</strong> with n&minus;(k+1) degrees of freedom is used to evaluate the significance of any individual regression coefficient. The usual null hypothesis is H<sub>0</sub>: &beta;<sub>j</sub> = 0.</p>
+
+<div class="formula-box">
+  <div class="formula-label">t-test for a Regression Coefficient (Eq 14.6)</div>
+  <em>t</em> = (&beta;<sub>j</sub> &minus; &beta;*) / SE(&beta;<sub>j</sub>)
+</div>
+
+<div class="accordion">
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">Predictions & intervals</div>
+    <div class="accordion-body"><div class="accordion-body-inner">
+      <p>There are 2 types of variation in play: (1) from estimation of the regression parameters (the usual SE), and (2) from a new observation about the regression line. The <strong>prediction interval</strong> for a new observation involves both sources. The further the value x* is from the mean of X<sub>1</sub>, the greater the variability in the prediction. The 95% confidence interval is calculated as: 95% CI = Y &plusmn; t<sub>.05</sub>(SE).</p>
+    </div></div>
+  </div>
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">R&sup2; and adjusted R&sup2;</div>
+    <div class="accordion-body"><div class="accordion-body-inner">
+      <p><strong>R&sup2;</strong> (the <strong>coefficient of determination</strong>) describes the amount of variance in the outcome &ldquo;explained&rdquo; by the predictor variables. One formula: R&sup2; = SSM/SST = 1 &minus; (SSE/SST). Unfortunately, R&sup2; always increases as variables are added to the model. The <strong>adjusted R&sup2;</strong> = 1 &minus; (MSE/MST) adjusts for the number of predictors and is useful for comparing models with different numbers of variables.</p>
+    </div></div>
+  </div>
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">Testing groups of predictor variables</div>
+    <div class="accordion-body"><div class="accordion-body-inner">
+      <p>Sometimes it is necessary to simultaneously evaluate the significance of a <strong>group</strong> of X-variables (e.g., a set of indicator variables for a nominal variable). We compare the SSE of the full model with the SSE of the reduced model (without the group) using a partial <strong>F-test</strong>. This tells us whether the set of variables as a group contributes significantly to the model.</p>
+    </div></div>
+  </div>
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">Interpreting the F-statistic</div>
+    <div class="accordion-body"><div class="accordion-body-inner">
+      <p>The F-test has a straightforward interpretation only when the X-variables are manipulated treatments in a controlled experiment. In observational studies, the F-statistic is influenced by the number of variables available, their correlations, the total number of subjects, and the method used for variable selection. Most variable selection methods tend to <strong>maximise F</strong>, meaning the observed F overestimates the actual significance of the model.</p>
+    </div></div>
+  </div>
+</div>
+
+<!-- Section 2 Quiz -->
+<div class="quiz-section" id="quiz-1">
+  <h3>Section 2 Knowledge Check</h3>
+  <div class="quiz-question" data-correct="b">
+    <p>1. What does the F-test in the ANOVA table assess?</p>
+    <label class="quiz-option"><input type="radio" name="q1-0" value="a"> Whether individual regression coefficients differ from zero</label>
+    <label class="quiz-option"><input type="radio" name="q1-0" value="b"> Whether the predictors collectively have a significant relationship with the outcome</label>
+    <label class="quiz-option"><input type="radio" name="q1-0" value="c"> Whether the residuals are normally distributed</label>
+    <div class="quiz-explanation">The F-test from the ANOVA table tests the null hypothesis that all regression coefficients (except the intercept) are simultaneously equal to zero. It assesses the overall significance of the model.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="a">
+    <p>2. What does R&sup2; (the coefficient of determination) measure?</p>
+    <label class="quiz-option"><input type="radio" name="q1-1" value="a"> The proportion of variance in the outcome explained by the predictor variables</label>
+    <label class="quiz-option"><input type="radio" name="q1-1" value="b"> The correlation between two predictor variables</label>
+    <label class="quiz-option"><input type="radio" name="q1-1" value="c"> The probability that the model is correct</label>
+    <div class="quiz-explanation">R&sup2; = SSM/SST = 1 &minus; (SSE/SST). It represents the amount of variance in the outcome variable that is &ldquo;explained&rdquo; or &ldquo;accounted for&rdquo; by the predictor variables in the model.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="c">
+    <p>3. Why is adjusted R&sup2; preferred over R&sup2; when comparing models with different numbers of predictors?</p>
+    <label class="quiz-option"><input type="radio" name="q1-2" value="a"> Adjusted R&sup2; is always larger than R&sup2;</label>
+    <label class="quiz-option"><input type="radio" name="q1-2" value="b"> R&sup2; decreases when variables are added to the model</label>
+    <label class="quiz-option"><input type="radio" name="q1-2" value="c"> R&sup2; always increases with more predictors, regardless of their usefulness; adjusted R&sup2; penalises for added variables</label>
+    <div class="quiz-explanation">R&sup2; always increases as variables are added to a regression model. The adjusted R&sup2; = 1 &minus; (MSE/MST) accounts for the number of variables and will tend to decline if the added variables contain little additional information about the outcome.</div>
+  </div>
+
+  <div class="quiz-result" id="quizResult-1"></div>
+  <div class="quiz-retry" id="quizRetry-1"><button class="btn btn-outline" onclick="retryQuiz(1)">Retry Quiz</button></div>
+  <button class="btn btn-primary" onclick="checkQuiz(1)" style="margin-top:12px;">Check Answers</button>
+</div>
+
+<div class="reflection-box">
+  <h3>Reflection</h3>
+  <p>Consider a regression model you have seen in published research or coursework. How would you interpret the R&sup2; value? What does a low R&sup2; mean practically, and does it necessarily indicate a poor model?</p>
+  <textarea id="reflection-2" placeholder="Type your reflection here..."></textarea>
+  <button class="btn-save" onclick="checkReflection(2)">Save Reflection</button>
+  <div class="reflection-status" id="reflectionStatus-2">Reflection saved!</div>
+</div>
+
+<div class="section-nav">
+  <button class="btn btn-outline" onclick="goToModule(0)">&larr; Section 1</button>
+  <div>
+    <button class="btn btn-primary disabled" id="nextBtn-1" onclick="goToModule(2)">Next Section &rarr;</button>
+    <div class="req-note" id="reqNote-1"><span class="req-pending">*</span> Complete the quiz and reflection to continue.</div>
+  </div>
+</div>
+
+</div>
+</div>
+
+<!-- ============ SECTION 3: Nature of X-Variables & Collinearity ============ -->
+<div class="module-page" id="page-2">
+<div class="module-header">
+  <div class="module-tag">Section 3</div>
+  <h1>Nature of X-Variables &amp; Collinearity</h1>
+  <div class="time">Sections 14.4&ndash;14.5 of Dohoo, Martin &amp; Stryhn</div>
+</div>
+<div class="module-body">
+
+<h2>Types of Predictor Variables</h2>
+<p>The <em>X</em>-variables can be continuous or categorical. Categorical variables can be either <strong>nominal</strong> (levels with no meaningful numerical representation, e.g., race or city of residence) or <strong>ordinal</strong> (ordered levels, e.g., severity: low, medium, high). Nominal and ordinal variables with more than 2 levels must be converted to <strong>indicator variables</strong> before entering the regression.</p>
+
+<div class="tabs">
+  <div class="tab-row">
+    <button class="tab-btn active" onclick="switchTab(event,'tab-scaling')">Scaling Variables</button>
+    <button class="tab-btn" onclick="switchTab(event,'tab-regular')">Regular Indicators</button>
+    <button class="tab-btn" onclick="switchTab(event,'tab-hierarchical')">Hierarchical Indicators</button>
+  </div>
+  <div class="tab-panel active" id="tab-scaling">
+    <h3>Scaling Variables</h3>
+    <p>Often the predictor variables have a limited range of possible or sensible values. For example, if gestation length is a predictor, the intercept reflects birth weight at 0 weeks&mdash;which is meaningless. It is useful to <strong>scale</strong> these variables by subtracting the lowest possible sensible value (or the average) before entering them into the model. This makes the intercept interpretable without changing the regression coefficient or its SE.</p>
+    <p><strong>Example:</strong> Subtracting 39 weeks (the average gestation length) from -gest- gives gest39 = gest &minus; 39. Now &beta;<sub>0</sub> reflects birth weight for a 39-week gestation (3,341 gm), a much more meaningful value than the original constant of &minus;1,514 gm.</p>
+  </div>
+  <div class="tab-panel" id="tab-regular">
+    <h3>Regular (Disjoint) Indicator Variables</h3>
+    <p><strong>Indicator variables</strong> (also called <strong>dummy variables</strong>) are created variables whose values have no direct physical relationship to the characteristic being described. For a nominal variable with <em>j</em> levels, we need <em>j</em> &minus; 1 indicator variables. The omitted level becomes the <strong>referent</strong> (comparison) category.</p>
+    <p><strong>Example:</strong> For mother&rsquo;s race with 3 categories, we create 2 indicator variables (X<sub>1</sub> and X<sub>2</sub>). Race 3 (with both indicators = 0) becomes the referent. &beta;<sub>1</sub> estimates the difference in outcome between races 1 and 3, while &beta;<sub>2</sub> estimates the difference between races 2 and 3.</p>
+  </div>
+  <div class="tab-panel" id="tab-hierarchical">
+    <h3>Hierarchical (Incremental) Indicator Variables</h3>
+    <p>If the predictor variables are ordinal in type (reflecting relative changes in an underlying characteristic), <strong>hierarchical</strong> indicator variables are often preferred. These contrast the outcome in each level against the level immediately preceding it (assuming all hierarchical variables are in the model).</p>
+    <p><strong>Example:</strong> For mother&rsquo;s education (4 levels), the disjoint indicators compare each level to the lowest (baseline). The hierarchical indicators instead show: the coefficient for level 4 reflects the difference between level 3 (some college) and level 4 (university degree), showing the incremental effect of each step up in education.</p>
+  </div>
+</div>
+
+<div class="data-table" style="overflow-x:auto;">
+<table class="data-table">
+  <thead>
+    <tr><th>Variable</th><th>Indicator Coding</th><th>Hierarchical Coding</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>meduc_c4=2 (high school diploma)</td><td>20.046</td><td>20.046</td></tr>
+    <tr><td>meduc_c4=3 (some college)</td><td>53.270</td><td>33.224</td></tr>
+    <tr><td>meduc_c4=4 (university degree)</td><td>80.599</td><td>27.329</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2>Detecting Highly Correlated (Collinear) Variables</h2>
+<p>If the predictor variables are too highly correlated, a number of problems arise. The estimated effect of each variable depends on the other predictors in the model. With highly correlated predictors, the &beta;s will be highly and negatively correlated, and in extreme cases none of the individual coefficients will be significantly different from zero despite a significant overall F-test.</p>
+
+<div class="flip-card-grid">
+  <div class="flip-card" onclick="openCardModal('Variance Inflation Factor (VIF)', 'The VIF measures how much the variance of a regression coefficient is inflated due to collinearity with other variables. The formula is: &lt;strong&gt;VIF = 1 / (1 &minus; R&lt;sup&gt;2&lt;/sup&gt;&lt;sub&gt;x&lt;/sub&gt;)&lt;/strong&gt;, where R&lt;sup&gt;2&lt;/sup&gt;&lt;sub&gt;x&lt;/sub&gt; is the coefficient of determination from regressing that variable on all the other predictors. Values above 10 indicate serious collinearity.')">
+    <div class="card-icon">&#128202;</div>
+    <div class="card-label">VIF</div>
+    <div class="card-hint">Click to learn more</div>
+  </div>
+  <div class="flip-card" onclick="openCardModal('Centring Variables', 'Centring a continuous variable is performed by subtracting the &lt;strong&gt;mean value&lt;/strong&gt; (or some other central value) from each observed X-value. This reduces correlations between constructed variables (like power terms or interaction terms). Centring does not change the predictions or the fit of the model&mdash;only the values and interpretation of the regression coefficients.')">
+    <div class="card-icon">&#127919;</div>
+    <div class="card-label">Centring</div>
+    <div class="card-hint">Click to learn more</div>
+  </div>
+  <div class="flip-card" onclick="openCardModal('Measurement Error', 'In the regression model, the X-variables are assumed to be measured without error. In reality, observed X-values may contain natural variation or measurement error. If the measurement error is small relative to the range of X-values, it is not a major concern. However, ignoring large measurement errors tends to &lt;strong&gt;bias parameters towards the null&lt;/strong&gt;.')">
+    <div class="card-icon">&#9888;</div>
+    <div class="card-label">Measurement Error</div>
+    <div class="card-hint">Click to learn more</div>
+  </div>
+</div>
+
+<div class="formula-box">
+  <div class="formula-label">Variance Inflation Factor (Eq 14.12)</div>
+  VIF = 1 / (1 &minus; R&sup2;<sub>x</sub>)
+</div>
+
+<div class="info-box rose">
+  <div class="box-title">Collinearity Example</div>
+  <p>When a quadratic term (-gest_sq-) was added to a model already containing -gest-, the correlation between the two was 0.99, giving a VIF of 131. The SE of -gest- increased over 11 times (from 2.94 to 32.99). <strong>Centring</strong> -gest- by subtracting 39 (the mean) reduced the VIF from 131 to just 1.54 and the SE back down to 3.58.</p>
+</div>
+
+<!-- Section 3 Quiz -->
+<div class="quiz-section" id="quiz-2">
+  <h3>Section 3 Knowledge Check</h3>
+  <div class="quiz-question" data-correct="b">
+    <p>1. For a nominal variable with 4 categories, how many indicator (dummy) variables are needed?</p>
+    <label class="quiz-option"><input type="radio" name="q2-0" value="a"> 4</label>
+    <label class="quiz-option"><input type="radio" name="q2-0" value="b"> 3</label>
+    <label class="quiz-option"><input type="radio" name="q2-0" value="c"> 2</label>
+    <div class="quiz-explanation">For a nominal variable with <em>j</em> levels, we need <em>j</em> &minus; 1 indicator variables. The omitted level becomes the referent (reference) category for comparison. With 4 categories, we need 3 indicator variables.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="c">
+    <p>2. What does a VIF value greater than 10 suggest?</p>
+    <label class="quiz-option"><input type="radio" name="q2-1" value="a"> The variable is not a significant predictor</label>
+    <label class="quiz-option"><input type="radio" name="q2-1" value="b"> The model has good predictive validity</label>
+    <label class="quiz-option"><input type="radio" name="q2-1" value="c"> There is serious collinearity between predictor variables</label>
+    <div class="quiz-explanation">A conservative guide for interpreting VIFs is that values above 10 indicate serious collinearity. While this does not necessarily mean the model is useless, it should always be taken as a warning about the interpretation of regression coefficients and the increase in their standard errors.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="a">
+    <p>3. What is the primary purpose of centring a continuous variable before adding it to a regression model?</p>
+    <label class="quiz-option"><input type="radio" name="q2-2" value="a"> To reduce correlations between constructed variables (e.g., power terms or interaction terms)</label>
+    <label class="quiz-option"><input type="radio" name="q2-2" value="b"> To improve the R&sup2; of the model</label>
+    <label class="quiz-option"><input type="radio" name="q2-2" value="c"> To change the regression coefficient of the predictor</label>
+    <div class="quiz-explanation">Centring reduces the correlation between a variable and its constructed derivatives (such as power terms or interaction terms). It does not change the predictions or the fit of the model&mdash;only the values and interpretation of the regression coefficients and the intercept.</div>
+  </div>
+
+  <div class="quiz-result" id="quizResult-2"></div>
+  <div class="quiz-retry" id="quizRetry-2"><button class="btn btn-outline" onclick="retryQuiz(2)">Retry Quiz</button></div>
+  <button class="btn btn-primary" onclick="checkQuiz(2)" style="margin-top:12px;">Check Answers</button>
+</div>
+
+<div class="reflection-box">
+  <h3>Reflection</h3>
+  <p>Why might highly correlated predictor variables cause problems in a multivariable regression model? What strategies would you use to detect and address collinearity in your own analyses?</p>
+  <textarea id="reflection-3" placeholder="Type your reflection here..."></textarea>
+  <button class="btn-save" onclick="checkReflection(3)">Save Reflection</button>
+  <div class="reflection-status" id="reflectionStatus-3">Reflection saved!</div>
+</div>
+
+<div class="section-nav">
+  <button class="btn btn-outline" onclick="goToModule(1)">&larr; Section 2</button>
+  <div>
+    <button class="btn btn-primary disabled" id="nextBtn-2" onclick="goToModule(3)">Next Section &rarr;</button>
+    <div class="req-note" id="reqNote-2"><span class="req-pending">*</span> Complete the quiz and reflection to continue.</div>
+  </div>
+</div>
+
+</div>
+</div>
+
+<!-- ============ SECTION 4: Interaction & Causal Interpretation ============ -->
+<div class="module-page" id="page-3">
+<div class="module-header">
+  <div class="module-tag">Section 4</div>
+  <h1>Interaction &amp; Causal Interpretation</h1>
+  <div class="time">Sections 14.6&ndash;14.7 of Dohoo, Martin &amp; Stryhn</div>
+</div>
+<div class="module-body">
+
+<h2>Detecting and Modelling Interaction</h2>
+<p>Given the component cause model, we might expect to see <strong>interaction</strong> when 2 factors act synergistically or antagonistically. In previous sections, models contained only <strong>main effects</strong>&mdash;assuming the association of <em>X</em><sub>1</sub> to <em>Y</em> is the same at all levels of <em>X</em><sub>2</sub>. An <strong>interaction term</strong> tests whether the effect of one variable depends on the level of another.</p>
+
+<div class="formula-box">
+  <div class="formula-label">Model with Interaction Term (Eq 14.15)</div>
+  <em>Y</em> = &beta;<sub>0</sub> + &beta;<sub>1</sub><em>X</em><sub>1</sub> + &beta;<sub>2</sub><em>X</em><sub>2</sub> + &beta;<sub>3</sub><em>X</em><sub>1</sub>*<em>X</em><sub>2</sub> + &epsilon;
+</div>
+
+<p>We assess interaction by testing whether &beta;<sub>3</sub> = 0. If the interaction is absent (i.e., &beta;<sub>3</sub> is not significantly different from 0), the main effects (additive) model is deemed adequate. If the interaction is needed, centring becomes useful because it allows us to interpret &beta;<sub>1</sub> and &beta;<sub>2</sub> as linear effects when the centred version of the other variable is zero.</p>
+
+<div class="accordion">
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">Interaction between two dichotomous variables</div>
+    <div class="accordion-body"><div class="accordion-body-inner">
+      <p><strong>Example 14.9:</strong> The dichotomous versions of maternal weight gain (wtgain_c2: &lt;30 lb vs &ge;30 lb) and total birth order (tbo_c2: primiparous vs multiparous) were evaluated. The main effects model showed both factors were significant. Adding the interaction term (wg_c2*tbo_c2) revealed a significant interaction (&beta;<sub>3</sub> = &minus;88.4, P = 0.010).</p>
+      <p>This means the positive effect of multiparous birth on birth weight is present if weight gain is low, but is negligible if weight gain is high. Similarly, high weight gain has a bigger effect in primiparous births (227 gm) than in multiparous births (139 gm).</p>
+    </div></div>
+  </div>
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">Interactions with categorical variables</div>
+    <div class="accordion-body"><div class="accordion-body-inner">
+      <p>Interactions involving categorical variables (with more than 2 levels) are modelled by including products between <strong>all indicator variables</strong> needed in the main effects model. For example, the interaction between a 3-level and a 4-level categorical variable requires (3&minus;1) &times; (4&minus;1) = 6 product variables. These 6 variables should be tested and explored as a group using the partial F-test described in Section 14.3.6.</p>
+    </div></div>
+  </div>
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">Practical advice on interaction terms</div>
+    <div class="accordion-body"><div class="accordion-body-inner">
+      <p>In many multivariable analyses, the number of possibilities for interaction is large and there is no single correct way to assess if interaction is present. Unless the potential number of interactions is small, interactions should be limited to those of <strong>biological relevance</strong>. It is generally recommended that 3- and 4-way interactions only be investigated when there are good, biologically sound reasons for doing so.</p>
+    </div></div>
+  </div>
+</div>
+
+<h2>Causal Interpretation of a Multivariable Linear Model</h2>
+<p>So far, we have focused on the <strong>technical interpretation</strong> of regression coefficients. When making causal inferences, extra care is needed to ensure that only the appropriate variables are included in the analysis. A <strong>causal diagram</strong> is very helpful in this regard.</p>
+
+<div class="info-box teal">
+  <div class="box-title">Key Causal Principle</div>
+  <p>If a variable is an <strong>intervening variable</strong> (on the causal pathway between exposure and outcome), including it in the model will change the interpretation. For example, if gestation length is an intervening variable between cigarette smoking and birth weight, including -gest- in the model adjusts away part of the causal effect of smoking. The <strong>total effect</strong> of smoking would be obtained from a model without -gest-, while the <strong>direct effect</strong> (not mediated through gestation) would require including it.</p>
+</div>
+
+<div class="scenario-card">
+  <div class="scenario-title">Example: Causal Model for Smoking &amp; Birth Weight</div>
+  <p>Our objective is to evaluate the effects of cigarette smoking (-cig-) on birth weight (-bwt-). The causal diagram indicates that gestation length (-gest-) is an <strong>intervening variable</strong> between -cig- and -bwt-. Consequently, -gest- and -wtgain- should be <strong>excluded</strong> from the model when estimating the total causal effect of smoking on birth weight.</p>
+  <p>The model includes: -white- (potential confounder), -college- (potential confounder), and -cig_2- (the exposure of interest). The interaction between -cig_2- and -white- was assessed.</p>
+</div>
+
+<div class="flip-card-grid">
+  <div class="flip-card" onclick="openCardModal('Total Effect', 'The &lt;strong&gt;total effect&lt;/strong&gt; of an exposure is estimated by excluding intervening variables from the model. It captures both the direct effect and any effects mediated through other variables on the causal pathway. For example, the total effect of smoking on birth weight includes the effect through reduced gestation length.')">
+    <div class="card-icon">&#127919;</div>
+    <div class="card-label">Total Effect</div>
+    <div class="card-hint">Click to learn more</div>
+  </div>
+  <div class="flip-card" onclick="openCardModal('Direct Effect', 'The &lt;strong&gt;direct effect&lt;/strong&gt; is estimated by including intervening variables in the model. It represents the portion of the exposure&rsquo;s effect that is NOT mediated through those variables. For birth weight, the direct effect of smoking would exclude the portion mediated through changes in gestation length.')">
+    <div class="card-icon">&#10145;</div>
+    <div class="card-label">Direct Effect</div>
+    <div class="card-hint">Click to learn more</div>
+  </div>
+  <div class="flip-card" onclick="openCardModal('Confounders vs Intervening', 'It is critical to distinguish between &lt;strong&gt;confounders&lt;/strong&gt; (which should be included to reduce bias) and &lt;strong&gt;intervening variables&lt;/strong&gt; (which, if included, adjust away part of the causal effect). Drawing a causal diagram before analysis helps make this distinction clear.')">
+    <div class="card-icon">&#128300;</div>
+    <div class="card-label">Confounders vs Intervening</div>
+    <div class="card-hint">Click to learn more</div>
+  </div>
+</div>
+
+<!-- Section 4 Quiz -->
+<div class="quiz-section" id="quiz-3">
+  <h3>Section 4 Knowledge Check</h3>
+  <div class="quiz-question" data-correct="c">
+    <p>1. What does a significant interaction term (&beta;<sub>3</sub>) in a regression model indicate?</p>
+    <label class="quiz-option"><input type="radio" name="q3-0" value="a"> The two predictor variables are highly collinear</label>
+    <label class="quiz-option"><input type="radio" name="q3-0" value="b"> The main effects model fits the data better</label>
+    <label class="quiz-option"><input type="radio" name="q3-0" value="c"> The effect of one predictor on the outcome depends on the level of the other predictor</label>
+    <div class="quiz-explanation">A significant interaction term indicates that the association between one predictor and the outcome varies across levels of the other predictor. The main effects (additive) model is no longer sufficient to describe the relationship.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>2. When estimating the total causal effect of an exposure, what should you do with intervening variables?</p>
+    <label class="quiz-option"><input type="radio" name="q3-1" value="a"> Include them in the model to control for their effects</label>
+    <label class="quiz-option"><input type="radio" name="q3-1" value="b"> Exclude them from the model</label>
+    <label class="quiz-option"><input type="radio" name="q3-1" value="c"> Use them as the outcome variable instead</label>
+    <div class="quiz-explanation">Including intervening variables in the model adjusts away part of the causal effect that operates through the mediator. To estimate the total effect, intervening variables should be excluded; including them gives the direct effect only.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="a">
+    <p>3. What tool is recommended before building a multivariable model to help distinguish confounders from intervening variables?</p>
+    <label class="quiz-option"><input type="radio" name="q3-2" value="a"> A causal diagram</label>
+    <label class="quiz-option"><input type="radio" name="q3-2" value="b"> A correlation matrix</label>
+    <label class="quiz-option"><input type="radio" name="q3-2" value="c"> A residual plot</label>
+    <div class="quiz-explanation">A causal diagram (directed acyclic graph) is very helpful for identifying which variables are confounders (should be included), which are intervening variables (may need to be excluded for total effects), and which are effects of the outcome (should not be included).</div>
+  </div>
+
+  <div class="quiz-result" id="quizResult-3"></div>
+  <div class="quiz-retry" id="quizRetry-3"><button class="btn btn-outline" onclick="retryQuiz(3)">Retry Quiz</button></div>
+  <button class="btn btn-primary" onclick="checkQuiz(3)" style="margin-top:12px;">Check Answers</button>
+</div>
+
+<div class="reflection-box">
+  <h3>Reflection</h3>
+  <p>Consider an exposure&ndash;outcome relationship you are interested in. Draw (or describe) a causal diagram identifying potential confounders and intervening variables. How would the choice of which variables to include affect your estimate of the causal effect?</p>
+  <textarea id="reflection-4" placeholder="Type your reflection here..."></textarea>
+  <button class="btn-save" onclick="checkReflection(4)">Save Reflection</button>
+  <div class="reflection-status" id="reflectionStatus-4">Reflection saved!</div>
+</div>
+
+<div class="section-nav">
+  <button class="btn btn-outline" onclick="goToModule(2)">&larr; Section 3</button>
+  <div>
+    <button class="btn btn-primary disabled" id="nextBtn-3" onclick="goToModule(4)">Final Assessment &rarr;</button>
+    <div class="req-note" id="reqNote-3"><span class="req-pending">*</span> Complete the quiz and reflection to continue.</div>
+  </div>
+</div>
+
+</div>
+</div>
+
+<!-- ============ FINAL ASSESSMENT ============ -->
+<div class="module-page" id="page-4">
+<div class="module-header">
+  <div class="module-tag">Final Assessment</div>
+  <h1>Lesson 2 &mdash; Comprehensive Assessment</h1>
+  <div class="time">Covering all sections of Chapter 14</div>
+</div>
+<div class="module-body">
+
+<p>This final assessment covers all material from this lesson. You must answer all 15 questions correctly (100%) and complete the final reflection to finish the lesson.</p>
+
+<div class="reflection-box">
+  <h3>Final Reflection</h3>
+  <p>Reflect on the full chapter. How does linear regression differ from the categorical outcome methods you have previously studied? In what situations would you choose linear regression, and what are the key assumptions you need to verify before trusting your results?</p>
+  <textarea id="reflection-final" placeholder="Type your final reflection here..."></textarea>
+  <button class="btn-save" onclick="checkReflection('final')">Save Reflection</button>
+  <div class="reflection-status" id="reflectionStatus-final">Reflection saved!</div>
+</div>
+
+<div class="quiz-section" id="quiz-4">
+  <h3>Final Assessment (15 Questions)</h3>
+
+  <div class="quiz-question" data-correct="b">
+    <p>1. Linear regression is most appropriate when the outcome variable is:</p>
+    <label class="quiz-option"><input type="radio" name="qf-0" value="a"> Binary (e.g., yes/no)</label>
+    <label class="quiz-option"><input type="radio" name="qf-0" value="b"> Measured on a continuous scale (e.g., weight in grams)</label>
+    <label class="quiz-option"><input type="radio" name="qf-0" value="c"> A count of events over time</label>
+    <div class="quiz-explanation">Linear regression is designed for continuous or near-continuous outcome variables such as birth weight, blood pressure, or body mass index.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="c">
+    <p>2. In the simple regression model Y = &beta;<sub>0</sub> + &beta;<sub>1</sub>X<sub>1</sub> + &epsilon;, what does &beta;<sub>0</sub> represent?</p>
+    <label class="quiz-option"><input type="radio" name="qf-1" value="a"> The slope of the regression line</label>
+    <label class="quiz-option"><input type="radio" name="qf-1" value="b"> The error variance</label>
+    <label class="quiz-option"><input type="radio" name="qf-1" value="c"> The predicted value of Y when X<sub>1</sub> = 0</label>
+    <div class="quiz-explanation">&beta;<sub>0</sub> is the intercept or constant, representing the predicted value of the outcome when all predictors in the model are zero.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="a">
+    <p>3. Residuals in a regression model are:</p>
+    <label class="quiz-option"><input type="radio" name="qf-2" value="a"> The differences between observed and predicted values of Y</label>
+    <label class="quiz-option"><input type="radio" name="qf-2" value="b"> The regression coefficients divided by their standard errors</label>
+    <label class="quiz-option"><input type="radio" name="qf-2" value="c"> The intercept values for each observation</label>
+    <div class="quiz-explanation">Residuals are estimates of the error term (&epsilon;) and represent the difference between the observed (actual) value and the value predicted by the model for a given value of X.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>4. In a multivariable model, &beta;<sub>1</sub> represents the effect of X<sub>1</sub> on Y:</p>
+    <label class="quiz-option"><input type="radio" name="qf-3" value="a"> Without regard to any other variables</label>
+    <label class="quiz-option"><input type="radio" name="qf-3" value="b"> After controlling for the effects of all other X-variables in the model</label>
+    <label class="quiz-option"><input type="radio" name="qf-3" value="c"> Only when X<sub>2</sub> equals zero</label>
+    <div class="quiz-explanation">A key feature of multivariable regression is that each coefficient estimates the effect of its predictor while holding all other variables constant&mdash;thereby controlling for their effects.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="c">
+    <p>5. The root MSE (root mean square error) in a regression model is:</p>
+    <label class="quiz-option"><input type="radio" name="qf-4" value="a"> The R&sup2; value of the model</label>
+    <label class="quiz-option"><input type="radio" name="qf-4" value="b"> The mean of the dependent variable</label>
+    <label class="quiz-option"><input type="radio" name="qf-4" value="c"> The square root of the error variance (MSE), also called the standard error of prediction</label>
+    <div class="quiz-explanation">The root MSE = &radic;MSE = &radic;(SSE/dfE). It is the estimate of &sigma; and indicates the typical size of the residuals&mdash;the standard error of prediction.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="a">
+    <p>6. The null hypothesis for the overall F-test in regression is:</p>
+    <label class="quiz-option"><input type="radio" name="qf-5" value="a"> All regression coefficients (except the intercept) are simultaneously equal to zero</label>
+    <label class="quiz-option"><input type="radio" name="qf-5" value="b"> The intercept is equal to zero</label>
+    <label class="quiz-option"><input type="radio" name="qf-5" value="c"> The residuals are normally distributed</label>
+    <div class="quiz-explanation">The F-test from the ANOVA table tests H<sub>0</sub>: &beta;<sub>1</sub> = &beta;<sub>2</sub> = &hellip; = &beta;<sub>k</sub> = 0. The alternative is that at least one &beta; is non-zero.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>7. If R&sup2; = 0.26 in a regression model, what can we conclude?</p>
+    <label class="quiz-option"><input type="radio" name="qf-6" value="a"> The model is not statistically significant</label>
+    <label class="quiz-option"><input type="radio" name="qf-6" value="b"> The predictor(s) explain 26% of the variance in the outcome</label>
+    <label class="quiz-option"><input type="radio" name="qf-6" value="c"> There is a 26% chance the model is correct</label>
+    <div class="quiz-explanation">R&sup2; = 0.26 means that 26% of the variation in the outcome variable is explained (accounted for) by the predictor variables. The remaining 74% is unexplained.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="c">
+    <p>8. Why should we use adjusted R&sup2; rather than R&sup2; when comparing models?</p>
+    <label class="quiz-option"><input type="radio" name="qf-7" value="a"> Because R&sup2; can be negative</label>
+    <label class="quiz-option"><input type="radio" name="qf-7" value="b"> Because adjusted R&sup2; is easier to calculate</label>
+    <label class="quiz-option"><input type="radio" name="qf-7" value="c"> Because R&sup2; always increases when variables are added, even if they add no useful information</label>
+    <div class="quiz-explanation">R&sup2; always increases with more predictors. Adjusted R&sup2; = 1 &minus; (MSE/MST) accounts for the number of predictors and will decline if added variables contribute little additional information.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="a">
+    <p>9. To code a nominal variable with 5 categories for regression, you would create:</p>
+    <label class="quiz-option"><input type="radio" name="qf-8" value="a"> 4 indicator (dummy) variables</label>
+    <label class="quiz-option"><input type="radio" name="qf-8" value="b"> 5 indicator variables</label>
+    <label class="quiz-option"><input type="radio" name="qf-8" value="c"> 1 continuous variable coded 1 through 5</label>
+    <div class="quiz-explanation">For a nominal variable with j levels, j &minus; 1 indicator variables are needed. The omitted level becomes the referent category. With 5 categories, 4 indicators are required.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>10. What is the purpose of scaling a predictor variable (e.g., subtracting the mean)?</p>
+    <label class="quiz-option"><input type="radio" name="qf-9" value="a"> To make the regression coefficient larger</label>
+    <label class="quiz-option"><input type="radio" name="qf-9" value="b"> To make the intercept interpretable</label>
+    <label class="quiz-option"><input type="radio" name="qf-9" value="c"> To reduce the residual variance of the model</label>
+    <div class="quiz-explanation">Scaling a predictor by subtracting a meaningful value (e.g., the mean or the lowest sensible value) makes the intercept represent the predicted outcome at that meaningful value of X, rather than at X = 0 which may be meaningless. The regression coefficient and its SE are unchanged.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="c">
+    <p>11. A VIF of 1.0 for a predictor indicates that:</p>
+    <label class="quiz-option"><input type="radio" name="qf-10" value="a"> The predictor is not significant</label>
+    <label class="quiz-option"><input type="radio" name="qf-10" value="b"> The predictor is perfectly collinear with other variables</label>
+    <label class="quiz-option"><input type="radio" name="qf-10" value="c"> The predictor is not correlated with any other predictor in the model</label>
+    <div class="quiz-explanation">VIF = 1/(1 &minus; R&sup2;<sub>x</sub>). If R&sup2;<sub>x</sub> = 0 (no correlation with other predictors), VIF = 1.0, indicating no collinearity. The variance of &beta; is not inflated at all.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="a">
+    <p>12. In the model Y = &beta;<sub>0</sub> + &beta;<sub>1</sub>X<sub>1</sub> + &beta;<sub>2</sub>X<sub>2</sub> + &beta;<sub>3</sub>X<sub>1</sub>*X<sub>2</sub> + &epsilon;, a significant &beta;<sub>3</sub> indicates:</p>
+    <label class="quiz-option"><input type="radio" name="qf-11" value="a"> The effect of X<sub>1</sub> on Y changes depending on the value of X<sub>2</sub></label>
+    <label class="quiz-option"><input type="radio" name="qf-11" value="b"> X<sub>1</sub> and X<sub>2</sub> are collinear</label>
+    <label class="quiz-option"><input type="radio" name="qf-11" value="c"> The main effects model is adequate</label>
+    <div class="quiz-explanation">A significant interaction term (&beta;<sub>3</sub>) means the relationship between X<sub>1</sub> and Y is modified by X<sub>2</sub>. The effect of one predictor depends on the level of the other.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>13. Including an intervening variable in a causal regression model will:</p>
+    <label class="quiz-option"><input type="radio" name="qf-12" value="a"> Remove confounding bias from the exposure estimate</label>
+    <label class="quiz-option"><input type="radio" name="qf-12" value="b"> Adjust away part of the total causal effect of the exposure</label>
+    <label class="quiz-option"><input type="radio" name="qf-12" value="c"> Have no effect on the exposure coefficient</label>
+    <div class="quiz-explanation">If a variable lies on the causal pathway between exposure and outcome (an intervening/mediator variable), including it in the model removes the portion of the exposure effect that operates through that pathway, yielding only the direct effect rather than the total effect.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="c">
+    <p>14. The regression coefficient for a dichotomous predictor (coded 0/1) represents:</p>
+    <label class="quiz-option"><input type="radio" name="qf-13" value="a"> The average value of Y across both groups</label>
+    <label class="quiz-option"><input type="radio" name="qf-13" value="b"> The probability of being in group 1</label>
+    <label class="quiz-option"><input type="radio" name="qf-13" value="c"> The difference in the outcome between the two groups (level 1 minus level 0)</label>
+    <div class="quiz-explanation">For a dichotomous variable coded as 0 and 1, the regression coefficient represents the difference in the mean outcome between the two groups (the level coded 1 minus the level coded 0).</div>
+  </div>
+
+  <div class="quiz-question" data-correct="a">
+    <p>15. Ignoring measurement errors in predictor variables tends to:</p>
+    <label class="quiz-option"><input type="radio" name="qf-14" value="a"> Bias regression coefficients towards the null (underestimate effects)</label>
+    <label class="quiz-option"><input type="radio" name="qf-14" value="b"> Inflate regression coefficients (overestimate effects)</label>
+    <label class="quiz-option"><input type="radio" name="qf-14" value="c"> Have no effect on the regression coefficients</label>
+    <div class="quiz-explanation">Ignoring measurement error in the X-variables generally tends to bias the parameters towards the null&mdash;that is, effects will be numerically smaller than if the completely accurate information was present. This is known as attenuation bias.</div>
+  </div>
+
+  <div class="quiz-result" id="quizResult-4"></div>
+  <div class="quiz-retry" id="quizRetry-4"><button class="btn btn-outline" onclick="retryQuiz(4)">Retry Quiz</button></div>
+  <button class="btn btn-accent" onclick="checkFinalAssessment()" style="margin-top:12px;">Submit Final Assessment</button>
+</div>
+
+<div class="completion-banner" id="completionBanner">
+  <h2>Lesson 2 Complete!</h2>
+  <p>Congratulations! You have successfully completed the Linear Regression module. Your responses have been downloaded automatically.</p>
+</div>
+
+<div class="section-nav">
+  <button class="btn btn-outline" onclick="goToModule(3)">&larr; Section 4</button>
+  <div></div>
+</div>
+
+</div>
+</div>
+
+</div><!-- /main -->
+
+<!-- Card Modal -->
+<div class="card-modal-overlay" id="cardModalOverlay" onclick="closeCardModal(event)">
+  <div class="card-modal">
+    <button class="card-modal-close" onclick="document.getElementById('cardModalOverlay').classList.remove('show')">&times;</button>
+    <h3 id="cardModalTitle"></h3>
+    <div id="cardModalBody"></div>
+  </div>
+</div>
+
+<script>
+var modules = [
+  { id: -1, short: 'Welcome', title: 'Introduction' },
+  { id: 0, short: 'Section 1', title: 'Introduction & Regression Analysis' },
+  { id: 1, short: 'Section 2', title: 'Hypothesis Testing & Effect Estimation' },
+  { id: 2, short: 'Section 3', title: 'X-Variables & Collinearity' },
+  { id: 3, short: 'Section 4', title: 'Interaction & Causal Interpretation' },
+  { id: 4, short: 'Section 5', title: 'Final Assessment' }
+];
+var currentModule = -1;
+var completed = new Set();
+var quizPassed = {};
+var reflectionDone = {};
+var modulesWithReflection = { 1: true, 2: true, 3: true, 4: true };
+
+function buildNav() {
+  var nav = document.getElementById('sidebarNav');
+  nav.innerHTML = '';
+  modules.forEach(function(m) {
+    var div = document.createElement('div');
+    div.className = 'nav-item';
+    var key = m.id === -1 ? 'welcome' : m.id;
+    if (completed.has(key)) div.classList.add('completed');
+    if (m.id === currentModule) div.classList.add('active');
+    div.innerHTML = '<div class="dot"></div><span>' + m.short + ': ' + m.title + '</span>';
+    div.onclick = function() { goToModule(m.id); closeSidebarMobile(); };
+    nav.appendChild(div);
+  });
+}
+
+function goToModule(id) {
+  currentModule = id;
+  document.querySelectorAll('.module-page').forEach(function(p) { p.classList.remove('active'); });
+  var pageId = id === -1 ? 'page-welcome' : 'page-' + id;
+  var page = document.getElementById(pageId);
+  if (page) page.classList.add('active');
+  if (id === -1) completed.add('welcome');
+  buildNav();
+  updateProgress();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function updateProgress() {
+  var total = modules.length;
+  var done = completed.size;
+  var pct = Math.round((done / total) * 100);
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressText').textContent = pct + '% complete';
+}
+
+function checkReflection(idx) {
+  var ta = document.getElementById('reflection-' + idx);
+  if (ta && ta.value.trim().length > 0) {
+    reflectionDone[idx === 'final' ? 4 : idx] = true;
+    var status = document.getElementById('reflectionStatus-' + idx);
+    if (status) status.classList.add('show');
+    if (idx !== 'final') updateNextButton(idx);
+  }
+}
+
+function updateNextButton(moduleIdx) {
+  var btn = document.getElementById('nextBtn-' + moduleIdx);
+  var note = document.getElementById('reqNote-' + moduleIdx);
+  if (!btn) return;
+  var quizOk = quizPassed[moduleIdx];
+  var refIdx = moduleIdx + 1;
+  var needsRef = modulesWithReflection[refIdx];
+  var refOk = !needsRef || reflectionDone[refIdx];
+  if (quizOk && refOk) {
+    btn.classList.remove('disabled');
+    completed.add(moduleIdx);
+    buildNav();
+    updateProgress();
+    if (note) note.innerHTML = '<span class="req-check">&#10003;</span> Section complete! You may continue.';
+  }
+}
+
+function checkQuiz(moduleIdx) {
+  var quiz = document.getElementById('quiz-' + moduleIdx);
+  var questions = quiz.querySelectorAll('.quiz-question');
+  var correct = 0;
+  var total = questions.length;
+  var allAnswered = true;
+  questions.forEach(function(q, i) {
+    var correctVal = q.dataset.correct;
+    var selected = quiz.querySelector('input[name="q' + moduleIdx + '-' + i + '"]:checked');
+    q.querySelectorAll('.quiz-option').forEach(function(opt) { opt.classList.remove('correct', 'incorrect'); });
+    if (!selected) { allAnswered = false; return; }
+    q.querySelectorAll('.quiz-option').forEach(function(opt) {
+      var inp = opt.querySelector('input');
+      if (inp.value === correctVal) opt.classList.add('correct');
+      else if (inp === selected && inp.value !== correctVal) opt.classList.add('incorrect');
+    });
+    q.querySelector('.quiz-explanation').classList.add('show');
+    if (selected.value === correctVal) correct++;
+  });
+  if (!allAnswered) { alert('Please answer all questions before checking.'); return; }
+  var result = document.getElementById('quizResult-' + moduleIdx);
+  var retryDiv = document.getElementById('quizRetry-' + moduleIdx);
+  result.style.display = 'block';
+  if (correct === total) {
+    result.className = 'quiz-result pass';
+    result.textContent = 'All correct! Great job.';
+    quizPassed[moduleIdx] = true;
+    if (retryDiv) retryDiv.classList.remove('show');
+    quiz.querySelectorAll('input[type="radio"]').forEach(function(r) { r.disabled = true; });
+    updateNextButton(moduleIdx);
+  } else {
+    result.className = 'quiz-result fail';
+    result.textContent = 'You got ' + correct + ' out of ' + total + ' correct. You need 100% to continue. Review the feedback and try again.';
+    quizPassed[moduleIdx] = false;
+    if (retryDiv) retryDiv.classList.add('show');
+  }
+}
+
+function retryQuiz(moduleIdx) {
+  var quiz = document.getElementById('quiz-' + moduleIdx);
+  quiz.querySelectorAll('.quiz-option').forEach(function(opt) { opt.classList.remove('correct', 'incorrect'); });
+  quiz.querySelectorAll('.quiz-explanation').forEach(function(exp) { exp.classList.remove('show'); });
+  quiz.querySelectorAll('input[type="radio"]').forEach(function(r) { r.checked = false; r.disabled = false; });
+  var result = document.getElementById('quizResult-' + moduleIdx);
+  result.style.display = 'none';
+  var retryDiv = document.getElementById('quizRetry-' + moduleIdx);
+  if (retryDiv) retryDiv.classList.remove('show');
+  quiz.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function checkFinalAssessment() {
+  if (!reflectionDone[4]) {
+    alert('Please complete the final reflection before submitting the assessment.');
+    return;
+  }
+  var quiz = document.getElementById('quiz-4');
+  var questions = quiz.querySelectorAll('.quiz-question');
+  var correct = 0;
+  var total = questions.length;
+  var allAnswered = true;
+  questions.forEach(function(q, i) {
+    var correctVal = q.dataset.correct;
+    var selected = quiz.querySelector('input[name="qf-' + i + '"]:checked');
+    q.querySelectorAll('.quiz-option').forEach(function(opt) { opt.classList.remove('correct', 'incorrect'); });
+    if (!selected) { allAnswered = false; return; }
+    q.querySelectorAll('.quiz-option').forEach(function(opt) {
+      var inp = opt.querySelector('input');
+      if (inp.value === correctVal) opt.classList.add('correct');
+      else if (inp === selected && inp.value !== correctVal) opt.classList.add('incorrect');
+    });
+    q.querySelector('.quiz-explanation').classList.add('show');
+    if (selected.value === correctVal) correct++;
+  });
+  if (!allAnswered) { alert('Please answer all 15 questions before submitting.'); return; }
+  var pct = Math.round((correct / total) * 100);
+  var passed = correct === total;
+  var result = document.getElementById('quizResult-4');
+  var retryDiv = document.getElementById('quizRetry-4');
+  result.style.display = 'block';
+  if (passed) {
+    result.className = 'quiz-result pass';
+    result.innerHTML = 'Congratulations! You scored ' + correct + '/' + total + ' (100%). You have completed Lesson 2!';
+    completed.add(4);
+    updateProgress();
+    buildNav();
+    if (retryDiv) retryDiv.classList.remove('show');
+    quiz.querySelectorAll('input[type="radio"]').forEach(function(r) { r.disabled = true; });
+    document.getElementById('completionBanner').style.display = 'block';
+    document.getElementById('completionBanner').scrollIntoView({ behavior: 'smooth' });
+    downloadResponses();
+  } else {
+    result.className = 'quiz-result fail';
+    result.innerHTML = 'You scored ' + correct + '/' + total + ' (' + pct + '%). You need 100% to complete the lesson. Review the feedback and try again.';
+    if (retryDiv) retryDiv.classList.add('show');
+  }
+}
+
+function toggleAccordion(header) {
+  var item = header.parentElement;
+  var wasOpen = item.classList.contains('open');
+  item.classList.toggle('open');
+  var body = item.querySelector('.accordion-body');
+  if (wasOpen) { body.style.maxHeight = null; }
+  else { body.style.maxHeight = body.scrollHeight + 'px'; }
+}
+
+function switchTab(e, panelId) {
+  var tabRow = e.target.closest('.tab-row');
+  var tabs = tabRow.parentElement;
+  tabs.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+  tabs.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
+  e.target.classList.add('active');
+  document.getElementById(panelId).classList.add('active');
+}
+
+function openCardModal(title, body) {
+  document.getElementById('cardModalTitle').textContent = title;
+  document.getElementById('cardModalBody').innerHTML = body;
+  document.getElementById('cardModalOverlay').classList.add('show');
+}
+
+function closeCardModal(e) {
+  if (!e || e.target === document.getElementById('cardModalOverlay')) {
+    document.getElementById('cardModalOverlay').classList.remove('show');
+  }
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.querySelector('.sidebar-overlay').classList.toggle('show');
+}
+
+function closeSidebarMobile() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.querySelector('.sidebar-overlay').classList.remove('show');
+}
+
+buildNav();
+updateProgress();
+
+function downloadResponses() {
+  var lines = [];
+  lines.push('Exploratory Data Analysis For Epidemiology, Lesson 2');
+  lines.push('Linear Regression');
+  lines.push('');
+  lines.push('Name: ');
+  lines.push('Date: ' + new Date().toLocaleDateString());
+  lines.push('='.repeat(60));
+  lines.push('');
+
+  lines.push('REFLECTIONS');
+  lines.push('-'.repeat(40));
+  for (var r = 1; r <= 4; r++) {
+    var ta = document.getElementById('reflection-' + r);
+    if (ta) {
+      var box = ta.closest('.reflection-box');
+      var prompt = box ? box.querySelector('p') : null;
+      lines.push('');
+      lines.push('Section ' + r + ' Reflection:');
+      if (prompt) lines.push('Q: ' + prompt.textContent.trim());
+      lines.push('A: ' + (ta.value.trim() || '[No response]'));
+    }
+  }
+  var taFinal = document.getElementById('reflection-final');
+  if (taFinal) {
+    var box = taFinal.closest('.reflection-box');
+    var prompt = box ? box.querySelector('p') : null;
+    lines.push('');
+    lines.push('Final Reflection:');
+    if (prompt) lines.push('Q: ' + prompt.textContent.trim());
+    lines.push('A: ' + (taFinal.value.trim() || '[No response]'));
+  }
+  lines.push('');
+  lines.push('='.repeat(60));
+  lines.push('');
+
+  lines.push('SECTION QUIZ RESPONSES');
+  lines.push('-'.repeat(40));
+  for (var s = 0; s <= 3; s++) {
+    var quiz = document.getElementById('quiz-' + s);
+    if (!quiz) continue;
+    lines.push('');
+    lines.push('Section ' + (s + 1) + ' Quiz:');
+    var questions = quiz.querySelectorAll('.quiz-question');
+    questions.forEach(function(q, i) {
+      var qText = q.querySelector('p');
+      var selected = q.querySelector('input[type="radio"]:checked');
+      var selLabel = selected ? selected.closest('.quiz-option') || selected.parentElement : null;
+      lines.push('  Q' + (i + 1) + ': ' + (qText ? qText.textContent.trim() : ''));
+      lines.push('  Selected: ' + (selLabel ? selLabel.textContent.trim() : '[No answer]'));
+      var isCorrect = selected && q.querySelector('.quiz-option.correct input') === selected;
+      lines.push('  Result: ' + (selected ? (isCorrect ? 'Correct' : 'Incorrect') : 'Unanswered'));
+    });
+  }
+  lines.push('');
+  lines.push('='.repeat(60));
+  lines.push('');
+
+  lines.push('FINAL ASSESSMENT RESPONSES');
+  lines.push('-'.repeat(40));
+  var finalQuiz = document.getElementById('quiz-4');
+  if (finalQuiz) {
+    var questions = finalQuiz.querySelectorAll('.quiz-question');
+    questions.forEach(function(q, i) {
+      var qText = q.querySelector('p');
+      var selected = q.querySelector('input[type="radio"]:checked');
+      var selLabel = selected ? selected.closest('.quiz-option') || selected.parentElement : null;
+      lines.push('  Q' + (i + 1) + ': ' + (qText ? qText.textContent.trim() : ''));
+      lines.push('  Selected: ' + (selLabel ? selLabel.textContent.trim() : '[No answer]'));
+      var correctOpt = q.querySelector('.quiz-option.correct');
+      var isCorrect = selected && correctOpt && correctOpt.querySelector('input') === selected;
+      lines.push('  Result: ' + (selected ? (isCorrect ? 'Correct' : 'Incorrect') : 'Unanswered'));
+    });
+  }
+
+  var blob = new Blob([lines.join('\n')], { type: 'text/plain' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'HSCI410_Lesson2_Linear_Regression_Responses.txt';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+</script>
+</body>
+</html>
