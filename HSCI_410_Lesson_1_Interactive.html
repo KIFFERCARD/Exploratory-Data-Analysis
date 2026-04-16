@@ -1,0 +1,1307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 1: A Structured Approach to Data Analysis &mdash; HSCI 410</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+
+:root {
+  --teal: #0B7B6B;
+  --dark-teal: #065C50;
+  --light-teal: #6BB5A6;
+  --very-light-teal: #E6F3F0;
+  --dark: #042A25;
+  --text: #2D3436;
+  --text-light: #555;
+  --bg: #FFFFFF;
+  --white: #fff;
+  --accent: #CC0033;
+  --accent-dark: #A3002A;
+  --accent-light: #FDEAEF;
+  --amber: #CC0033;
+  --light-amber: #FDEAEF;
+  --green: #0B7B6B;
+  --light-green: #D1F0EA;
+  --blue: #0B7B6B;
+  --light-blue: #E6F3F0;
+  --rose: #CC0033;
+  --light-rose: #FDEAEF;
+  --purple: #065C50;
+  --light-purple: #E6F3F0;
+  --grey: #E8ECEE;
+  --radius: 12px;
+  --shadow: 0 2px 12px rgba(0,0,0,0.08);
+  --shadow-lg: 0 8px 30px rgba(0,0,0,0.12);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { font-family: 'Open Sans', 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; }
+.sidebar {
+  position: fixed; top: 0; left: 0; width: 280px; height: 100vh;
+  background: linear-gradient(180deg, rgba(6,92,80,0.92) 0%, rgba(4,42,37,0.95) 100%), url('bg_texture.jpg') center/cover no-repeat;
+  color: #fff; z-index: 100; display: flex; flex-direction: column;
+  transition: transform 0.3s ease; overflow: hidden;
+}
+.sidebar-header { padding: 24px 20px 16px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+.sidebar-header h2 { font-size: 16px; font-weight: 600; line-height: 1.4; opacity: 0.95; color: #fff; }
+.sidebar-header p { font-size: 11px; opacity: 0.6; margin-top: 4px; }
+.sidebar-nav { flex: 1; overflow-y: auto; padding: 12px 0; }
+.sidebar-nav::-webkit-scrollbar { width: 4px; }
+.sidebar-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 2px; }
+.nav-item {
+  display: flex; align-items: center; gap: 12px; padding: 10px 20px;
+  cursor: pointer; transition: all 0.2s; font-size: 13.5px; position: relative;
+  color: rgba(255,255,255,0.7);
+}
+.nav-item:hover:not(.locked) { background: rgba(255,255,255,0.08); color: #fff; }
+.nav-item.active { background: rgba(255,255,255,0.12); color: #fff; font-weight: 600; }
+.nav-item.active::before {
+  content: ''; position: absolute; left: 0; top: 6px; bottom: 6px; width: 3px;
+  background: var(--accent); border-radius: 0 2px 2px 0;
+}
+.nav-item .dot {
+  width: 22px; height: 22px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.3);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  font-size: 11px; transition: all 0.3s;
+}
+.nav-item.completed .dot { background: var(--green); border-color: var(--green); }
+.nav-item.completed .dot::after { content: '\2713'; color: #fff; font-weight: 700; }
+.nav-item.active .dot { border-color: var(--accent); background: rgba(204,0,51,0.2); }
+.sidebar-footer { padding: 16px 20px; border-top: 1px solid rgba(255,255,255,0.1); }
+.progress-bar-bg { height: 6px; background: rgba(255,255,255,0.15); border-radius: 3px; overflow: hidden; }
+.progress-bar-fill { height: 100%; background: var(--green); border-radius: 3px; transition: width 0.5s ease; }
+.progress-text { font-size: 11px; opacity: 0.6; margin-top: 6px; }
+.main { margin-left: 280px; min-height: 100vh; }
+.module-page { display: none; animation: fadeIn 0.4s ease; }
+.module-page.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.module-header {
+  background: linear-gradient(135deg, rgba(6,92,80,0.88) 0%, rgba(11,123,107,0.85) 100%), url('bg_texture.jpg') center/cover no-repeat;
+  color: #fff; padding: 60px 48px 48px; position: relative; overflow: hidden;
+}
+.module-header::after {
+  content: ''; position: absolute; right: -60px; top: -60px; width: 300px; height: 300px;
+  background: radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 70%); border-radius: 50%;
+}
+.module-tag { display: inline-block; background: var(--accent); padding: 4px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 12px; }
+.module-header h1 { font-size: 32px; font-weight: 700; line-height: 1.3; max-width: 700px; color: #fff; }
+.module-header .time { font-size: 14px; opacity: 0.7; margin-top: 8px; }
+.module-body { max-width: 800px; margin: 0 auto; padding: 40px 48px 80px; }
+h2 { font-size: 22px; color: var(--dark-teal); margin: 36px 0 16px; font-weight: 700; }
+h3 { font-size: 18px; color: var(--teal); margin: 24px 0 12px; font-weight: 600; }
+p { margin-bottom: 16px; }
+ul, ol { margin: 0 0 16px 24px; }
+li { margin-bottom: 8px; }
+.info-box { border-radius: var(--radius); padding: 24px; margin: 24px 0; border-left: 4px solid var(--teal); }
+.info-box.teal { background: var(--very-light-teal); border-color: var(--teal); }
+.info-box.rose { background: var(--light-rose); border-color: var(--accent); }
+.info-box.amber { background: #FFF8E1; border-color: #FFA000; }
+.info-box .box-title { font-weight: 700; margin-bottom: 6px; color: inherit; }
+.flip-card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin: 24px 0; }
+.flip-card {
+  background: var(--white); border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 24px; text-align: center; cursor: pointer; transition: all 0.3s;
+  border: 2px solid var(--grey); position: relative; min-height: 120px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.flip-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); border-color: var(--teal); }
+.flip-card .card-icon { font-size: 28px; margin-bottom: 8px; }
+.flip-card .card-label { font-weight: 600; font-size: 14px; color: var(--dark-teal); }
+.flip-card .card-hint { font-size: 11px; color: var(--text-light); margin-top: 6px; }
+.accordion { margin: 20px 0; }
+.accordion-item { border: 1px solid var(--grey); border-radius: var(--radius); margin-bottom: 8px; overflow: hidden; }
+.accordion-header {
+  padding: 16px 20px; background: var(--white); cursor: pointer; font-weight: 600;
+  display: flex; justify-content: space-between; align-items: center; font-size: 15px;
+  transition: background 0.2s;
+}
+.accordion-header:hover { background: var(--very-light-teal); }
+.accordion-header::after { content: '+'; font-size: 20px; font-weight: 300; color: var(--teal); transition: transform 0.3s; }
+.accordion-item.open .accordion-header::after { content: '\2212'; }
+.accordion-body { max-height: 0; overflow: hidden; transition: max-height 0.4s ease; }
+.accordion-body-inner { padding: 16px 20px 20px; border-top: 1px solid var(--grey); line-height: 1.7; }
+.tabs { margin: 24px 0; }
+.tab-row { display: flex; border-bottom: 2px solid var(--grey); margin-bottom: 0; overflow-x: auto; }
+.tab-btn {
+  padding: 10px 20px; border: none; background: none; cursor: pointer;
+  font-weight: 600; font-size: 14px; color: var(--text-light); border-bottom: 2px solid transparent;
+  margin-bottom: -2px; transition: all 0.2s; white-space: nowrap;
+}
+.tab-btn.active { color: var(--teal); border-bottom-color: var(--teal); }
+.tab-panel { display: none; padding: 20px 0; }
+.tab-panel.active { display: block; }
+.data-table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; }
+.data-table th { background: var(--dark-teal); color: #fff; padding: 12px 16px; text-align: left; font-weight: 600; }
+.data-table td { padding: 10px 16px; border-bottom: 1px solid var(--grey); }
+.data-table tr:nth-child(even) td { background: #f8fafa; }
+.data-table tr:hover td { background: var(--very-light-teal); }
+.formula-box {
+  background: #f8fafc; border: 2px solid var(--grey); border-radius: var(--radius);
+  padding: 20px 24px; margin: 16px 0; text-align: center; font-size: 16px;
+  font-family: 'Georgia', serif;
+}
+.formula-box .formula-label { font-size: 12px; color: var(--text-light); margin-bottom: 6px; font-family: 'Open Sans', sans-serif; }
+.scenario-card {
+  background: linear-gradient(135deg, #f0faf8 0%, #e6f3f0 100%);
+  border-radius: var(--radius); padding: 24px; margin: 20px 0;
+  border: 1px solid rgba(11,123,107,0.15);
+}
+.scenario-card .scenario-title { font-weight: 700; color: var(--dark-teal); margin-bottom: 8px; }
+.quiz-section { background: #f8fafa; border-radius: var(--radius); padding: 32px; margin: 40px 0; border: 2px solid var(--grey); }
+.quiz-section h3 { margin-top: 0; }
+.quiz-question { margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid var(--grey); }
+.quiz-question:last-of-type { border-bottom: none; margin-bottom: 16px; padding-bottom: 0; }
+.quiz-question p { font-weight: 600; margin-bottom: 12px; }
+.quiz-option { display: block; padding: 10px 16px; margin: 6px 0; border-radius: 8px; cursor: pointer; transition: all 0.2s; border: 1px solid var(--grey); }
+.quiz-option:hover { background: var(--very-light-teal); }
+.quiz-option input { margin-right: 10px; }
+.quiz-option.correct { background: var(--light-green); border-color: var(--green); }
+.quiz-option.incorrect { background: var(--light-rose); border-color: var(--accent); }
+.quiz-explanation { display: none; margin-top: 8px; padding: 10px 14px; background: var(--very-light-teal); border-radius: 8px; font-size: 13.5px; }
+.quiz-explanation.show { display: block; }
+.quiz-result { padding: 16px 20px; border-radius: 8px; font-weight: 600; margin-top: 16px; display: none; }
+.quiz-result.pass { background: var(--light-green); color: var(--dark-teal); }
+.quiz-result.fail { background: var(--light-rose); color: var(--accent-dark); }
+.quiz-retry { display: none; margin-top: 12px; }
+.quiz-retry.show { display: block; }
+.btn {
+  display: inline-block; padding: 12px 28px; border-radius: 8px; font-weight: 600;
+  font-size: 15px; border: none; cursor: pointer; transition: all 0.2s;
+}
+.btn-primary { background: var(--teal); color: #fff; }
+.btn-primary:hover { background: var(--dark-teal); }
+.btn-accent { background: var(--accent); color: #fff; }
+.btn-accent:hover { background: var(--accent-dark); }
+.btn-outline { background: transparent; border: 2px solid var(--teal); color: var(--teal); }
+.btn-outline:hover { background: var(--teal); color: #fff; }
+.btn.disabled { opacity: 0.5; pointer-events: none; }
+.reflection-box {
+  background: linear-gradient(135deg, #fdf6ff 0%, #f5f0ff 100%);
+  border: 2px solid #d4bfff; border-radius: var(--radius); padding: 24px; margin: 24px 0;
+}
+.reflection-box h3 { color: #6B21A8; margin-top: 0; }
+.reflection-box textarea {
+  width: 100%; min-height: 100px; border: 1px solid #d4bfff; border-radius: 8px;
+  padding: 12px; font-family: inherit; font-size: 14px; resize: vertical; margin: 8px 0;
+}
+.reflection-box .btn-save { background: #7C3AED; color: #fff; border: none; padding: 8px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; }
+.reflection-box .btn-save:hover { background: #6B21A8; }
+.reflection-status { font-size: 13px; margin-top: 6px; color: #6B21A8; display: none; }
+.reflection-status.show { display: block; }
+.section-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 48px; padding-top: 24px; border-top: 2px solid var(--grey); }
+.req-note { font-size: 13px; margin-top: 12px; }
+.req-check { color: var(--green); }
+.req-pending { color: var(--accent); }
+.completion-banner {
+  display: none; background: linear-gradient(135deg, var(--teal) 0%, var(--dark-teal) 100%);
+  color: #fff; padding: 48px; border-radius: var(--radius); text-align: center; margin: 40px 0;
+}
+.completion-banner h2 { color: #fff; margin: 0 0 12px; font-size: 28px; }
+.sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 99; }
+.card-modal-overlay {
+  display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.6); z-index: 1000; align-items: center; justify-content: center; padding: 20px;
+}
+.card-modal-overlay.show { display: flex; }
+.card-modal {
+  background: #fff; border-radius: var(--radius); max-width: 600px; width: 100%;
+  max-height: 80vh; overflow-y: auto; padding: 32px; position: relative;
+  box-shadow: var(--shadow-lg);
+}
+.card-modal h3 { color: var(--dark-teal); margin: 0 0 16px; padding-right: 30px; }
+.card-modal-close {
+  position: absolute; top: 16px; right: 16px; background: none; border: none;
+  font-size: 24px; cursor: pointer; color: var(--text-light); width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center; border-radius: 50%;
+}
+.card-modal-close:hover { background: var(--grey); }
+.welcome-hero {
+  min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, rgba(6,92,80,0.88) 0%, rgba(4,42,37,0.92) 100%), url('bg_texture.jpg') center/cover no-repeat;
+  color: #fff; text-align: center; padding: 48px 24px; position: relative; overflow: hidden;
+}
+.welcome-hero::before {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(circle at 30% 70%, rgba(11,123,107,0.25) 0%, transparent 50%),
+              radial-gradient(circle at 70% 30%, rgba(107,181,166,0.12) 0%, transparent 40%);
+}
+.welcome-hero > * { position: relative; z-index: 1; }
+.welcome-hero h1 { font-size: 48px; font-weight: 800; margin-bottom: 12px; line-height: 1.2; }
+.welcome-hero .subtitle { font-size: 20px; opacity: 0.8; margin-bottom: 32px; }
+.welcome-hero .start-btn {
+  background: var(--accent); color: #fff; padding: 16px 40px; border-radius: 50px;
+  font-size: 17px; font-weight: 700; border: none; cursor: pointer;
+  transition: all 0.3s; box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+.welcome-hero .start-btn:hover { background: var(--accent-dark); transform: translateY(-2px) scale(1.02); box-shadow: 0 8px 30px rgba(0,0,0,0.3); }
+.welcome-details { max-width: 560px; margin-top: 40px; text-align: left; background: rgba(255,255,255,0.08); border-radius: 16px; padding: 28px; backdrop-filter: blur(10px); }
+.welcome-details h3 { font-size: 16px; margin-bottom: 12px; opacity: 0.9; color: #fff; }
+.welcome-details ul { list-style: none; margin: 0; padding: 0; }
+.welcome-details li { padding: 4px 0; font-size: 14px; opacity: 0.8; }
+.welcome-details li::before { content: '\2726 '; color: #fff; opacity: 0.6; }
+.mobile-header {
+  display: none; position: fixed; top: 0; left: 0; right: 0; height: 56px;
+  background: var(--dark); color: #fff; z-index: 101;
+  padding: 0 16px; align-items: center; gap: 12px;
+}
+.mobile-header button { background: none; border: none; color: #fff; font-size: 24px; cursor: pointer; padding: 4px; }
+.mobile-header h3 { font-size: 14px; font-weight: 600; color: #fff; }
+@media (max-width: 768px) {
+  .sidebar { transform: translateX(-100%); width: 280px; }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar-overlay.show { display: block; }
+  .mobile-header { display: flex; }
+  .main { margin-left: 0; padding-top: 56px; }
+  .module-header { padding: 32px 20px 28px; }
+  .module-header h1 { font-size: 24px; }
+  .module-body { padding: 24px 20px 60px; }
+  .flip-card-grid { grid-template-columns: 1fr; }
+}
+
+</style>
+</head>
+<body>
+<div class="mobile-header">
+  <button onclick="toggleSidebar()">&#9776;</button>
+  <h3>HSCI 410 &mdash; Lesson 1</h3>
+</div>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <img src="sfu_logo_white.webp" alt="SFU &mdash; Simon Fraser University" style="width:100%;max-width:180px;margin-bottom:12px;">
+    <h2>Exploratory Data Analysis For Epidemiology</h2>
+    <p>Kiffer G. Card, PhD</p>
+  </div>
+  <div class="sidebar-nav" id="sidebarNav"></div>
+  <div class="sidebar-footer">
+    <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressFill" style="width:0%"></div></div>
+    <div class="progress-text" id="progressText">0% complete</div>
+  </div>
+</div>
+
+<div class="main" id="mainContent">
+
+<!-- ============ WELCOME ============ -->
+<div class="module-page active" id="page-welcome">
+<div class="welcome-hero">
+  <h1>A Structured Approach to Data Analysis</h1>
+  <p class="subtitle">Exploratory Data Analysis For Epidemiology</p>
+  <p style="font-size:15px;opacity:0.7;margin-bottom:32px;">Kiffer G. Card, PhD, Faculty of Health Sciences, Simon Fraser University</p>
+  <button class="start-btn" onclick="goToModule(0)">Begin Lesson &rarr;</button>
+  <div class="welcome-details">
+    <h3>Learning objectives for this lesson:</h3>
+    <ul>
+      <li>Construct a causal diagram before beginning data analysis</li>
+      <li>Establish a system for managing data-collection sheets, files, and variables</li>
+      <li>Apply best practices for data coding, entry, and verification</li>
+      <li>Process outcome and predictor variables appropriately for analysis</li>
+      <li>Evaluate unconditional associations between variables</li>
+      <li>Set up a systematic approach for keeping track of analyses</li>
+    </ul>
+  </div>
+  <p style="font-size:12px;opacity:0.5;margin-top:32px;max-width:560px;text-align:center;line-height:1.5;">Dohoo, I. R., Martin, S. W., &amp; Stryhn, H. (2012). <em>Methods in Epidemiologic Research.</em> VER Inc.</p>
+</div>
+</div>
+
+<!-- ============ SECTION 1: Introduction & Data Collection ============ -->
+<div class="module-page" id="page-0">
+<div class="module-header">
+  <div class="module-tag">Section 1</div>
+  <h1>Introduction &amp; Data Collection</h1>
+  <div class="time">Sections 30.1&ndash;30.2 of Dohoo, Martin &amp; Stryhn</div>
+</div>
+<div class="module-body">
+
+<h2>Why a Structured Approach?</h2>
+<p>When starting the analysis of a complex dataset, it is very helpful to have a structured approach in mind. For most people, there is a strong tendency to jump straight into the sophisticated analysis that will provide the ultimate answer. This rarely works out&mdash;the results will inevitably be wrong because important preliminary steps were skipped.</p>
+
+<div class="info-box teal">
+  <div class="box-title">Key Principle</div>
+  <p>Data analysis is an <strong>iterative process</strong> which often requires that you back up several steps as you gain more insight into your data. A structured template, while not the only approach, will be applicable in most situations and will serve to guide your initial efforts.</p>
+</div>
+
+<h2>Start with a Causal Diagram</h2>
+<p>Before you start any work with your data, it is essential to construct a plausible <strong>causal diagram</strong> of the problem you are about to investigate. This will help identify:</p>
+<ul>
+  <li>Which variables are important <strong>outcomes</strong> and <strong>predictors</strong></li>
+  <li>Which are potential <strong>confounders</strong></li>
+  <li>Which might be <strong>intervening variables</strong> between your main predictors and outcomes</li>
+</ul>
+
+<div class="info-box amber">
+  <div class="box-title">Practical Tip</div>
+  <p>Keep this causal diagram in mind throughout the entire data-analysis process. With large datasets, it will not be possible to include all predictors as separate entities. This can be handled by including blocks of variables (e.g., demographic characteristics) in the diagram instead of listing each variable.</p>
+</div>
+
+<h2>Managing Data-Collection Sheets</h2>
+<p>It is important to establish a permanent storage system for all original data-collection sheets (survey forms, data-collection forms, etc.) that makes it easy to retrieve individual sheets if they are needed during the analysis.</p>
+
+<div class="accordion">
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">Protect your originals</div>
+    <div class="accordion-body"><div class="accordion-body-inner">
+      <p>Do not remove originals from your file. If you need a specific sheet for use at another location, make a photocopy. Never ship the original to another location without first making copies of all forms.</p>
+    </div></div>
+  </div>
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">Track collection progress</div>
+    <div class="accordion-body"><div class="accordion-body-inner">
+      <p>Set up a system for recording the insertion of data-collection sheets into the file so that you know how many remain to be collected before further work begins.</p>
+    </div></div>
+  </div>
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">Scan for completeness</div>
+    <div class="accordion-body"><div class="accordion-body-inner">
+      <p>Once all forms have been collected, scan through all sheets for their completeness before doing anything else. If there are omissions, returning to the data source to complete the data will be more likely to succeed if done soon after collection rather than weeks or months later.</p>
+    </div></div>
+  </div>
+</div>
+
+<!-- Section 1 Quiz -->
+<div class="quiz-section" id="quiz-0">
+  <h3>Section 1 Knowledge Check</h3>
+  <div class="quiz-question" data-correct="c">
+    <p>1. What should you construct before beginning any work with your data?</p>
+    <label class="quiz-option"><input type="radio" name="q0-0" value="a"> A frequency distribution of all variables</label>
+    <label class="quiz-option"><input type="radio" name="q0-0" value="b"> A regression model of the primary outcome</label>
+    <label class="quiz-option"><input type="radio" name="q0-0" value="c"> A plausible causal diagram of the problem under investigation</label>
+    <div class="quiz-explanation">Before working with your data, you should construct a plausible causal diagram. This identifies which variables are important outcomes and predictors, which are potential confounders, and which might be intervening variables.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>2. Why is data analysis described as an &ldquo;iterative process&rdquo;?</p>
+    <label class="quiz-option"><input type="radio" name="q0-1" value="a"> Because it only needs to be done once</label>
+    <label class="quiz-option"><input type="radio" name="q0-1" value="b"> Because it often requires backing up several steps as you gain more insight into your data</label>
+    <label class="quiz-option"><input type="radio" name="q0-1" value="c"> Because statistical software requires multiple iterations to converge</label>
+    <div class="quiz-explanation">Data analysis is iterative because as you gain more insight into your data, you often need to revisit earlier steps, revise your approach, and re-examine your variables and models.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="a">
+    <p>3. What should you do if you find omissions in data-collection sheets?</p>
+    <label class="quiz-option"><input type="radio" name="q0-2" value="a"> Return to the data source to complete the data as soon as possible</label>
+    <label class="quiz-option"><input type="radio" name="q0-2" value="b"> Delete those records from the dataset</label>
+    <label class="quiz-option"><input type="radio" name="q0-2" value="c"> Impute the values using statistical methods</label>
+    <div class="quiz-explanation">Returning to the data source to complete missing data will more likely be successful if done soon after the data were initially collected, rather than weeks or months later when the analysis has begun.</div>
+  </div>
+
+  <div class="quiz-result" id="quizResult-0"></div>
+  <div class="quiz-retry" id="quizRetry-0"><button class="btn btn-outline" onclick="retryQuiz(0)">Retry Quiz</button></div>
+  <button class="btn btn-primary" onclick="checkQuiz(0)" style="margin-top:12px;">Check Answers</button>
+</div>
+
+<div class="reflection-box">
+  <h3>Reflection</h3>
+  <p>Think of a research question you are interested in. Sketch out (describe) a causal diagram showing the key outcome, main predictors, potential confounders, and any intervening variables. How does this diagram help you plan your analysis?</p>
+  <textarea id="reflection-1" placeholder="Type your reflection here..."></textarea>
+  <button class="btn-save" onclick="checkReflection(1)">Save Reflection</button>
+  <div class="reflection-status" id="reflectionStatus-1">Reflection saved!</div>
+</div>
+
+<div class="section-nav">
+  <button class="btn btn-outline" onclick="goToModule(-1)">&larr; Welcome</button>
+  <div>
+    <button class="btn btn-primary disabled" id="nextBtn-0" onclick="goToModule(1)">Next Section &rarr;</button>
+    <div class="req-note" id="reqNote-0"><span class="req-pending">*</span> Complete the quiz and reflection to continue.</div>
+  </div>
+</div>
+
+</div>
+</div>
+
+<!-- ============ SECTION 2: Data Coding, Entry & File Management ============ -->
+<div class="module-page" id="page-1">
+<div class="module-header">
+  <div class="module-tag">Section 2</div>
+  <h1>Data Coding, Entry &amp; File Management</h1>
+  <div class="time">Sections 30.3&ndash;30.6 of Dohoo, Martin &amp; Stryhn</div>
+</div>
+<div class="module-body">
+
+<h2>Data Coding</h2>
+<p>Before entering data into a computer, careful coding is essential. Good coding practices prevent errors that can cascade throughout an entire analysis.</p>
+
+<div class="flip-card-grid">
+  <div class="flip-card" onclick="openCardModal('Missing Values', 'Assign a specific number to all missing values (e.g., &minus;999=no data provided, &minus;998=invalid entry, &minus;997=not applicable). Be sure that this specific number is not a legitimate value for any of your responses.')">
+    <div class="card-icon">&#10067;</div>
+    <div class="card-label">Missing Values</div>
+    <div class="card-hint">Click to learn more</div>
+  </div>
+  <div class="flip-card" onclick="openCardModal('Use Numeric Codes', 'In general, avoid the use of string variables except for rare instances where you need to capture some textual information (e.g., a comment field). Use numeric codes and maintain a master list of all codes assigned.')">
+    <div class="card-icon">&#128290;</div>
+    <div class="card-label">Numeric Codes</div>
+    <div class="card-hint">Click to learn more</div>
+  </div>
+  <div class="flip-card" onclick="openCardModal('Never Use Compound Codes!', 'Only code one piece of information in a single variable. For example, if you have recorded both sex and race, do NOT code them as 1=male Caucasian, 2=female Caucasian, 3=male Hispanic, etc. Create separate variables for sex and race.')">
+    <div class="card-icon">&#9888;</div>
+    <div class="card-label">No Compound Codes</div>
+    <div class="card-hint">Click to learn more</div>
+  </div>
+</div>
+
+<h2>Data Entry</h2>
+<p>Some important issues to consider when entering your data into a computer file:</p>
+
+<div class="accordion">
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">Double-data entry</div>
+    <div class="accordion-body"><div class="accordion-body-inner">
+      <p>Double-data entry, followed by comparison of the 2 files to detect any inconsistencies, is preferable to single-data entry. This dramatically reduces the error rate in your dataset.</p>
+    </div></div>
+  </div>
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">Caution with spreadsheets</div>
+    <div class="accordion-body"><div class="accordion-body-inner">
+      <p>Spreadsheets are a convenient tool for initial data entry, but they must be used with extreme caution. It is possible to sort individual columns, which could destroy your entire dataset with one inappropriate &ldquo;sort&rdquo; command. Custom data-entry software provides a greater margin of safety.</p>
+    </div></div>
+  </div>
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">Save and back up immediately</div>
+    <div class="accordion-body"><div class="accordion-body-inner">
+      <p>As soon as the data-entry process has been completed, save the original data files in a safe location. In large, expensive trials, keep a copy of all originals stored in another location. Convert your data to the format your statistical software uses as soon as possible.</p>
+    </div></div>
+  </div>
+</div>
+
+<h2>Keeping Track of Files</h2>
+<p>It is important to have a system for keeping track of all your files. Key recommendations:</p>
+<ul>
+  <li>Assign a <strong>logical name</strong> with a 2-digit numerical suffix (e.g., brazil01). A 2-digit suffix allows you to have 99 versions that still sort correctly when listed alphabetically.</li>
+  <li>When data manipulations are carried out, save the file with a <strong>new name</strong> (the next available number). Do not change data and then overwrite the file.</li>
+  <li>Keep a simple <strong>log of files created</strong> with information about the contents (e.g., number of observations and variables).</li>
+</ul>
+
+<div class="scenario-card">
+  <div class="scenario-title">Example: File Log for a Blood Pressure Study</div>
+  <p><strong>bp01.odc</strong> (27/09/07) &mdash; Original blood pressure study data; spreadsheet; 1 record per measurement. 1092 obs, 8 vars.</p>
+  <p><strong>bp01.dta</strong> (28/09/07) &mdash; Original file; Stata format. 1092 obs, 8 vars.</p>
+  <p><strong>bp02.dta</strong> (30/09/07) &mdash; 45 records with missing values dropped. 1047 obs, 8 vars.</p>
+</div>
+
+<h2>Keeping Track of Variables</h2>
+<p>Even a relatively focused study can give rise to a large number of variables once transformed and recoded variables have been created. Recommendations include:</p>
+
+<div class="tabs">
+  <div class="tab-row">
+    <button class="tab-btn active" onclick="switchTab(event,'tab-naming')">Naming Convention</button>
+    <button class="tab-btn" onclick="switchTab(event,'tab-example')">Example</button>
+  </div>
+  <div class="tab-panel active" id="tab-naming">
+    <p>Use short but informative names and have all related variables start with the same name. Long names can be shortened by removing vowels (e.g., <code>wtr_cstrn</code> for &ldquo;water cistern&rdquo;). If your statistics program is case sensitive, use ONLY lower-case letters. At some point, prepare a master list of all variables.</p>
+  </div>
+  <div class="tab-panel" id="tab-example">
+    <table class="data-table">
+      <thead><tr><th>Variable</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>age</code></td><td>Original data (in years)</td></tr>
+        <tr><td><code>age_ct</code></td><td>Age after centring by subtraction of the mean</td></tr>
+        <tr><td><code>age_ctsq</code></td><td>Quadratic term (age_ct squared)</td></tr>
+        <tr><td><code>age_c2</code></td><td>Age categorised into 2 categories (young vs old)</td></tr>
+        <tr><td><code>age_c3</code></td><td>Age categorised into 3 categories</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Section 2 Quiz -->
+<div class="quiz-section" id="quiz-1">
+  <h3>Section 2 Knowledge Check</h3>
+  <div class="quiz-question" data-correct="c">
+    <p>1. Why should you never use compound codes?</p>
+    <label class="quiz-option"><input type="radio" name="q1-0" value="a"> Because compound codes take up more storage space</label>
+    <label class="quiz-option"><input type="radio" name="q1-0" value="b"> Because compound codes are difficult to type</label>
+    <label class="quiz-option"><input type="radio" name="q1-0" value="c"> Because each variable should only code one piece of information; combining creates analysis problems</label>
+    <div class="quiz-explanation">Only code one piece of information in a single variable. Compound codes (e.g., 1=male Caucasian, 2=female Caucasian) make it extremely difficult to separate and analyse each characteristic independently.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="a">
+    <p>2. What is the advantage of double-data entry?</p>
+    <label class="quiz-option"><input type="radio" name="q1-1" value="a"> It allows comparison of two files to detect inconsistencies and reduce errors</label>
+    <label class="quiz-option"><input type="radio" name="q1-1" value="b"> It doubles the sample size</label>
+    <label class="quiz-option"><input type="radio" name="q1-1" value="c"> It allows the data to be entered twice as fast</label>
+    <div class="quiz-explanation">Double-data entry, followed by comparison of the 2 files to detect any inconsistencies, is preferable to single-data entry because it dramatically reduces the entry error rate.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>3. When data manipulations are carried out, what should you do with the file?</p>
+    <label class="quiz-option"><input type="radio" name="q1-2" value="a"> Overwrite the original file to save space</label>
+    <label class="quiz-option"><input type="radio" name="q1-2" value="b"> Save it with a new name (the next available number) and do not overwrite the original</label>
+    <label class="quiz-option"><input type="radio" name="q1-2" value="c"> Delete the original and keep only the modified version</label>
+    <div class="quiz-explanation">Save the file with a new name (the next available number in your naming convention) so you always have a record of all versions and can trace back to the original data if needed.</div>
+  </div>
+
+  <div class="quiz-result" id="quizResult-1"></div>
+  <div class="quiz-retry" id="quizRetry-1"><button class="btn btn-outline" onclick="retryQuiz(1)">Retry Quiz</button></div>
+  <button class="btn btn-primary" onclick="checkQuiz(1)" style="margin-top:12px;">Check Answers</button>
+</div>
+
+<div class="reflection-box">
+  <h3>Reflection</h3>
+  <p>Describe a file-naming and version-control system you would use for a dataset in your own research area. How would you organise the variable names for a study with demographic, clinical, and outcome variables?</p>
+  <textarea id="reflection-2" placeholder="Type your reflection here..."></textarea>
+  <button class="btn-save" onclick="checkReflection(2)">Save Reflection</button>
+  <div class="reflection-status" id="reflectionStatus-2">Reflection saved!</div>
+</div>
+
+<div class="section-nav">
+  <button class="btn btn-outline" onclick="goToModule(0)">&larr; Section 1</button>
+  <div>
+    <button class="btn btn-primary disabled" id="nextBtn-1" onclick="goToModule(2)">Next Section &rarr;</button>
+    <div class="req-note" id="reqNote-1"><span class="req-pending">*</span> Complete the quiz and reflection to continue.</div>
+  </div>
+</div>
+
+</div>
+</div>
+
+<!-- ============ SECTION 3: Program Files, Data Editing & Verification ============ -->
+<div class="module-page" id="page-2">
+<div class="module-header">
+  <div class="module-tag">Section 3</div>
+  <h1>Program Files, Data Editing &amp; Verification</h1>
+  <div class="time">Sections 30.7&ndash;30.9 of Dohoo, Martin &amp; Stryhn</div>
+</div>
+<div class="module-body">
+
+<h2>Program Mode vs. Interactive Processing</h2>
+<p>Statistical programs can be used in an <strong>interactive mode</strong> (selecting items from menus or typing in a command) or in <strong>program mode</strong> (compiling a series of commands into a program and then running it).</p>
+
+<div class="tabs">
+  <div class="tab-row">
+    <button class="tab-btn active" onclick="switchTab(event,'tab-interactive')">Interactive Mode</button>
+    <button class="tab-btn" onclick="switchTab(event,'tab-program')">Program Mode</button>
+  </div>
+  <div class="tab-panel active" id="tab-interactive">
+    <p>Interactive mode is very useful for <strong>exploring</strong> your data and trying out analyses. However, it should not be used for any of the &ldquo;real&rdquo; processing and/or analysis because it is very difficult to keep a clear record of steps taken. Consequently, it is difficult or impossible to reconstruct the analyses you have completed.</p>
+  </div>
+  <div class="tab-panel" id="tab-program">
+    <p><strong>Program mode</strong> is the recommended approach. You compile the commands into a program and then run it. These program files can be saved and used to reconstruct any analyses you have carried out. Key tips: name files logically, structure the program to be easy to follow, use sequential indents, and document the file thoroughly with comments.</p>
+  </div>
+</div>
+
+<div class="info-box rose">
+  <div class="box-title">Critical Rule</div>
+  <p>Do all of the analyses in your statistical program. Don&rsquo;t start doing basic statistics in a spreadsheet. You are going to need the statistical program eventually, and it will be much easier to keep track of all your analyses if they are all done there.</p>
+</div>
+
+<h2>Data Editing</h2>
+<p>Before beginning any analyses, spend time editing your data. The most important components are:</p>
+
+<div class="flip-card-grid">
+  <div class="flip-card" onclick="openCardModal('Labelling Variables', 'All variables should have a label attached that more fully describes the contents of the variable. While variable names are often quite short (&lt;8 or &lt;16 characters), labels can be much longer.')">
+    <div class="card-icon">&#127991;</div>
+    <div class="card-label">Labelling Variables</div>
+    <div class="card-hint">Click to learn more</div>
+  </div>
+  <div class="flip-card" onclick="openCardModal('Labelling Categories', 'Categorical variables (hopefully all numeric) should have meaningful labels attached to each category. For example, sex could be coded as 0 or 1, but should have labels for &quot;male&quot; and &quot;female&quot; attached.')">
+    <div class="card-icon">&#128196;</div>
+    <div class="card-label">Labelling Categories</div>
+    <div class="card-hint">Click to learn more</div>
+  </div>
+  <div class="flip-card" onclick="openCardModal('Coding Missing Values', 'The number(s) that were assigned to all missing values need to be converted into the code(s) used by your statistics program for missing values. Some programs allow you to attach notes to the dataset or individual variables.')">
+    <div class="card-icon">&#128260;</div>
+    <div class="card-label">Missing Value Codes</div>
+    <div class="card-hint">Click to learn more</div>
+  </div>
+</div>
+
+<h2>Data Verification</h2>
+<p>Before you start any analyses, you must verify that your data are correct. This can be combined with data processing and involves going through all of your variables, one-by-one.</p>
+
+<div class="accordion">
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">For continuous variables</div>
+    <div class="accordion-body"><div class="accordion-body-inner">
+      <ul>
+        <li>Determine the number of valid observations and the number of missing values</li>
+        <li>Check the maximum and minimum values (or the 5 smallest and 5 largest) to make sure they are reasonable; if they are not, find the error, correct it, and repeat the process</li>
+        <li>Prepare a <strong>histogram</strong> of the data to get an idea of the distribution and see if it looks reasonable</li>
+      </ul>
+    </div></div>
+  </div>
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">For categorical variables</div>
+    <div class="accordion-body"><div class="accordion-body-inner">
+      <ul>
+        <li>Determine the number of valid observations and the number of missing values</li>
+        <li>Obtain a <strong>frequency distribution</strong> to see if the counts in each category look reasonable (and to make sure there are no unexpected categories)</li>
+      </ul>
+    </div></div>
+  </div>
+</div>
+
+<!-- Section 3 Quiz -->
+<div class="quiz-section" id="quiz-2">
+  <h3>Section 3 Knowledge Check</h3>
+  <div class="quiz-question" data-correct="b">
+    <p>1. Why should program mode be preferred over interactive mode for &ldquo;real&rdquo; data analysis?</p>
+    <label class="quiz-option"><input type="radio" name="q2-0" value="a"> Because interactive mode is slower</label>
+    <label class="quiz-option"><input type="radio" name="q2-0" value="b"> Because program mode creates a record of all steps, making analyses reproducible</label>
+    <label class="quiz-option"><input type="radio" name="q2-0" value="c"> Because interactive mode cannot perform complex analyses</label>
+    <div class="quiz-explanation">Program mode compiles commands into a program file that can be saved and reused, making it possible to reconstruct and reproduce all analyses. Interactive mode makes it difficult to keep a clear record of steps taken.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="a">
+    <p>2. When verifying continuous variables, what should you examine first?</p>
+    <label class="quiz-option"><input type="radio" name="q2-1" value="a"> The number of valid observations, missing values, and the minimum/maximum values</label>
+    <label class="quiz-option"><input type="radio" name="q2-1" value="b"> The regression coefficients</label>
+    <label class="quiz-option"><input type="radio" name="q2-1" value="c"> The correlation with the outcome variable</label>
+    <div class="quiz-explanation">For continuous variables, the first verification step is to determine the number of valid observations and missing values, then check the minimum and maximum values (or the 5 smallest and 5 largest) to make sure they are reasonable.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="c">
+    <p>3. What is the purpose of attaching labels to categorical variable values?</p>
+    <label class="quiz-option"><input type="radio" name="q2-2" value="a"> To increase the file size for better storage</label>
+    <label class="quiz-option"><input type="radio" name="q2-2" value="b"> To allow the data to be used in a different statistical program</label>
+    <label class="quiz-option"><input type="radio" name="q2-2" value="c"> To provide meaningful descriptions of what each numeric code represents</label>
+    <div class="quiz-explanation">Categorical variables should have meaningful labels attached to each category (e.g., sex coded as 0 or 1 should have labels &ldquo;male&rdquo; and &ldquo;female&rdquo; attached) so that output is immediately interpretable.</div>
+  </div>
+
+  <div class="quiz-result" id="quizResult-2"></div>
+  <div class="quiz-retry" id="quizRetry-2"><button class="btn btn-outline" onclick="retryQuiz(2)">Retry Quiz</button></div>
+  <button class="btn btn-primary" onclick="checkQuiz(2)" style="margin-top:12px;">Check Answers</button>
+</div>
+
+<div class="reflection-box">
+  <h3>Reflection</h3>
+  <p>Imagine you receive a dataset where a colleague entered data interactively in a spreadsheet with no documentation. What steps would you take to clean, verify, and prepare the data for analysis? What problems might you encounter?</p>
+  <textarea id="reflection-3" placeholder="Type your reflection here..."></textarea>
+  <button class="btn-save" onclick="checkReflection(3)">Save Reflection</button>
+  <div class="reflection-status" id="reflectionStatus-3">Reflection saved!</div>
+</div>
+
+<div class="section-nav">
+  <button class="btn btn-outline" onclick="goToModule(1)">&larr; Section 2</button>
+  <div>
+    <button class="btn btn-primary disabled" id="nextBtn-2" onclick="goToModule(3)">Next Section &rarr;</button>
+    <div class="req-note" id="reqNote-2"><span class="req-pending">*</span> Complete the quiz and reflection to continue.</div>
+  </div>
+</div>
+
+</div>
+</div>
+
+<!-- ============ SECTION 4: Data Processing & Unconditional Associations ============ -->
+<div class="module-page" id="page-3">
+<div class="module-header">
+  <div class="module-tag">Section 4</div>
+  <h1>Data Processing &amp; Unconditional Associations</h1>
+  <div class="time">Sections 30.10&ndash;30.14 of Dohoo, Martin &amp; Stryhn</div>
+</div>
+<div class="module-body">
+
+<h2>Processing the Outcome Variable(s)</h2>
+<p>While verifying data, you can also start processing your outcome variable(s). Review the stated goals of the study to determine the format(s) which best suits the goal(s). Consider the following based on outcome type:</p>
+
+<div class="accordion">
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">Categorical outcomes</div>
+    <div class="accordion-body"><div class="accordion-body-inner">
+      <p>Is the distribution of outcomes across categories acceptable? For example, if you planned a multinomial regression with a 3-category outcome, but very few observations fall in one of the categories, you might want to recode it to a 2-category variable.</p>
+    </div></div>
+  </div>
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">Continuous outcomes</div>
+    <div class="accordion-body"><div class="accordion-body-inner">
+      <p>Does the variable have the characteristics necessary for the planned analysis? If linear regression is planned, is the distribution approximately normal? If not, explore transformations. <em>Note:</em> It is the normality of the residuals which is ultimately important, but if the original variable is far from normal and there are no strong predictors, the residuals are unlikely to be normal.</p>
+    </div></div>
+  </div>
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">Count / rate outcomes</div>
+    <div class="accordion-body"><div class="accordion-body-inner">
+      <p>If Poisson regression is planned, are the mean and variance of the distribution approximately equal? If not, consider negative binomial regression or alternative analytic approaches.</p>
+    </div></div>
+  </div>
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">Time-to-event outcomes</div>
+    <div class="accordion-body"><div class="accordion-body-inner">
+      <p>What proportion of the observations are censored? You might also want to generate a simple graph of the empirical hazard function to get an idea what shape it has.</p>
+    </div></div>
+  </div>
+</div>
+
+<h2>Processing Predictor Variables</h2>
+<p>It is important to go through all predictor variables to determine how they will be handled:</p>
+<ul>
+  <li><strong>Missing values:</strong> Are there many? If so, you might need to abandon plans to use that predictor, or conduct 2 analyses (one on the subset where the predictor is present and one on the full dataset ignoring the predictor).</li>
+  <li><strong>Distribution:</strong> For continuous variables, is there a reasonable representation over the whole range of values? If not, it might be necessary to categorise the variable.</li>
+  <li><strong>Categorical variables:</strong> Are all categories reasonably well represented? If not, you might have to combine categories.</li>
+</ul>
+
+<h2>Multilevel Data</h2>
+<p>If your data are multilevel (e.g., blood pressure measurements within individuals within centres), evaluate the hierarchical structure:</p>
+
+<div class="info-box teal">
+  <div class="box-title">Key Questions for Multilevel Data</div>
+  <p>What is the average (and range) number of observations at one level in each higher-level unit? Are individuals uniquely identified within a hierarchical level? It is often useful to create one unique identifier for each observation in the dataset.</p>
+</div>
+
+<h2>Unconditional Associations</h2>
+<p>Before proceeding with any multivariable analyses, it is important to evaluate <strong>unconditional associations</strong> within the data. These serve as the foundation for building more complex models.</p>
+
+<div class="data-table-wrapper" style="overflow-x:auto;">
+<table class="data-table">
+  <thead><tr><th>Variable Types</th><th>Analytical Approach</th></tr></thead>
+  <tbody>
+    <tr><td>Two continuous variables</td><td>Correlation coefficient, scatterplot, simple linear regression</td></tr>
+    <tr><td>One continuous + one categorical</td><td>One-way ANOVA, simple linear or logistic regression</td></tr>
+    <tr><td>Two categorical variables</td><td>Cross-tabulation and &chi;&sup2; test</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>When evaluating unconditional associations, pay attention to:</p>
+<ul>
+  <li><strong>Associations between predictors and outcome:</strong> Determine if there is any association at all; determine the functional form (is it linear?); get a simple picture of the strength and direction.</li>
+  <li><strong>Associations between pairs of predictors:</strong> Look for potential <strong>collinearity</strong> problems (highly correlated predictors).</li>
+  <li><strong>Confounding variables:</strong> Evaluate associations between the confounding variables and the key predictors of interest and the outcome.</li>
+</ul>
+
+<h2>Keeping Track of Your Analyses</h2>
+<p>Before starting the more substantial analysis, set up a system for keeping track of your results:</p>
+
+<div class="flip-card-grid">
+  <div class="flip-card" onclick="openCardModal('Work in Blocks', 'Carry out your analyses in substantial blocks. For example, if computing descriptive statistics, do so for all variables, not just 1 or 2. Eventually you will need descriptive statistics for all of them.')">
+    <div class="card-icon">&#128230;</div>
+    <div class="card-label">Analyse in Blocks</div>
+    <div class="card-hint">Click to learn more</div>
+  </div>
+  <div class="flip-card" onclick="openCardModal('Use Log Files', 'Most statistical packages allow you to keep a log which records all of the results from a set of analyses. Give these log files the same name as the program file (except with a different extension).')">
+    <div class="card-icon">&#128221;</div>
+    <div class="card-label">Keep Log Files</div>
+    <div class="card-hint">Click to learn more</div>
+  </div>
+  <div class="flip-card" onclick="openCardModal('Label and Date', 'Label and date all printouts and describe briefly what each contains on the first page. This will simplify finding results later. Organise results in binders for easy retrieval.')">
+    <div class="card-icon">&#128197;</div>
+    <div class="card-label">Label &amp; Date</div>
+    <div class="card-hint">Click to learn more</div>
+  </div>
+</div>
+
+<!-- Section 4 Quiz -->
+<div class="quiz-section" id="quiz-3">
+  <h3>Section 4 Knowledge Check</h3>
+  <div class="quiz-question" data-correct="b">
+    <p>1. Why should you evaluate unconditional associations before multivariable analyses?</p>
+    <label class="quiz-option"><input type="radio" name="q3-0" value="a"> Because multivariable analysis is not necessary if unconditional associations exist</label>
+    <label class="quiz-option"><input type="radio" name="q3-0" value="b"> Because they reveal the strength and direction of associations and identify potential collinearity and confounding</label>
+    <label class="quiz-option"><input type="radio" name="q3-0" value="c"> Because unconditional associations are the final step in data analysis</label>
+    <div class="quiz-explanation">Evaluating unconditional associations before multivariable analyses helps you understand the basic relationships in your data, identify collinearity, detect confounding, and determine the functional form of relationships&mdash;all of which inform the complex models you will subsequently build.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="a">
+    <p>2. If a continuous outcome variable is far from normally distributed, what should you do?</p>
+    <label class="quiz-option"><input type="radio" name="q3-1" value="a"> Explore transformations that might normalise the distribution</label>
+    <label class="quiz-option"><input type="radio" name="q3-1" value="b"> Remove the variable from the analysis</label>
+    <label class="quiz-option"><input type="radio" name="q3-1" value="c"> Always convert it to a categorical variable</label>
+    <div class="quiz-explanation">If the continuous outcome is not approximately normally distributed, you should explore transformations which might normalise the distribution. It is ultimately the normality of the residuals that is important, but a far-from-normal variable with no strong predictors will produce non-normal residuals.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="c">
+    <p>3. What is the appropriate analytical approach for evaluating the association between two categorical variables?</p>
+    <label class="quiz-option"><input type="radio" name="q3-2" value="a"> Correlation coefficient and scatterplot</label>
+    <label class="quiz-option"><input type="radio" name="q3-2" value="b"> One-way ANOVA</label>
+    <label class="quiz-option"><input type="radio" name="q3-2" value="c"> Cross-tabulation and chi-squared test</label>
+    <div class="quiz-explanation">For associations between two categorical variables, cross-tabulation and the chi-squared (&chi;&sup2;) test are the appropriate analytical approaches. These are particularly useful for identifying unexpected observations.</div>
+  </div>
+
+  <div class="quiz-result" id="quizResult-3"></div>
+  <div class="quiz-retry" id="quizRetry-3"><button class="btn btn-outline" onclick="retryQuiz(3)">Retry Quiz</button></div>
+  <button class="btn btn-primary" onclick="checkQuiz(3)" style="margin-top:12px;">Check Answers</button>
+</div>
+
+<div class="reflection-box">
+  <h3>Reflection</h3>
+  <p>Consider a dataset with 15 predictor variables and one continuous outcome. Describe the sequence of unconditional analyses you would carry out before fitting any multivariable models. How would you handle a predictor that has 30% missing values?</p>
+  <textarea id="reflection-4" placeholder="Type your reflection here..."></textarea>
+  <button class="btn-save" onclick="checkReflection(4)">Save Reflection</button>
+  <div class="reflection-status" id="reflectionStatus-4">Reflection saved!</div>
+</div>
+
+<div class="section-nav">
+  <button class="btn btn-outline" onclick="goToModule(2)">&larr; Section 3</button>
+  <div>
+    <button class="btn btn-primary disabled" id="nextBtn-3" onclick="goToModule(4)">Final Assessment &rarr;</button>
+    <div class="req-note" id="reqNote-3"><span class="req-pending">*</span> Complete the quiz and reflection to continue.</div>
+  </div>
+</div>
+
+</div>
+</div>
+
+<!-- ============ FINAL ASSESSMENT ============ -->
+<div class="module-page" id="page-4">
+<div class="module-header">
+  <div class="module-tag">Final Assessment</div>
+  <h1>A Structured Approach to Data Analysis &mdash; Final Assessment</h1>
+  <div class="time">15 questions &bull; 100% required to pass</div>
+</div>
+<div class="module-body">
+
+<div class="reflection-box">
+  <h3>Final Reflection</h3>
+  <p>Reflecting on the entire lesson, what do you consider the most important step in the structured approach to data analysis? How would you apply this structured approach to a dataset you are currently working with or plan to work with in the future?</p>
+  <textarea id="reflection-final" placeholder="Type your reflection here..."></textarea>
+  <button class="btn-save" onclick="checkReflection('final')">Save Reflection</button>
+  <div class="reflection-status" id="reflectionStatus-final">Reflection saved!</div>
+</div>
+
+<div class="quiz-section" id="quiz-4">
+  <h3>Final Assessment</h3>
+  <p style="font-weight:400;margin-bottom:24px;">You must complete the final reflection above before submitting. Answer all 15 questions. 100% is required to pass.</p>
+
+  <div class="quiz-question" data-correct="c">
+    <p>1. What is the first step recommended before beginning any data analysis?</p>
+    <label class="quiz-option"><input type="radio" name="qf-0" value="a"> Running a regression model</label>
+    <label class="quiz-option"><input type="radio" name="qf-0" value="b"> Computing descriptive statistics</label>
+    <label class="quiz-option"><input type="radio" name="qf-0" value="c"> Constructing a plausible causal diagram</label>
+    <div class="quiz-explanation">The first step is to construct a plausible causal diagram of the problem, identifying outcomes, predictors, confounders, and intervening variables.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>2. Why should you avoid starting analyses in a spreadsheet?</p>
+    <label class="quiz-option"><input type="radio" name="qf-1" value="a"> Spreadsheets cannot perform any statistical calculations</label>
+    <label class="quiz-option"><input type="radio" name="qf-1" value="b"> It is easier to keep track of all analyses if they are done in the statistical program you will ultimately use</label>
+    <label class="quiz-option"><input type="radio" name="qf-1" value="c"> Spreadsheets are more expensive than statistical software</label>
+    <div class="quiz-explanation">Doing all analyses in the statistical program makes it easier to keep track of all analyses and simplifies tracking modifications to the data.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="a">
+    <p>3. What coding value should NOT be assigned to missing data?</p>
+    <label class="quiz-option"><input type="radio" name="qf-2" value="a"> A value that could be a legitimate response for that variable</label>
+    <label class="quiz-option"><input type="radio" name="qf-2" value="b"> A large negative number like &minus;999</label>
+    <label class="quiz-option"><input type="radio" name="qf-2" value="c"> A code designated specifically for missing data</label>
+    <div class="quiz-explanation">The specific number assigned to missing values must not be a legitimate value for any of the responses. Common conventions include large negative numbers like &minus;999.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="c">
+    <p>4. Why is a 2-digit numerical suffix recommended for file names?</p>
+    <label class="quiz-option"><input type="radio" name="qf-3" value="a"> Because computers cannot handle single-digit numbers</label>
+    <label class="quiz-option"><input type="radio" name="qf-3" value="b"> Because it makes files harder to accidentally delete</label>
+    <label class="quiz-option"><input type="radio" name="qf-3" value="c"> Because it allows up to 99 versions that still sort correctly alphabetically</label>
+    <div class="quiz-explanation">A 2-digit suffix allows you to have 99 versions of a file that will sort correctly when listed alphabetically (e.g., brazil01, brazil02, ... brazil99).</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>5. What is the danger of using the &ldquo;sort&rdquo; command in a spreadsheet for data entry?</p>
+    <label class="quiz-option"><input type="radio" name="qf-4" value="a"> It changes the variable names</label>
+    <label class="quiz-option"><input type="radio" name="qf-4" value="b"> Sorting individual columns can destroy your entire dataset by misaligning records</label>
+    <label class="quiz-option"><input type="radio" name="qf-4" value="c"> It removes missing values from the dataset</label>
+    <div class="quiz-explanation">In spreadsheets, it is possible to sort individual columns independently, which can destroy your entire dataset with one inappropriate &ldquo;sort&rdquo; command by misaligning records across columns.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="a">
+    <p>6. What is the primary purpose of evaluating unconditional associations between pairs of predictors?</p>
+    <label class="quiz-option"><input type="radio" name="qf-5" value="a"> To detect potential collinearity problems (highly correlated predictors)</label>
+    <label class="quiz-option"><input type="radio" name="qf-5" value="b"> To determine which predictors to remove from the analysis</label>
+    <label class="quiz-option"><input type="radio" name="qf-5" value="c"> To compute the final regression model</label>
+    <div class="quiz-explanation">Associations between pairs of predictors are evaluated to detect potential collinearity problems, where highly correlated predictors can cause instability in multivariable models.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="c">
+    <p>7. When processing a categorical outcome with 3 categories, when might you recode it to 2 categories?</p>
+    <label class="quiz-option"><input type="radio" name="qf-6" value="a"> When the sample size exceeds 1,000</label>
+    <label class="quiz-option"><input type="radio" name="qf-6" value="b"> When the categories are not mutually exclusive</label>
+    <label class="quiz-option"><input type="radio" name="qf-6" value="c"> When there are very few observations in one of the 3 categories</label>
+    <div class="quiz-explanation">If you planned a multinomial regression with a 3-category outcome, but there are very few observations in 1 of the 3 categories, you might want to recode it to a 2-category variable.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>8. What approach should be used to document what a program file does?</p>
+    <label class="quiz-option"><input type="radio" name="qf-7" value="a"> Write a separate document for each analysis</label>
+    <label class="quiz-option"><input type="radio" name="qf-7" value="b"> Add comments within the program file explaining what it does and key results</label>
+    <label class="quiz-option"><input type="radio" name="qf-7" value="c"> Rely on memory to recall what each program does</label>
+    <div class="quiz-explanation">All statistical programs allow you to add comments to the program files. These should document what the program does and, in some cases, record key results within the file itself.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="a">
+    <p>9. For verifying a continuous variable, what visual tool is recommended?</p>
+    <label class="quiz-option"><input type="radio" name="qf-8" value="a"> A histogram to get an idea of the distribution</label>
+    <label class="quiz-option"><input type="radio" name="qf-8" value="b"> A forest plot</label>
+    <label class="quiz-option"><input type="radio" name="qf-8" value="c"> A funnel plot</label>
+    <div class="quiz-explanation">For continuous variables, preparing a histogram gives you an idea of the distribution and allows you to see if it looks reasonable before proceeding with further analysis.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="c">
+    <p>10. What is the appropriate analysis for the association between one continuous and one categorical variable?</p>
+    <label class="quiz-option"><input type="radio" name="qf-9" value="a"> Cross-tabulation and chi-squared test</label>
+    <label class="quiz-option"><input type="radio" name="qf-9" value="b"> Correlation coefficient</label>
+    <label class="quiz-option"><input type="radio" name="qf-9" value="c"> One-way ANOVA, simple linear or logistic regression</label>
+    <div class="quiz-explanation">For the association between one continuous and one categorical variable, one-way ANOVA, simple linear regression, or logistic regression are appropriate analytical approaches.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>11. If a predictor variable has many missing values, what options are available?</p>
+    <label class="quiz-option"><input type="radio" name="qf-10" value="a"> Always remove the variable from the analysis</label>
+    <label class="quiz-option"><input type="radio" name="qf-10" value="b"> Abandon the predictor, or conduct 2 analyses: one on the subset with the predictor and one on the full dataset ignoring it</label>
+    <label class="quiz-option"><input type="radio" name="qf-10" value="c"> Always impute the missing values</label>
+    <div class="quiz-explanation">If many values are missing, you might abandon plans to use that predictor, or conduct 2 analyses: one on the subset in which the predictor is present and one on the full dataset ignoring the predictor.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="a">
+    <p>12. What should you do with log files from your analyses?</p>
+    <label class="quiz-option"><input type="radio" name="qf-11" value="a"> Name them the same as the program file but with a different extension</label>
+    <label class="quiz-option"><input type="radio" name="qf-11" value="b"> Delete them after reviewing the results</label>
+    <label class="quiz-option"><input type="radio" name="qf-11" value="c"> Store them in a separate directory from the program files</label>
+    <div class="quiz-explanation">Give log files the same name as the program file (except with a different extension) so that it is easy to match the program that generated a particular set of results.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="c">
+    <p>13. Why is interactive mode still useful despite its limitations?</p>
+    <label class="quiz-option"><input type="radio" name="qf-12" value="a"> It is the only way to enter data</label>
+    <label class="quiz-option"><input type="radio" name="qf-12" value="b"> It produces more accurate results than program mode</label>
+    <label class="quiz-option"><input type="radio" name="qf-12" value="c"> It is very useful for exploring your data and trying out analyses</label>
+    <div class="quiz-explanation">Interactive mode is very useful for exploring your data and trying out analyses. However, the &ldquo;real&rdquo; processing and analysis should be done in program mode for reproducibility.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>14. When evaluating confounding variables, what should you specifically look for?</p>
+    <label class="quiz-option"><input type="radio" name="qf-13" value="a"> Variables with the highest variance</label>
+    <label class="quiz-option"><input type="radio" name="qf-13" value="b"> Variables that have strong associations with both the key predictor and the outcome</label>
+    <label class="quiz-option"><input type="radio" name="qf-13" value="c"> Variables that are missing the most data</label>
+    <div class="quiz-explanation">Special attention needs to be paid to potential confounding variables by evaluating the associations between these variables and the key predictors of interest and the outcome, particularly if there is a strong association with both.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="a">
+    <p>15. What does the chapter suggest you should do if a count/rate outcome&rsquo;s mean and variance are not approximately equal?</p>
+    <label class="quiz-option"><input type="radio" name="qf-14" value="a"> Consider negative binomial regression or alternative analytic approaches</label>
+    <label class="quiz-option"><input type="radio" name="qf-14" value="b"> Always use Poisson regression regardless</label>
+    <label class="quiz-option"><input type="radio" name="qf-14" value="c"> Convert the variable to a binary outcome</label>
+    <div class="quiz-explanation">If the mean and variance of a count/rate outcome are not approximately equal, Poisson regression assumptions may be violated. Consider negative binomial regression or alternative analytic approaches.</div>
+  </div>
+
+  <div class="quiz-result" id="quizResult-4"></div>
+  <div class="quiz-retry" id="quizRetry-4"><button class="btn btn-outline" onclick="retryQuiz(4)">Retry Quiz</button></div>
+  <button class="btn btn-accent" onclick="checkFinalAssessment()" style="margin-top:12px;">Submit Final Assessment</button>
+</div>
+
+<div class="completion-banner" id="completionBanner">
+  <h2>Lesson 1 Complete!</h2>
+  <p>You have successfully completed A Structured Approach to Data Analysis. Your responses have been downloaded.</p>
+  <button class="btn btn-success" style="background:#fff;color:var(--dark-teal);margin-top:16px;font-weight:700;" onclick="downloadResponses()">Download Responses Again</button>
+</div>
+
+<div class="section-nav">
+  <button class="btn btn-outline" onclick="goToModule(3)">&larr; Section 4</button>
+  <div></div>
+</div>
+
+</div>
+</div>
+
+</div><!-- end .main -->
+
+<!-- Card Modal -->
+<div class="card-modal-overlay" id="cardModalOverlay" onclick="closeCardModal(event)">
+  <div class="card-modal" onclick="event.stopPropagation()">
+    <button class="card-modal-close" onclick="closeCardModal()">&times;</button>
+    <h3 id="cardModalTitle"></h3>
+    <div id="cardModalBody"></div>
+  </div>
+</div>
+
+<script>
+var modules = [
+  { id: -1, short: 'Welcome', title: 'Introduction' },
+  { id: 0, short: 'Section 1', title: 'Introduction & Data Collection' },
+  { id: 1, short: 'Section 2', title: 'Coding, Entry & Files' },
+  { id: 2, short: 'Section 3', title: 'Programs, Editing & Verification' },
+  { id: 3, short: 'Section 4', title: 'Processing & Associations' },
+  { id: 4, short: 'Section 5', title: 'Final Assessment' }
+];
+var currentModule = -1;
+var completed = new Set();
+var quizPassed = {};
+var modulesWithReflection = { 1: true, 2: true, 3: true, 4: true };
+var reflectionDone = {};
+
+function buildNav() {
+  var nav = document.getElementById('sidebarNav');
+  nav.innerHTML = '';
+  modules.forEach(function(m) {
+    var div = document.createElement('div');
+    div.className = 'nav-item';
+    if (m.id === currentModule) div.classList.add('active');
+    if (completed.has(m.id === -1 ? 'welcome' : m.id)) div.classList.add('completed');
+    div.innerHTML = '<div class="dot"></div><span>' + m.short + ': ' + m.title + '</span>';
+    div.onclick = function() { goToModule(m.id); closeSidebarMobile(); };
+    nav.appendChild(div);
+  });
+}
+
+function goToModule(id) {
+  if (currentModule === -1 && id === 0) completed.add('welcome');
+  currentModule = id;
+  document.querySelectorAll('.module-page').forEach(function(p) { p.classList.remove('active'); });
+  var pageId = id === -1 ? 'page-welcome' : 'page-' + id;
+  document.getElementById(pageId).classList.add('active');
+  buildNav();
+  updateProgress();
+  window.scrollTo(0, 0);
+}
+
+function updateProgress() {
+  var total = modules.length;
+  var done = completed.size;
+  var pct = Math.round((done / total) * 100);
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressText').textContent = pct + '% complete';
+}
+
+function checkReflection(idx) {
+  var ta = document.getElementById('reflection-' + idx);
+  if (ta && ta.value.trim().length > 0) {
+    reflectionDone[idx === 'final' ? 4 : idx] = true;
+    var status = document.getElementById('reflectionStatus-' + idx);
+    if (status) status.classList.add('show');
+    if (idx !== 'final') updateNextButton(idx);
+  }
+}
+
+function updateNextButton(moduleIdx) {
+  var btn = document.getElementById('nextBtn-' + moduleIdx);
+  var note = document.getElementById('reqNote-' + moduleIdx);
+  if (!btn) return;
+  var quizOk = quizPassed[moduleIdx];
+  var refIdx = moduleIdx + 1;
+  var needsRef = modulesWithReflection[refIdx];
+  var refOk = !needsRef || reflectionDone[refIdx];
+  if (quizOk && refOk) {
+    btn.classList.remove('disabled');
+    completed.add(moduleIdx);
+    buildNav();
+    updateProgress();
+    if (note) note.innerHTML = '<span class="req-check">&#10003;</span> Section complete! You may continue.';
+  }
+}
+
+function checkQuiz(moduleIdx) {
+  var quiz = document.getElementById('quiz-' + moduleIdx);
+  var questions = quiz.querySelectorAll('.quiz-question');
+  var correct = 0;
+  var total = questions.length;
+  var allAnswered = true;
+  questions.forEach(function(q, i) {
+    var correctVal = q.dataset.correct;
+    var selected = quiz.querySelector('input[name="q' + moduleIdx + '-' + i + '"]:checked');
+    q.querySelectorAll('.quiz-option').forEach(function(opt) { opt.classList.remove('correct', 'incorrect'); });
+    if (!selected) { allAnswered = false; return; }
+    q.querySelectorAll('.quiz-option').forEach(function(opt) {
+      var inp = opt.querySelector('input');
+      if (inp.value === correctVal) opt.classList.add('correct');
+      else if (inp === selected && inp.value !== correctVal) opt.classList.add('incorrect');
+    });
+    q.querySelector('.quiz-explanation').classList.add('show');
+    if (selected.value === correctVal) correct++;
+  });
+  if (!allAnswered) { alert('Please answer all questions before checking.'); return; }
+  var result = document.getElementById('quizResult-' + moduleIdx);
+  var retryDiv = document.getElementById('quizRetry-' + moduleIdx);
+  result.style.display = 'block';
+  if (correct === total) {
+    result.className = 'quiz-result pass';
+    result.textContent = 'All correct! Great job.';
+    quizPassed[moduleIdx] = true;
+    if (retryDiv) retryDiv.classList.remove('show');
+    quiz.querySelectorAll('input[type="radio"]').forEach(function(r) { r.disabled = true; });
+    updateNextButton(moduleIdx);
+  } else {
+    result.className = 'quiz-result fail';
+    result.textContent = 'You got ' + correct + ' out of ' + total + ' correct. You need 100% to continue. Review the feedback and try again.';
+    quizPassed[moduleIdx] = false;
+    if (retryDiv) retryDiv.classList.add('show');
+  }
+}
+
+function retryQuiz(moduleIdx) {
+  var quiz = document.getElementById('quiz-' + moduleIdx);
+  quiz.querySelectorAll('.quiz-option').forEach(function(opt) { opt.classList.remove('correct', 'incorrect'); });
+  quiz.querySelectorAll('.quiz-explanation').forEach(function(exp) { exp.classList.remove('show'); });
+  quiz.querySelectorAll('input[type="radio"]').forEach(function(r) { r.checked = false; r.disabled = false; });
+  var result = document.getElementById('quizResult-' + moduleIdx);
+  result.style.display = 'none';
+  var retryDiv = document.getElementById('quizRetry-' + moduleIdx);
+  if (retryDiv) retryDiv.classList.remove('show');
+  quiz.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function checkFinalAssessment() {
+  if (!reflectionDone[4]) {
+    alert('Please complete the final reflection before submitting the assessment.');
+    return;
+  }
+  var quiz = document.getElementById('quiz-4');
+  var questions = quiz.querySelectorAll('.quiz-question');
+  var correct = 0;
+  var total = questions.length;
+  var allAnswered = true;
+  questions.forEach(function(q, i) {
+    var correctVal = q.dataset.correct;
+    var selected = quiz.querySelector('input[name="qf-' + i + '"]:checked');
+    q.querySelectorAll('.quiz-option').forEach(function(opt) { opt.classList.remove('correct', 'incorrect'); });
+    if (!selected) { allAnswered = false; return; }
+    q.querySelectorAll('.quiz-option').forEach(function(opt) {
+      var inp = opt.querySelector('input');
+      if (inp.value === correctVal) opt.classList.add('correct');
+      else if (inp === selected && inp.value !== correctVal) opt.classList.add('incorrect');
+    });
+    q.querySelector('.quiz-explanation').classList.add('show');
+    if (selected.value === correctVal) correct++;
+  });
+  if (!allAnswered) { alert('Please answer all 15 questions before submitting.'); return; }
+  var pct = Math.round((correct / total) * 100);
+  var passed = correct === total;
+  var result = document.getElementById('quizResult-4');
+  var retryDiv = document.getElementById('quizRetry-4');
+  result.style.display = 'block';
+  if (passed) {
+    result.className = 'quiz-result pass';
+    result.innerHTML = 'Congratulations! You scored ' + correct + '/' + total + ' (100%). You have completed Lesson 1!';
+    completed.add(4);
+    updateProgress();
+    buildNav();
+    if (retryDiv) retryDiv.classList.remove('show');
+    quiz.querySelectorAll('input[type="radio"]').forEach(function(r) { r.disabled = true; });
+    document.getElementById('completionBanner').style.display = 'block';
+    document.getElementById('completionBanner').scrollIntoView({ behavior: 'smooth' });
+    downloadResponses();
+  } else {
+    result.className = 'quiz-result fail';
+    result.innerHTML = 'You scored ' + correct + '/' + total + ' (' + pct + '%). You need 100% to complete the lesson. Review the feedback and try again.';
+    if (retryDiv) retryDiv.classList.add('show');
+  }
+}
+
+function toggleAccordion(header) {
+  var item = header.parentElement;
+  var wasOpen = item.classList.contains('open');
+  item.classList.toggle('open');
+  var body = item.querySelector('.accordion-body');
+  if (wasOpen) { body.style.maxHeight = null; }
+  else { body.style.maxHeight = body.scrollHeight + 'px'; }
+}
+
+function switchTab(e, panelId) {
+  var tabRow = e.target.closest('.tab-row');
+  var tabs = tabRow.parentElement;
+  tabs.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+  tabs.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
+  e.target.classList.add('active');
+  document.getElementById(panelId).classList.add('active');
+}
+
+function openCardModal(title, body) {
+  document.getElementById('cardModalTitle').textContent = title;
+  document.getElementById('cardModalBody').innerHTML = body;
+  document.getElementById('cardModalOverlay').classList.add('show');
+}
+
+function closeCardModal(e) {
+  if (!e || e.target === document.getElementById('cardModalOverlay')) {
+    document.getElementById('cardModalOverlay').classList.remove('show');
+  }
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.querySelector('.sidebar-overlay').classList.toggle('show');
+}
+
+function closeSidebarMobile() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.querySelector('.sidebar-overlay').classList.remove('show');
+}
+
+buildNav();
+updateProgress();
+
+function downloadResponses() {
+  var lines = [];
+  lines.push('Exploratory Data Analysis For Epidemiology, Lesson 1');
+  lines.push('A Structured Approach to Data Analysis');
+  lines.push('');
+  lines.push('Name: ');
+  lines.push('Date: ' + new Date().toLocaleDateString());
+  lines.push('='.repeat(60));
+  lines.push('');
+
+  lines.push('REFLECTIONS');
+  lines.push('-'.repeat(40));
+  for (var r = 1; r <= 4; r++) {
+    var ta = document.getElementById('reflection-' + r);
+    if (ta) {
+      var box = ta.closest('.reflection-box');
+      var prompt = box ? box.querySelector('p') : null;
+      lines.push('');
+      lines.push('Section ' + r + ' Reflection:');
+      if (prompt) lines.push('Q: ' + prompt.textContent.trim());
+      lines.push('A: ' + (ta.value.trim() || '[No response]'));
+    }
+  }
+  var taFinal = document.getElementById('reflection-final');
+  if (taFinal) {
+    var box = taFinal.closest('.reflection-box');
+    var prompt = box ? box.querySelector('p') : null;
+    lines.push('');
+    lines.push('Final Reflection:');
+    if (prompt) lines.push('Q: ' + prompt.textContent.trim());
+    lines.push('A: ' + (taFinal.value.trim() || '[No response]'));
+  }
+  lines.push('');
+  lines.push('='.repeat(60));
+  lines.push('');
+
+  lines.push('SECTION QUIZ RESPONSES');
+  lines.push('-'.repeat(40));
+  for (var s = 0; s <= 3; s++) {
+    var quiz = document.getElementById('quiz-' + s);
+    if (!quiz) continue;
+    lines.push('');
+    lines.push('Section ' + (s + 1) + ' Quiz:');
+    var questions = quiz.querySelectorAll('.quiz-question');
+    questions.forEach(function(q, i) {
+      var qText = q.querySelector('p');
+      var selected = q.querySelector('input[type="radio"]:checked');
+      var selLabel = selected ? selected.closest('.quiz-option') || selected.parentElement : null;
+      lines.push('  Q' + (i + 1) + ': ' + (qText ? qText.textContent.trim() : ''));
+      lines.push('  Selected: ' + (selLabel ? selLabel.textContent.trim() : '[No answer]'));
+      var isCorrect = selected && q.querySelector('.quiz-option.correct input') === selected;
+      lines.push('  Result: ' + (selected ? (isCorrect ? 'Correct' : 'Incorrect') : 'Unanswered'));
+    });
+  }
+  lines.push('');
+  lines.push('='.repeat(60));
+  lines.push('');
+
+  lines.push('FINAL ASSESSMENT RESPONSES');
+  lines.push('-'.repeat(40));
+  var finalQuiz = document.getElementById('quiz-4');
+  if (finalQuiz) {
+    var questions = finalQuiz.querySelectorAll('.quiz-question');
+    questions.forEach(function(q, i) {
+      var qText = q.querySelector('p');
+      var selected = q.querySelector('input[type="radio"]:checked');
+      var selLabel = selected ? selected.closest('.quiz-option') || selected.parentElement : null;
+      lines.push('  Q' + (i + 1) + ': ' + (qText ? qText.textContent.trim() : ''));
+      lines.push('  Selected: ' + (selLabel ? selLabel.textContent.trim() : '[No answer]'));
+      var correctOpt = q.querySelector('.quiz-option.correct');
+      var isCorrect = selected && correctOpt && correctOpt.querySelector('input') === selected;
+      lines.push('  Result: ' + (selected ? (isCorrect ? 'Correct' : 'Incorrect') : 'Unanswered'));
+    });
+  }
+
+  var blob = new Blob([lines.join('\n')], { type: 'text/plain' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'HSCI410_Lesson1_Structured_Approach_Responses.txt';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+</script>
+</body>
+</html>
