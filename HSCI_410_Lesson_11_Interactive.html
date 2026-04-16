@@ -1,0 +1,1367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 11: Repeated Measures Data &mdash; HSCI 410</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+
+:root {
+  --teal: #0B7B6B;
+  --dark-teal: #065C50;
+  --light-teal: #6BB5A6;
+  --very-light-teal: #E6F3F0;
+  --dark: #042A25;
+  --text: #2D3436;
+  --text-light: #555;
+  --bg: #FFFFFF;
+  --white: #fff;
+  --accent: #CC0033;
+  --accent-dark: #A3002A;
+  --accent-light: #FDEAEF;
+  --amber: #CC0033;
+  --light-amber: #FDEAEF;
+  --green: #0B7B6B;
+  --light-green: #D1F0EA;
+  --blue: #0B7B6B;
+  --light-blue: #E6F3F0;
+  --rose: #CC0033;
+  --light-rose: #FDEAEF;
+  --purple: #065C50;
+  --light-purple: #E6F3F0;
+  --grey: #E8ECEE;
+  --radius: 12px;
+  --shadow: 0 2px 12px rgba(0,0,0,0.08);
+  --shadow-lg: 0 8px 30px rgba(0,0,0,0.12);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { font-family: 'Open Sans', 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; }
+.sidebar {
+  position: fixed; top: 0; left: 0; width: 280px; height: 100vh;
+  background: linear-gradient(180deg, rgba(6,92,80,0.92) 0%, rgba(4,42,37,0.95) 100%), url('bg_texture.jpg') center/cover no-repeat;
+  color: #fff; z-index: 100; display: flex; flex-direction: column;
+  transition: transform 0.3s ease; overflow: hidden;
+}
+.sidebar-header { padding: 24px 20px 16px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+.sidebar-header h2 { font-size: 16px; font-weight: 600; line-height: 1.4; opacity: 0.95; color: #fff; }
+.sidebar-header p { font-size: 11px; opacity: 0.6; margin-top: 4px; }
+.sidebar-nav { flex: 1; overflow-y: auto; padding: 12px 0; }
+.sidebar-nav::-webkit-scrollbar { width: 4px; }
+.sidebar-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 2px; }
+.nav-item {
+  display: flex; align-items: center; gap: 12px; padding: 10px 20px;
+  cursor: pointer; transition: all 0.2s; font-size: 13.5px; position: relative;
+  color: rgba(255,255,255,0.7);
+}
+.nav-item:hover:not(.locked) { background: rgba(255,255,255,0.08); color: #fff; }
+.nav-item.active { background: rgba(255,255,255,0.12); color: #fff; font-weight: 600; }
+.nav-item.active::before {
+  content: ''; position: absolute; left: 0; top: 6px; bottom: 6px; width: 3px;
+  background: var(--accent); border-radius: 0 2px 2px 0;
+}
+.nav-item .dot {
+  width: 22px; height: 22px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.3);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  font-size: 11px; transition: all 0.3s;
+}
+.nav-item.completed .dot { background: var(--green); border-color: var(--green); }
+.nav-item.completed .dot::after { content: '\2713'; color: #fff; font-weight: 700; }
+.nav-item.active .dot { border-color: var(--accent); background: rgba(204,0,51,0.2); }
+.sidebar-footer { padding: 16px 20px; border-top: 1px solid rgba(255,255,255,0.1); }
+.progress-bar-bg { height: 6px; background: rgba(255,255,255,0.15); border-radius: 3px; overflow: hidden; }
+.progress-bar-fill { height: 100%; background: var(--green); border-radius: 3px; transition: width 0.5s ease; }
+.progress-text { font-size: 11px; opacity: 0.6; margin-top: 6px; }
+.main { margin-left: 280px; min-height: 100vh; }
+.module-page { display: none; animation: fadeIn 0.4s ease; }
+.module-page.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.module-header {
+  background: linear-gradient(135deg, rgba(6,92,80,0.88) 0%, rgba(11,123,107,0.85) 100%), url('bg_texture.jpg') center/cover no-repeat;
+  color: #fff; padding: 60px 48px 48px; position: relative; overflow: hidden;
+}
+.module-header::after {
+  content: ''; position: absolute; right: -60px; top: -60px; width: 300px; height: 300px;
+  background: radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 70%); border-radius: 50%;
+}
+.module-tag { display: inline-block; background: var(--accent); padding: 4px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 12px; }
+.module-header h1 { font-size: 32px; font-weight: 700; line-height: 1.3; max-width: 700px; color: #fff; }
+.module-header .time { font-size: 14px; opacity: 0.7; margin-top: 8px; }
+.module-body { max-width: 800px; margin: 0 auto; padding: 40px 48px 80px; }
+h2 { font-size: 22px; color: var(--dark-teal); margin: 36px 0 16px; font-weight: 700; }
+h3 { font-size: 18px; color: var(--teal); margin: 24px 0 12px; font-weight: 600; }
+p { margin-bottom: 16px; }
+ul, ol { margin: 0 0 16px 24px; }
+li { margin-bottom: 8px; }
+.info-box { border-radius: var(--radius); padding: 24px; margin: 24px 0; border-left: 4px solid var(--teal); }
+.info-box.teal { background: var(--very-light-teal); border-color: var(--teal); }
+.info-box.rose { background: var(--light-rose); border-color: var(--accent); }
+.info-box.amber { background: #FFF8E1; border-color: #FFA000; }
+.info-box .box-title { font-weight: 700; margin-bottom: 6px; color: inherit; }
+.flip-card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin: 24px 0; }
+.flip-card {
+  background: var(--white); border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 24px; text-align: center; cursor: pointer; transition: all 0.3s;
+  border: 2px solid var(--grey); position: relative; min-height: 120px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.flip-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); border-color: var(--teal); }
+.flip-card .card-icon { font-size: 28px; margin-bottom: 8px; }
+.flip-card .card-label { font-weight: 600; font-size: 14px; color: var(--dark-teal); }
+.flip-card .card-hint { font-size: 11px; color: var(--text-light); margin-top: 6px; }
+.accordion { margin: 20px 0; }
+.accordion-item { border: 1px solid var(--grey); border-radius: var(--radius); margin-bottom: 8px; overflow: hidden; }
+.accordion-header {
+  padding: 16px 20px; background: var(--white); cursor: pointer; font-weight: 600;
+  display: flex; justify-content: space-between; align-items: center; font-size: 15px;
+  transition: background 0.2s;
+}
+.accordion-header:hover { background: var(--very-light-teal); }
+.accordion-header::after { content: '+'; font-size: 20px; font-weight: 300; color: var(--teal); transition: transform 0.3s; }
+.accordion-item.open .accordion-header::after { content: '\2212'; }
+.accordion-body { max-height: 0; overflow: hidden; transition: max-height 0.4s ease; }
+.accordion-body-inner { padding: 16px 20px 20px; border-top: 1px solid var(--grey); line-height: 1.7; }
+.tabs { margin: 24px 0; }
+.tab-row { display: flex; border-bottom: 2px solid var(--grey); margin-bottom: 0; overflow-x: auto; }
+.tab-btn {
+  padding: 10px 20px; border: none; background: none; cursor: pointer;
+  font-weight: 600; font-size: 14px; color: var(--text-light); border-bottom: 2px solid transparent;
+  margin-bottom: -2px; transition: all 0.2s; white-space: nowrap;
+}
+.tab-btn.active { color: var(--teal); border-bottom-color: var(--teal); }
+.tab-panel { display: none; padding: 20px 0; }
+.tab-panel.active { display: block; }
+.data-table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; }
+.data-table th { background: var(--dark-teal); color: #fff; padding: 12px 16px; text-align: left; font-weight: 600; }
+.data-table td { padding: 10px 16px; border-bottom: 1px solid var(--grey); }
+.data-table tr:nth-child(even) td { background: #f8fafa; }
+.data-table tr:hover td { background: var(--very-light-teal); }
+.formula-box {
+  background: #f8fafc; border: 2px solid var(--grey); border-radius: var(--radius);
+  padding: 20px 24px; margin: 16px 0; text-align: center; font-size: 16px;
+  font-family: 'Georgia', serif;
+}
+.formula-box .formula-label { font-size: 12px; color: var(--text-light); margin-bottom: 6px; font-family: 'Open Sans', sans-serif; }
+.scenario-card {
+  background: linear-gradient(135deg, #f0faf8 0%, #e6f3f0 100%);
+  border-radius: var(--radius); padding: 24px; margin: 20px 0;
+  border: 1px solid rgba(11,123,107,0.15);
+}
+.scenario-card .scenario-title { font-weight: 700; color: var(--dark-teal); margin-bottom: 8px; }
+.quiz-section { background: #f8fafa; border-radius: var(--radius); padding: 32px; margin: 40px 0; border: 2px solid var(--grey); }
+.quiz-section h3 { margin-top: 0; }
+.quiz-question { margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid var(--grey); }
+.quiz-question:last-of-type { border-bottom: none; margin-bottom: 16px; padding-bottom: 0; }
+.quiz-question p { font-weight: 600; margin-bottom: 12px; }
+.quiz-option { display: block; padding: 10px 16px; margin: 6px 0; border-radius: 8px; cursor: pointer; transition: all 0.2s; border: 1px solid var(--grey); }
+.quiz-option:hover { background: var(--very-light-teal); }
+.quiz-option input { margin-right: 10px; }
+.quiz-option.correct { background: var(--light-green); border-color: var(--green); }
+.quiz-option.incorrect { background: var(--light-rose); border-color: var(--accent); }
+.quiz-explanation { display: none; margin-top: 8px; padding: 10px 14px; background: var(--very-light-teal); border-radius: 8px; font-size: 13.5px; }
+.quiz-explanation.show { display: block; }
+.quiz-result { padding: 16px 20px; border-radius: 8px; font-weight: 600; margin-top: 16px; display: none; }
+.quiz-result.pass { background: var(--light-green); color: var(--dark-teal); }
+.quiz-result.fail { background: var(--light-rose); color: var(--accent-dark); }
+.quiz-retry { display: none; margin-top: 12px; }
+.quiz-retry.show { display: block; }
+.btn {
+  display: inline-block; padding: 12px 28px; border-radius: 8px; font-weight: 600;
+  font-size: 15px; border: none; cursor: pointer; transition: all 0.2s;
+}
+.btn-primary { background: var(--teal); color: #fff; }
+.btn-primary:hover { background: var(--dark-teal); }
+.btn-accent { background: var(--accent); color: #fff; }
+.btn-accent:hover { background: var(--accent-dark); }
+.btn-outline { background: transparent; border: 2px solid var(--teal); color: var(--teal); }
+.btn-outline:hover { background: var(--teal); color: #fff; }
+.btn.disabled { opacity: 0.5; pointer-events: none; }
+.reflection-box {
+  background: linear-gradient(135deg, #fdf6ff 0%, #f5f0ff 100%);
+  border: 2px solid #d4bfff; border-radius: var(--radius); padding: 24px; margin: 24px 0;
+}
+.reflection-box h3 { color: #6B21A8; margin-top: 0; }
+.reflection-box textarea {
+  width: 100%; min-height: 100px; border: 1px solid #d4bfff; border-radius: 8px;
+  padding: 12px; font-family: inherit; font-size: 14px; resize: vertical; margin: 8px 0;
+}
+.reflection-box .btn-save { background: #7C3AED; color: #fff; border: none; padding: 8px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; }
+.reflection-box .btn-save:hover { background: #6B21A8; }
+.reflection-status { font-size: 13px; margin-top: 6px; color: #6B21A8; display: none; }
+.reflection-status.show { display: block; }
+.section-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 48px; padding-top: 24px; border-top: 2px solid var(--grey); }
+.req-note { font-size: 13px; margin-top: 12px; }
+.req-check { color: var(--green); }
+.req-pending { color: var(--accent); }
+.completion-banner {
+  display: none; background: linear-gradient(135deg, var(--teal) 0%, var(--dark-teal) 100%);
+  color: #fff; padding: 48px; border-radius: var(--radius); text-align: center; margin: 40px 0;
+}
+.completion-banner h2 { color: #fff; margin: 0 0 12px; font-size: 28px; }
+.sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 99; }
+.card-modal-overlay {
+  display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.6); z-index: 1000; align-items: center; justify-content: center; padding: 20px;
+}
+.card-modal-overlay.show { display: flex; }
+.card-modal {
+  background: #fff; border-radius: var(--radius); max-width: 600px; width: 100%;
+  max-height: 80vh; overflow-y: auto; padding: 32px; position: relative;
+  box-shadow: var(--shadow-lg);
+}
+.card-modal h3 { color: var(--dark-teal); margin: 0 0 16px; padding-right: 30px; }
+.card-modal-close {
+  position: absolute; top: 16px; right: 16px; background: none; border: none;
+  font-size: 24px; cursor: pointer; color: var(--text-light); width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center; border-radius: 50%;
+}
+.card-modal-close:hover { background: var(--grey); }
+.welcome-hero {
+  min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, rgba(6,92,80,0.88) 0%, rgba(4,42,37,0.92) 100%), url('bg_texture.jpg') center/cover no-repeat;
+  color: #fff; text-align: center; padding: 48px 24px; position: relative; overflow: hidden;
+}
+.welcome-hero::before {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(circle at 30% 70%, rgba(11,123,107,0.25) 0%, transparent 50%),
+              radial-gradient(circle at 70% 30%, rgba(107,181,166,0.12) 0%, transparent 40%);
+}
+.welcome-hero > * { position: relative; z-index: 1; }
+.welcome-hero h1 { font-size: 48px; font-weight: 800; margin-bottom: 12px; line-height: 1.2; }
+.welcome-hero .subtitle { font-size: 20px; opacity: 0.8; margin-bottom: 32px; }
+.welcome-hero .start-btn {
+  background: var(--accent); color: #fff; padding: 16px 40px; border-radius: 50px;
+  font-size: 17px; font-weight: 700; border: none; cursor: pointer;
+  transition: all 0.3s; box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+.welcome-hero .start-btn:hover { background: var(--accent-dark); transform: translateY(-2px) scale(1.02); box-shadow: 0 8px 30px rgba(0,0,0,0.3); }
+.welcome-details { max-width: 560px; margin-top: 40px; text-align: left; background: rgba(255,255,255,0.08); border-radius: 16px; padding: 28px; backdrop-filter: blur(10px); }
+.welcome-details h3 { font-size: 16px; margin-bottom: 12px; opacity: 0.9; color: #fff; }
+.welcome-details ul { list-style: none; margin: 0; padding: 0; }
+.welcome-details li { padding: 4px 0; font-size: 14px; opacity: 0.8; }
+.welcome-details li::before { content: '\2726 '; color: #fff; opacity: 0.6; }
+.mobile-header {
+  display: none; position: fixed; top: 0; left: 0; right: 0; height: 56px;
+  background: var(--dark); color: #fff; z-index: 101;
+  padding: 0 16px; align-items: center; gap: 12px;
+}
+.mobile-header button { background: none; border: none; color: #fff; font-size: 24px; cursor: pointer; padding: 4px; }
+.mobile-header h3 { font-size: 14px; font-weight: 600; color: #fff; }
+@media (max-width: 768px) {
+  .sidebar { transform: translateX(-100%); width: 280px; }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar-overlay.show { display: block; }
+  .mobile-header { display: flex; }
+  .main { margin-left: 0; padding-top: 56px; }
+  .module-header { padding: 32px 20px 28px; }
+  .module-header h1 { font-size: 24px; }
+  .module-body { padding: 24px 20px 60px; }
+  .flip-card-grid { grid-template-columns: 1fr; }
+}
+
+</style>
+</head>
+<body>
+<div class="mobile-header">
+  <button onclick="toggleSidebar()">&#9776;</button>
+  <h3>HSCI 410 &mdash; Lesson 11</h3>
+</div>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <img src="sfu_logo_white.webp" alt="SFU &mdash; Simon Fraser University" style="width:100%;max-width:180px;margin-bottom:12px;">
+    <h2>Exploratory Data Analysis For Epidemiology</h2>
+    <p>Kiffer G. Card, PhD</p>
+  </div>
+  <div class="sidebar-nav" id="sidebarNav"></div>
+  <div class="sidebar-footer">
+    <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressFill" style="width:0%"></div></div>
+    <div class="progress-text" id="progressText">0% complete</div>
+  </div>
+</div>
+
+<div class="main" id="mainContent">
+
+<!-- ============ WELCOME ============ -->
+<div class="module-page active" id="page-welcome">
+<div class="welcome-hero">
+  <h1>Repeated Measures Data</h1>
+  <p class="subtitle">Exploratory Data Analysis For Epidemiology</p>
+  <p style="font-size:15px;opacity:0.7;margin-bottom:32px;">Kiffer G. Card, PhD, Faculty of Health Sciences, Simon Fraser University</p>
+  <button class="start-btn" onclick="goToModule(0)">Begin Lesson &rarr;</button>
+  <div class="welcome-details">
+    <h3>Learning objectives for this lesson:</h3>
+    <ul>
+      <li>Recognize and describe the unique characteristics of repeated measures data structures</li>
+      <li>Use descriptive and graphical tools to explore repeated measures datasets</li>
+      <li>Apply simple univariate approaches (separate time point analyses, summary statistics) to analyze repeated measures</li>
+      <li>Understand the limitations of random-intercept mixed models for repeated measures and why correlation structures matter</li>
+      <li>Choose among correlation structures (compound symmetry, AR(1), ARMA(1,1), Toeplitz, unstructured) for repeated measures</li>
+      <li>Apply linear mixed models with appropriate correlation structures to repeated measures data</li>
+      <li>Understand trend models with random slopes for time</li>
+      <li>Describe the challenges of extending GLMMs to discrete repeated measures data including transition models</li>
+      <li>Use GEE procedures to analyze clustered and repeated measures data</li>
+    </ul>
+  </div>
+  <p style="font-size:12px;opacity:0.5;margin-top:32px;max-width:560px;text-align:center;line-height:1.5;">This course was developed by Kiffer G. Card, PhD, as a companion to Dohoo, I. R., Martin, S. W., &amp; Stryhn, H. (2012). <em>Methods in Epidemiologic Research.</em> VER Inc.</p>
+</div>
+</div>
+
+<!-- ============ SECTION 1: Introduction & Descriptive Approaches ============ -->
+<div class="module-page" id="page-0">
+<div class="module-header">
+  <div class="module-tag">Section 1</div>
+  <h1>Introduction &amp; Descriptive Approaches</h1>
+  <div class="time">&#9201; Estimated time: 15 minutes</div>
+</div>
+<div class="module-body">
+
+<h2>What Are Repeated Measures?</h2>
+<p>Repeated measures data arise when <strong>multiple measurements are taken over time on the same subjects</strong>. This is one of the most common data structures in health sciences research&mdash;think of clinical trials where patients are measured at baseline and multiple follow-up visits, or cohort studies that track health outcomes over years.</p>
+
+<p>Longitudinal studies (which collect repeated measures) differ fundamentally from cross-sectional studies, which measure each subject only once. The key advantage of longitudinal designs is their ability to assess <strong>within-subject change</strong> over time, making them more powerful for detecting the effects of within-subject predictors.</p>
+
+<div class="info-box teal">
+  <div class="box-title">Why Repeated Measures Require Special Methods</div>
+  <p>In repeated measures data, observations within the same subject are <strong>not independent</strong>. Moreover, the <strong>time ordering</strong> of measurements introduces <strong>autocorrelation</strong>&mdash;measurements closer in time tend to be more strongly correlated than those further apart. This temporal structure means that a simple hierarchical (random intercept) model, which assumes all within-subject correlations are equal, may be inadequate. Special methods are needed to properly account for the pattern of correlations.</p>
+</div>
+
+<h2>Key Terminology</h2>
+
+<div class="flip-card-grid">
+  <div class="flip-card" onclick="openCardModal('Balanced Design', 'A &lt;strong&gt;balanced&lt;/strong&gt; repeated measures design means each subject has the &lt;strong&gt;same number of measurements&lt;/strong&gt;. This is the simplest data structure and allows the widest range of analytical approaches. In practice, missing data and drop-outs often make designs unbalanced.')">
+    <div class="card-icon">&#9878;</div>
+    <div class="card-label">Balanced</div>
+    <div class="card-hint">Click to learn more</div>
+  </div>
+  <div class="flip-card" onclick="openCardModal('Uniform Design', 'A &lt;strong&gt;uniform&lt;/strong&gt; design means all subjects are measured at the &lt;strong&gt;same time points&lt;/strong&gt;. Combined with a balanced design, this means every subject has identical measurement schedules. Uniform designs simplify analysis because the covariance structure is the same for all subjects.')">
+    <div class="card-icon">&#128197;</div>
+    <div class="card-label">Uniform</div>
+    <div class="card-hint">Click to learn more</div>
+  </div>
+  <div class="flip-card" onclick="openCardModal('Equidistant Design', 'An &lt;strong&gt;equidistant&lt;/strong&gt; design means the &lt;strong&gt;time spacing between consecutive measurements is equal&lt;/strong&gt; (e.g., measurements every 3 months). This is important because many correlation structures (such as AR(1) or Toeplitz) assume equal spacing. When spacing is unequal, spatial or power-based correlation structures may be needed.')">
+    <div class="card-icon">&#128207;</div>
+    <div class="card-label">Equidistant</div>
+    <div class="card-hint">Click to learn more</div>
+  </div>
+  <div class="flip-card" onclick="openCardModal('Autocorrelation', 'In repeated measures data, &lt;strong&gt;autocorrelation&lt;/strong&gt; refers to the pattern where measurements closer in time are more strongly correlated than measurements further apart. For example, a patient\u2019s blood pressure today is more similar to yesterday\u2019s than to a measurement taken a year ago. This temporal decay in correlation is the defining feature that distinguishes repeated measures from standard clustered data.')">
+    <div class="card-icon">&#128257;</div>
+    <div class="card-label">Autocorrelation</div>
+    <div class="card-hint">Click to learn more</div>
+  </div>
+</div>
+
+<h2>Missing Data and Drop-Outs</h2>
+<p>Missing data is very common in repeated measures studies. Subjects may miss individual visits (intermittent missingness) or drop out permanently (monotone missingness). The pattern and mechanism of missingness can substantially affect the validity of the analysis. Methods that can handle unbalanced data (such as mixed models and GEE) are therefore particularly valuable for repeated measures.</p>
+
+<h2>Descriptive Approaches</h2>
+
+<div class="accordion">
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">Profile Plots</div>
+    <div class="accordion-body"><div class="accordion-body-inner">
+      <p><strong>Profile plots</strong> (also called spaghetti plots) display each subject's trajectory over time. They reveal patterns of <strong>tracking</strong> (whether subjects maintain their relative positions), overall trends, and variability. These plots are essential for understanding the data before fitting any model.</p>
+    </div></div>
+  </div>
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">Mean Plots</div>
+    <div class="accordion-body"><div class="accordion-body-inner">
+      <p><strong>Mean plots</strong> show the average outcome at each time point, often separated by treatment group. They summarize the overall trend but hide individual variability. Mean plots are useful for visualizing treatment effects over time and identifying non-linear trends.</p>
+    </div></div>
+  </div>
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">Correlation and Covariance Matrices</div>
+    <div class="accordion-body"><div class="accordion-body-inner">
+      <p>Examining the <strong>correlation matrix</strong> of measurements across time points reveals the autocorrelation pattern. If correlations decrease with increasing time distance, an AR(1)-type structure may be appropriate. If correlations are roughly equal, compound symmetry may suffice. The <strong>covariance matrix</strong> additionally reveals whether variances change over time.</p>
+    </div></div>
+  </div>
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">Data Format: Long vs. Wide</div>
+    <div class="accordion-body"><div class="accordion-body-inner">
+      <p>Repeated measures data can be stored in <strong>wide format</strong> (one row per subject, separate columns for each time point) or <strong>long format</strong> (one row per measurement, with a time variable). Most modern statistical software requires long format for mixed models and GEE. Wide format is needed for MANOVA approaches.</p>
+    </div></div>
+  </div>
+</div>
+
+<div class="scenario-card">
+  <div class="scenario-title">Example: Clinical Trial with Repeated Blood Pressure Measurements</div>
+  <p>Consider a clinical trial where 100 patients are randomized to treatment or placebo, with blood pressure measured at baseline and months 1, 3, 6, and 12. This is a <strong>balanced</strong> (5 measurements per subject), <strong>uniform</strong> (same time points), but <strong>not equidistant</strong> (spacing varies: 1, 2, 3, and 6 months) design. Profile plots reveal that patients&rsquo; blood pressures track over time, and the correlation matrix shows correlations declining from 0.80 (adjacent visits) to 0.45 (baseline vs. month 12)&mdash;clear evidence of autocorrelation.</p>
+</div>
+
+<!-- Section 1 Quiz -->
+<div class="quiz-section" id="quiz-0">
+  <h3>Section 1 Knowledge Check</h3>
+  <div class="quiz-question" data-correct="b">
+    <p>1. What distinguishes repeated measures data from standard clustered data?</p>
+    <label class="quiz-option"><input type="radio" name="q0-0" value="a"> There is no clustering</label>
+    <label class="quiz-option"><input type="radio" name="q0-0" value="b"> The time ordering of measurements introduces autocorrelation</label>
+    <label class="quiz-option"><input type="radio" name="q0-0" value="c"> Observations are independent</label>
+    <label class="quiz-option"><input type="radio" name="q0-0" value="d"> There is only one level</label>
+    <div class="quiz-explanation">While repeated measures are a type of clustered data (measurements within subjects), the time ordering introduces autocorrelation &mdash; measurements closer in time are more correlated &mdash; which standard hierarchical models don&rsquo;t capture.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>2. A balanced repeated measures design means:</p>
+    <label class="quiz-option"><input type="radio" name="q0-1" value="a"> All subjects have the same outcome value</label>
+    <label class="quiz-option"><input type="radio" name="q0-1" value="b"> Each subject has the same number of measurements at the same time points</label>
+    <label class="quiz-option"><input type="radio" name="q0-1" value="c"> The treatment groups are equal in size</label>
+    <label class="quiz-option"><input type="radio" name="q0-1" value="d"> There is no missing data and no variance</label>
+    <div class="quiz-explanation">A balanced design has the same number of measurements per subject, taken at the same time points. This is the most regular data structure and allows the widest range of analytical approaches.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>3. Autocorrelation in repeated measures means:</p>
+    <label class="quiz-option"><input type="radio" name="q0-2" value="a"> All measurements are equally correlated</label>
+    <label class="quiz-option"><input type="radio" name="q0-2" value="b"> Measurements closer in time tend to be more strongly correlated</label>
+    <label class="quiz-option"><input type="radio" name="q0-2" value="c"> There is no correlation between measurements</label>
+    <label class="quiz-option"><input type="radio" name="q0-2" value="d"> Only the first and last measurements are correlated</label>
+    <div class="quiz-explanation">Autocorrelation refers to the pattern where the correlation between measurements decreases as the time gap between them increases, which is a natural feature of longitudinal data.</div>
+  </div>
+
+  <div class="quiz-result" id="quizResult-0"></div>
+  <div class="quiz-retry" id="quizRetry-0"><button class="btn btn-outline" onclick="retryQuiz(0)">Retry Quiz</button></div>
+  <button class="btn btn-primary" onclick="checkQuiz(0)" style="margin-top:12px;">Check Answers</button>
+</div>
+
+<div class="reflection-box">
+  <h3>Reflection</h3>
+  <p>Think of a longitudinal study in health sciences. What types of missing data patterns might occur, and how could they affect the validity of your analysis?</p>
+  <textarea id="reflection-1" placeholder="Type your reflection here..."></textarea>
+  <button class="btn-save" onclick="checkReflection(1)">Save Reflection</button>
+  <div class="reflection-status" id="reflectionStatus-1">Reflection saved!</div>
+</div>
+
+<div class="section-nav">
+  <button class="btn btn-outline" onclick="goToModule(-1)">&larr; Welcome</button>
+  <div>
+    <button class="btn btn-primary disabled" id="nextBtn-0" onclick="goToModule(1)">Next Section &rarr;</button>
+    <div class="req-note" id="reqNote-0"><span class="req-pending">*</span> Complete the quiz and reflection to continue.</div>
+  </div>
+</div>
+
+</div>
+</div>
+
+<!-- ============ SECTION 2: Univariate & Multivariate Approaches ============ -->
+<div class="module-page" id="page-1">
+<div class="module-header">
+  <div class="module-tag">Section 2</div>
+  <h1>Univariate &amp; Multivariate Approaches</h1>
+  <div class="time">&#9201; Estimated time: 20 minutes</div>
+</div>
+<div class="module-body">
+
+<h2>Simple Approaches to Repeated Measures</h2>
+<p>Before turning to complex mixed models, it is worth understanding the simpler methods that have traditionally been used for repeated measures data. These methods either reduce the data to avoid modelling correlations altogether, or make strong assumptions about the correlation structure.</p>
+
+<div class="tabs">
+  <div class="tab-row">
+    <button class="tab-btn active" onclick="switchTab(event,'tab-univariate')">Separate Time Points</button>
+    <button class="tab-btn" onclick="switchTab(event,'tab-summary')">Summary Statistics</button>
+    <button class="tab-btn" onclick="switchTab(event,'tab-rmanova')">RM ANOVA</button>
+    <button class="tab-btn" onclick="switchTab(event,'tab-manova')">MANOVA</button>
+  </div>
+  <div class="tab-panel active" id="tab-univariate">
+    <h3>Separate Time Point Analysis</h3>
+    <p>The simplest approach is to analyze each time point independently&mdash;for example, running a separate t-test or regression at each visit. This is straightforward but <strong>wasteful</strong>: it ignores the within-subject correlations and creates a <strong>multiple testing problem</strong>. If there are <em>m</em> time points, a Bonferroni correction divides &alpha; by <em>m</em>, which can be very conservative.</p>
+  </div>
+  <div class="tab-panel" id="tab-summary">
+    <h3>Summary Statistics Approach</h3>
+    <p>A more elegant simple approach is to compute a <strong>single summary value per subject</strong>&mdash;such as the slope of their trajectory, the drop from first to last measurement, or the area under the curve (AUC)&mdash;and then perform a standard between-subjects analysis on these summaries.</p>
+    <p><strong>Advantages:</strong> Simple, robust to model assumptions about correlation structure, and easy to interpret.</p>
+    <p><strong>Disadvantages:</strong> Loss of information about the temporal pattern, difficulty incorporating within-subject time-varying predictors, and potential loss of power.</p>
+  </div>
+  <div class="tab-panel" id="tab-rmanova">
+    <h3>Repeated Measures ANOVA</h3>
+    <p>Repeated measures ANOVA treats time as a <strong>within-subject factor</strong> and tests for differences across time points. However, it assumes <strong>compound symmetry</strong>&mdash;that all pairs of time points have the same correlation. This is the same assumption as a random intercept model.</p>
+    <p>When compound symmetry is violated (which is common with autocorrelated data), the F-test becomes <strong>liberal</strong> (anti-conservative). The <strong>Huyhn-Feldt correction factor</strong> (&epsilon;) adjusts the degrees of freedom to account for this violation. When &epsilon; = 1, compound symmetry holds perfectly; as &epsilon; decreases, the violation is more severe.</p>
+  </div>
+  <div class="tab-panel" id="tab-manova">
+    <h3>MANOVA (Multivariate Analysis of Variance)</h3>
+    <p>MANOVA treats the entire vector of repeated measurements as a <strong>multivariate outcome</strong>, making <strong>no assumptions about the correlation structure</strong>. This is its key advantage over repeated measures ANOVA.</p>
+    <p><strong>Limitations:</strong> Requires completely balanced data with no missing values, cannot easily handle within-subject continuous predictors, and uses wide-format data. It also becomes impractical with many time points.</p>
+  </div>
+</div>
+
+<h2>Covariance and Correlation Matrices</h2>
+
+<div class="formula-box">
+  <div class="formula-label">Covariance Matrix (Eq 23.1)</div>
+  &Sigma; = Cov(Y<sub>i</sub>) &mdash; an <em>m</em> &times; <em>m</em> matrix of variances and covariances across time points
+</div>
+
+<div class="formula-box">
+  <div class="formula-label">Correlation Matrix (Eq 23.2)</div>
+  R = Corr(Y<sub>i</sub>) &mdash; standardised version with 1s on the diagonal and correlations off-diagonal
+</div>
+
+<div class="info-box amber">
+  <div class="box-title">Limitations of Each Approach</div>
+  <p><strong>Separate time points:</strong> Multiple testing, ignores correlations, wasteful of information. <strong>Summary statistics:</strong> Loses temporal detail, cannot incorporate time-varying covariates. <strong>RM ANOVA:</strong> Assumes compound symmetry, which is rarely true. <strong>MANOVA:</strong> Requires complete, balanced data with no missing values. All of these limitations motivate the use of mixed models with flexible correlation structures.</p>
+</div>
+
+<div class="data-table" style="overflow-x:auto;">
+<table class="data-table">
+  <thead>
+    <tr><th>Approach</th><th>Handles Missing Data?</th><th>Assumes Equal Correlations?</th><th>Time-Varying Covariates?</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Separate Time Points</td><td>Yes (per time point)</td><td>N/A (ignores structure)</td><td>Yes</td></tr>
+    <tr><td>Summary Statistics</td><td>Partially</td><td>No</td><td>No</td></tr>
+    <tr><td>RM ANOVA</td><td>No</td><td>Yes (compound symmetry)</td><td>No</td></tr>
+    <tr><td>MANOVA</td><td>No</td><td>No</td><td>No</td></tr>
+    <tr><td>Mixed Models</td><td>Yes</td><td>Flexible</td><td>Yes</td></tr>
+  </tbody>
+</table>
+</div>
+
+<!-- Section 2 Quiz -->
+<div class="quiz-section" id="quiz-1">
+  <h3>Section 2 Knowledge Check</h3>
+  <div class="quiz-question" data-correct="b">
+    <p>1. The summary statistic approach involves:</p>
+    <label class="quiz-option"><input type="radio" name="q1-0" value="a"> Analyzing all time points simultaneously</label>
+    <label class="quiz-option"><input type="radio" name="q1-0" value="b"> Computing a single summary value per subject and then analyzing these between subjects</label>
+    <label class="quiz-option"><input type="radio" name="q1-0" value="c"> Using MANOVA</label>
+    <label class="quiz-option"><input type="radio" name="q1-0" value="d"> Ignoring the repeated measures structure</label>
+    <div class="quiz-explanation">The summary statistic approach reduces each subject&rsquo;s series to one number (e.g., slope, AUC, drop from first to last) and performs a standard between-subjects analysis, avoiding the need to model within-subject correlations.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>2. Repeated measures ANOVA assumes:</p>
+    <label class="quiz-option"><input type="radio" name="q1-1" value="a"> Unstructured covariance</label>
+    <label class="quiz-option"><input type="radio" name="q1-1" value="b"> Compound symmetry &mdash; equal correlations between all pairs of time points</label>
+    <label class="quiz-option"><input type="radio" name="q1-1" value="c"> No correlation between measurements</label>
+    <label class="quiz-option"><input type="radio" name="q1-1" value="d"> Only 2 time points</label>
+    <div class="quiz-explanation">Repeated measures ANOVA assumes compound symmetry, meaning all pairs of measurements have the same correlation. This is the same assumption as a random intercept model, and violations can lead to liberal (anti-conservative) test statistics.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>3. An advantage of MANOVA over repeated measures ANOVA for repeated measures is:</p>
+    <label class="quiz-option"><input type="radio" name="q1-2" value="a"> MANOVA requires less data</label>
+    <label class="quiz-option"><input type="radio" name="q1-2" value="b"> MANOVA makes no assumptions about the correlation structure</label>
+    <label class="quiz-option"><input type="radio" name="q1-2" value="c"> MANOVA is simpler to interpret</label>
+    <label class="quiz-option"><input type="radio" name="q1-2" value="d"> MANOVA can handle missing data easily</label>
+    <div class="quiz-explanation">MANOVA treats the entire observation vector as multivariate, making no assumptions about the structure of the covariance matrix. However, it requires balanced data with no missing values and cannot easily handle within-subject continuous predictors.</div>
+  </div>
+
+  <div class="quiz-result" id="quizResult-1"></div>
+  <div class="quiz-retry" id="quizRetry-1"><button class="btn btn-outline" onclick="retryQuiz(1)">Retry Quiz</button></div>
+  <button class="btn btn-primary" onclick="checkQuiz(1)" style="margin-top:12px;">Check Answers</button>
+</div>
+
+<div class="reflection-box">
+  <h3>Reflection</h3>
+  <p>When would you choose a simple summary statistic approach over a mixed model for repeated measures data? What information might you lose by simplifying the analysis in this way?</p>
+  <textarea id="reflection-2" placeholder="Type your reflection here..."></textarea>
+  <button class="btn-save" onclick="checkReflection(2)">Save Reflection</button>
+  <div class="reflection-status" id="reflectionStatus-2">Reflection saved!</div>
+</div>
+
+<div class="section-nav">
+  <button class="btn btn-outline" onclick="goToModule(0)">&larr; Section 1</button>
+  <div>
+    <button class="btn btn-primary disabled" id="nextBtn-1" onclick="goToModule(2)">Next Section &rarr;</button>
+    <div class="req-note" id="reqNote-1"><span class="req-pending">*</span> Complete the quiz and reflection to continue.</div>
+  </div>
+</div>
+
+</div>
+</div>
+
+<!-- ============ SECTION 3: Linear Mixed Models with Correlation Structure ============ -->
+<div class="module-page" id="page-2">
+<div class="module-header">
+  <div class="module-tag">Section 3</div>
+  <h1>Linear Mixed Models with Correlation Structure</h1>
+  <div class="time">&#9201; Estimated time: 20 minutes</div>
+</div>
+<div class="module-body">
+
+<h2>Beyond Random Intercepts</h2>
+<p>A random intercept model assumes <strong>compound symmetry</strong>&mdash;that all pairs of measurements on the same subject are equally correlated. For most repeated measures data, this assumption is violated because of autocorrelation. We need to extend the mixed model to include explicit <strong>correlation structures</strong> for the error term &epsilon;.</p>
+
+<div class="info-box teal">
+  <div class="box-title">Choosing a Correlation Structure</div>
+  <p>The choice of correlation structure is one of the most important decisions in repeated measures analysis. Start by examining the empirical correlation matrix. If correlations clearly decay with increasing time lag, consider AR(1) or ARMA(1,1). If the decay is minimal, compound symmetry may suffice. If the pattern is complex, consider Toeplitz or unstructured. Use AIC to compare non-nested structures and likelihood ratio tests for nested ones.</p>
+</div>
+
+<h2>Key Correlation Structures</h2>
+
+<div class="tabs">
+  <div class="tab-row">
+    <button class="tab-btn active" onclick="switchTab(event,'tab-cs')">Compound Symmetry</button>
+    <button class="tab-btn" onclick="switchTab(event,'tab-ar1')">AR(1)</button>
+    <button class="tab-btn" onclick="switchTab(event,'tab-arma')">ARMA(1,1)</button>
+    <button class="tab-btn" onclick="switchTab(event,'tab-toeplitz')">Toeplitz</button>
+    <button class="tab-btn" onclick="switchTab(event,'tab-unstruct')">Unstructured</button>
+  </div>
+  <div class="tab-panel active" id="tab-cs">
+    <h3>Compound Symmetry (Exchangeable)</h3>
+    <p>All pairs of measurements have the <strong>same correlation &rho;</strong>, regardless of how far apart in time they are. This is the simplest structure and is equivalent to a random intercept model. It has only <strong>1 correlation parameter</strong>.</p>
+    <p><strong>When appropriate:</strong> When there is no autocorrelation&mdash;i.e., the correlation between measurements does not depend on time distance. This is rare in practice for true repeated measures data.</p>
+  </div>
+  <div class="tab-panel" id="tab-ar1">
+    <h3>First-Order Autoregressive &mdash; AR(1)</h3>
+    <p>Correlations <strong>decay as powers of &rho;</strong> with increasing time distance: Corr(Y<sub>j</sub>, Y<sub>k</sub>) = &rho;<sup>|j&minus;k|</sup>. This produces an exponential decay pattern. It has only <strong>1 parameter (&rho;)</strong> and is a good default for equally spaced repeated measures.</p>
+    <p><strong>When appropriate:</strong> When the correlation matrix shows a clear pattern of decreasing correlations with increasing time lag, and the decay appears approximately geometric.</p>
+  </div>
+  <div class="tab-panel" id="tab-arma">
+    <h3>ARMA(1,1)</h3>
+    <p>An extension of AR(1) that allows a <strong>slower or more flexible decay</strong> in correlations. It has <strong>2 parameters</strong> and can accommodate patterns where the initial drop in correlation is steep but then levels off.</p>
+  </div>
+  <div class="tab-panel" id="tab-toeplitz">
+    <h3>Toeplitz (Stationary)</h3>
+    <p>Each lag has its own <strong>unconstrained correlation</strong>. For <em>m</em> time points, there are <em>m</em> &minus; 1 correlation parameters. The structure is &ldquo;banded&rdquo;&mdash;the correlation depends only on the time lag, not on which specific time points are involved.</p>
+    <p><strong>When appropriate:</strong> When the pattern of decay is irregular and cannot be well approximated by AR(1) or ARMA, but you still believe the correlation depends only on lag distance.</p>
+  </div>
+  <div class="tab-panel" id="tab-unstruct">
+    <h3>Unstructured</h3>
+    <p>Completely <strong>unconstrained correlations and variances</strong> for each pair of time points. For <em>m</em> time points, there are <em>m</em>(<em>m</em>+1)/2 parameters. This is the most flexible but requires the most parameters.</p>
+    <p><strong>When appropriate:</strong> Only with few time points and large sample sizes. With many time points, the number of parameters becomes impractical.</p>
+  </div>
+</div>
+
+<div class="formula-box">
+  <div class="formula-label">AR(1) Correlation Structure</div>
+  Corr(Y<sub>j</sub>, Y<sub>k</sub>) = &rho;<sup>|j&minus;k|</sup> &nbsp;&nbsp;&mdash;&nbsp;&nbsp; e.g., lag 1: &rho;, lag 2: &rho;&sup2;, lag 3: &rho;&sup3;
+</div>
+
+<div class="data-table" style="overflow-x:auto;">
+<table class="data-table">
+  <thead>
+    <tr><th>Structure</th><th>Parameters</th><th>Key Feature</th><th>Assumption</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Compound Symmetry</td><td>1</td><td>Equal correlations</td><td>No autocorrelation</td></tr>
+    <tr><td>AR(1)</td><td>1</td><td>Geometric decay</td><td>Equidistant time points</td></tr>
+    <tr><td>ARMA(1,1)</td><td>2</td><td>Flexible decay</td><td>Equidistant time points</td></tr>
+    <tr><td>Toeplitz</td><td><em>m</em> &minus; 1</td><td>Lag-specific correlations</td><td>Equidistant time points</td></tr>
+    <tr><td>Unstructured</td><td><em>m</em>(<em>m</em>+1)/2</td><td>Completely flexible</td><td>None</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2>Combining Random Effects with Correlation Structures</h2>
+<p>An important practical consideration is how random effects interact with error correlation structures. Some combinations are <strong>redundant</strong> and cannot be separately identified:</p>
+<ul>
+  <li><strong>Random intercepts + compound symmetry errors = redundant</strong> &mdash; both produce the same correlation structure</li>
+  <li><strong>Random intercepts + AR(1) errors = useful</strong> &mdash; produces a structure where correlations decay but do not reach zero</li>
+  <li><strong>Unstructured errors + random effects = pointless</strong> &mdash; the unstructured covariance already captures everything</li>
+</ul>
+<p><strong>Covariance pattern models</strong> use no random effects at all, relying entirely on the structured covariance of the errors to capture within-subject correlation.</p>
+
+<h2>Model Selection</h2>
+<p>For <strong>nested</strong> correlation structures (e.g., AR(1) is nested within Toeplitz), use <strong>likelihood ratio tests</strong>. For <strong>non-nested</strong> structures (e.g., AR(1) vs. compound symmetry), use <strong>AIC</strong> or similar information criteria. Models should be compared with the same fixed effects and random effects structure.</p>
+
+<div class="scenario-card">
+  <div class="scenario-title">Example: Comparing Correlation Structures</div>
+  <p>In a study with 6 equally-spaced measurements, the empirical correlations ranged from 0.72 (lag 1) to 0.31 (lag 5). An AR(1) model with &rho; = 0.73 fit well (AIC = 2,341), while compound symmetry (AIC = 2,398) fit poorly because it predicted equal correlations of 0.52 at all lags. The Toeplitz model (AIC = 2,338) offered a slight improvement over AR(1) but used 4 more parameters. Based on parsimony, AR(1) was selected.</p>
+</div>
+
+<!-- Section 3 Quiz -->
+<div class="quiz-section" id="quiz-2">
+  <h3>Section 3 Knowledge Check</h3>
+  <div class="quiz-question" data-correct="b">
+    <p>1. The AR(1) correlation structure assumes:</p>
+    <label class="quiz-option"><input type="radio" name="q2-0" value="a"> All correlations are equal</label>
+    <label class="quiz-option"><input type="radio" name="q2-0" value="b"> Correlations decay as powers of &rho; with increasing time distance</label>
+    <label class="quiz-option"><input type="radio" name="q2-0" value="c"> No correlation exists</label>
+    <label class="quiz-option"><input type="radio" name="q2-0" value="d"> Correlations increase over time</label>
+    <div class="quiz-explanation">In AR(1), the correlation between measurements k time steps apart is &rho;<sup>k</sup>, producing an exponential decay in correlation with increasing time distance. This captures the intuitive autocorrelation pattern in longitudinal data.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>2. Combining random intercepts with compound symmetry errors:</p>
+    <label class="quiz-option"><input type="radio" name="q2-1" value="a"> Gives a better model</label>
+    <label class="quiz-option"><input type="radio" name="q2-1" value="b"> Is redundant because both produce the same correlation structure</label>
+    <label class="quiz-option"><input type="radio" name="q2-1" value="c"> Is always recommended</label>
+    <label class="quiz-option"><input type="radio" name="q2-1" value="d"> Cannot be done computationally</label>
+    <div class="quiz-explanation">A random intercept model induces compound symmetry correlations, and adding a separate compound symmetry error structure produces the same overall structure. Only one is needed; they cannot be separately identified.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>3. For choosing between non-nested correlation structures (e.g., AR(1) vs. Toeplitz), one should use:</p>
+    <label class="quiz-option"><input type="radio" name="q2-2" value="a"> Likelihood ratio tests</label>
+    <label class="quiz-option"><input type="radio" name="q2-2" value="b"> Model selection criteria such as AIC</label>
+    <label class="quiz-option"><input type="radio" name="q2-2" value="c"> Only visual inspection</label>
+    <label class="quiz-option"><input type="radio" name="q2-2" value="d"> The simplest model always</label>
+    <div class="quiz-explanation">Non-nested models cannot be compared with likelihood ratio tests. AIC (or similar information criteria) can be used to compare models with the same number of random effects but different correlation structures.</div>
+  </div>
+
+  <div class="quiz-result" id="quizResult-2"></div>
+  <div class="quiz-retry" id="quizRetry-2"><button class="btn btn-outline" onclick="retryQuiz(2)">Retry Quiz</button></div>
+  <button class="btn btn-primary" onclick="checkQuiz(2)" style="margin-top:12px;">Check Answers</button>
+</div>
+
+<div class="reflection-box">
+  <h3>Reflection</h3>
+  <p>A study measures blood pressure at 6 monthly visits. The correlation between visits 1 and 2 is 0.60, between visits 1 and 6 is 0.15. Which correlation structure would you initially consider, and why?</p>
+  <textarea id="reflection-3" placeholder="Type your reflection here..."></textarea>
+  <button class="btn-save" onclick="checkReflection(3)">Save Reflection</button>
+  <div class="reflection-status" id="reflectionStatus-3">Reflection saved!</div>
+</div>
+
+<div class="section-nav">
+  <button class="btn btn-outline" onclick="goToModule(1)">&larr; Section 2</button>
+  <div>
+    <button class="btn btn-primary disabled" id="nextBtn-2" onclick="goToModule(3)">Next Section &rarr;</button>
+    <div class="req-note" id="reqNote-2"><span class="req-pending">*</span> Complete the quiz and reflection to continue.</div>
+  </div>
+</div>
+
+</div>
+</div>
+
+<!-- ============ SECTION 4: Trend Models, Discrete Outcomes & GEE ============ -->
+<div class="module-page" id="page-3">
+<div class="module-header">
+  <div class="module-tag">Section 4</div>
+  <h1>Trend Models, Discrete Outcomes &amp; GEE</h1>
+  <div class="time">&#9201; Estimated time: 20 minutes</div>
+</div>
+<div class="module-body">
+
+<h2>Trend Models with Random Slopes</h2>
+<p>An alternative to modelling the error correlation directly is to include <strong>random slopes for time</strong>. This allows each subject to have their own rate of change (growth or decline) over time, with the population-average trend captured by the fixed effect of time.</p>
+
+<p>The variation in individual trajectories naturally <strong>induces autocorrelation</strong>&mdash;subjects who start high and decline slowly will have correlated measurements. This can be sufficient to capture the temporal structure in many datasets, especially when the primary interest is in individual trajectories.</p>
+
+<p>The time variable can be parameterized in different ways: <strong>linear</strong> (for constant rates of change), <strong>polynomial</strong> (for curved trajectories), or <strong>log-transformed</strong> (for rapid early change that levels off).</p>
+
+<h2>Discrete Repeated Measures Data</h2>
+<p>Extending mixed models to <strong>discrete outcomes</strong> (binary, count) with correlation structures is much harder than for continuous outcomes. The fundamental challenge is that in GLMs, the error term and the linear predictor operate on <strong>different scales</strong>&mdash;the link function transforms the relationship, making it difficult to add correlation structures to the error term in a meaningful way.</p>
+
+<div class="info-box amber">
+  <div class="box-title">When to Use GEE vs. Mixed Models</div>
+  <p><strong>Use GEE</strong> when your research question focuses on <strong>population-averaged</strong> (marginal) effects&mdash;for example, &ldquo;What is the average treatment effect across the population?&rdquo; <strong>Use mixed models</strong> when you want <strong>subject-specific</strong> (conditional) effects or when the random effects themselves are of scientific interest&mdash;for example, &ldquo;How much do individual subjects vary in their response?&rdquo;</p>
+</div>
+
+<h3>Transition Models</h3>
+<p>One approach for discrete repeated measures is the <strong>transition model</strong>, which includes the <strong>previous outcome as a predictor</strong>. This captures autocorrelation informally through dependence on the prior outcome.</p>
+
+<div class="formula-box">
+  <div class="formula-label">Transition Model (Eq 23.5)</div>
+  logit(p<sub>ij</sub>) = X&beta; + Zu + &gamma;Y<sub>i,j&minus;1</sub>
+</div>
+
+<p>Here, &gamma; is the <strong>log odds ratio</strong> comparing those with versus without the previous event. A positive &gamma; means that having the event at the previous time point increases the odds of having it at the current time point.</p>
+
+<h2>Generalised Estimating Equations (GEE)</h2>
+<p>GEE is a <strong>population-averaged (marginal) approach</strong> that does not require specifying random effects. Instead, it specifies a <strong>&ldquo;working&rdquo; correlation structure</strong> and uses <strong>robust (sandwich) standard errors</strong> that provide valid inference even if the working correlation is misspecified.</p>
+
+<div class="tabs">
+  <div class="tab-row">
+    <button class="tab-btn active" onclick="switchTab(event,'tab-trend')">Trend Models</button>
+    <button class="tab-btn" onclick="switchTab(event,'tab-transition')">Transition Models</button>
+    <button class="tab-btn" onclick="switchTab(event,'tab-gee')">GEE</button>
+  </div>
+  <div class="tab-panel active" id="tab-trend">
+    <h3>Trend Models</h3>
+    <p>Trend models add random slopes for time, allowing each subject to have their own trajectory. The random slope induces autocorrelation through the variation in individual trajectories. This approach is particularly natural when the scientific question is about individual growth or decline rates.</p>
+    <p><strong>Key considerations:</strong> Choice of time parameterization (linear, polynomial, log), whether to include both random intercepts and slopes, and whether the induced autocorrelation is sufficient or additional error correlation is needed.</p>
+  </div>
+  <div class="tab-panel" id="tab-transition">
+    <h3>Transition Models</h3>
+    <p>Transition models include the previous outcome Y<sub>i,j&minus;1</sub> as a predictor in the model. The coefficient &gamma; represents the log OR for the event given the previous event occurred. This approach is intuitive and can be combined with random effects.</p>
+    <p><strong>Limitations:</strong> Difficult to interpret coefficients for other predictors (they are conditional on the previous outcome), requires careful handling of the first observation (which has no &ldquo;previous&rdquo; value), and may not fully capture complex autocorrelation patterns.</p>
+  </div>
+  <div class="tab-panel" id="tab-gee">
+    <h3>Generalised Estimating Equations (GEE)</h3>
+    <p>GEE estimates <strong>population-averaged</strong> effects using a quasi-likelihood approach. Key features:</p>
+    <ul>
+      <li>Specifies a <strong>working correlation</strong> (e.g., exchangeable, AR(1), unstructured)</li>
+      <li>With <strong>robust (sandwich) SEs</strong>, inference is valid even if the working correlation is wrong</li>
+      <li>Requires enough clusters/subjects (&ge;20&ndash;30) for reliable sandwich SEs</li>
+      <li><strong>Cannot estimate</strong> cluster-specific (random) effects&mdash;gives only PA estimates</li>
+      <li>Better working correlation = more efficient estimates (but always valid with robust SEs)</li>
+    </ul>
+  </div>
+</div>
+
+<div class="flip-card-grid">
+  <div class="flip-card" onclick="openCardModal('Population-Averaged (PA)', 'PA estimates represent the &lt;strong&gt;average effect across the entire population&lt;/strong&gt;. For example, a PA odds ratio compares the odds of the outcome in the treatment vs. control group &lt;em&gt;on average&lt;/em&gt;. GEE provides PA estimates. For linear models, PA and subject-specific (SS) estimates are the same, but for non-linear models (logistic, Poisson), they differ.')">
+    <div class="card-icon">&#128101;</div>
+    <div class="card-label">Population-Averaged</div>
+    <div class="card-hint">Click to learn more</div>
+  </div>
+  <div class="flip-card" onclick="openCardModal('Subject-Specific (SS)', 'SS estimates represent the effect &lt;strong&gt;for a given subject&lt;/strong&gt; (conditional on their random effects). Mixed models provide SS estimates. For non-linear models, SS effect sizes are typically larger than PA estimates because they condition on individual-level variation.')">
+    <div class="card-icon">&#128100;</div>
+    <div class="card-label">Subject-Specific</div>
+    <div class="card-hint">Click to learn more</div>
+  </div>
+  <div class="flip-card" onclick="openCardModal('Robust (Sandwich) SEs', 'Robust standard errors (also called sandwich or Huber-White SEs) provide &lt;strong&gt;valid variance estimates&lt;/strong&gt; even when the assumed correlation structure is wrong. They are computed from the observed residuals rather than the model-assumed covariance. They require a sufficient number of clusters (typically &ge;20&ndash;30) to be reliable.')">
+    <div class="card-icon">&#128272;</div>
+    <div class="card-label">Robust (Sandwich) SEs</div>
+    <div class="card-hint">Click to learn more</div>
+  </div>
+</div>
+
+<div class="scenario-card">
+  <div class="scenario-title">Example: GEE Analysis of Repeated Binary Outcome</div>
+  <p>A study followed 200 patients over 4 visits, recording whether they experienced a symptom (yes/no) at each visit along with a treatment indicator. A GEE model with exchangeable working correlation and robust SEs estimated the treatment OR as 0.65 (95% CI: 0.48&ndash;0.88), suggesting treatment reduced the odds of symptoms by 35% on average across the population. The working correlation was estimated as 0.42.</p>
+</div>
+
+<div class="data-table" style="overflow-x:auto;">
+<table class="data-table">
+  <thead>
+    <tr><th>Feature</th><th>GEE</th><th>Mixed Models (GLMM)</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Estimate type</td><td>Population-averaged (PA)</td><td>Subject-specific (SS)</td></tr>
+    <tr><td>Random effects</td><td>Not estimated</td><td>Estimated</td></tr>
+    <tr><td>Correlation</td><td>Working correlation + robust SEs</td><td>Explicit random effects / correlation</td></tr>
+    <tr><td>Missing data assumption</td><td>MCAR</td><td>MAR</td></tr>
+    <tr><td>Minimum clusters</td><td>&ge;20&ndash;30</td><td>Fewer acceptable</td></tr>
+    <tr><td>Best for</td><td>PA inference</td><td>SS inference, variance components</td></tr>
+  </tbody>
+</table>
+</div>
+
+<!-- Section 4 Quiz -->
+<div class="quiz-section" id="quiz-3">
+  <h3>Section 4 Knowledge Check</h3>
+  <div class="quiz-question" data-correct="b">
+    <p>1. Trend models with random slopes for time:</p>
+    <label class="quiz-option"><input type="radio" name="q3-0" value="a"> Assume all subjects have the same trajectory</label>
+    <label class="quiz-option"><input type="radio" name="q3-0" value="b"> Allow each subject to have their own rate of change over time</label>
+    <label class="quiz-option"><input type="radio" name="q3-0" value="c"> Cannot include fixed effects for time</label>
+    <label class="quiz-option"><input type="radio" name="q3-0" value="d"> Require unstructured covariance</label>
+    <div class="quiz-explanation">Random slopes for time allow each subject&rsquo;s outcome to change at their own rate, with the population-average trend captured by the fixed effect of time and individual deviations captured by the random slope.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>2. In a transition model, the previous outcome Y<sub>i,j&minus;1</sub> is included to:</p>
+    <label class="quiz-option"><input type="radio" name="q3-1" value="a"> Eliminate all random effects</label>
+    <label class="quiz-option"><input type="radio" name="q3-1" value="b"> Capture autocorrelation by conditioning on the prior outcome</label>
+    <label class="quiz-option"><input type="radio" name="q3-1" value="c"> Remove the time effect</label>
+    <label class="quiz-option"><input type="radio" name="q3-1" value="d"> Convert discrete data to continuous</label>
+    <div class="quiz-explanation">Transition models include the prior outcome as a predictor, which implicitly captures autocorrelation. The coefficient &gamma; represents the log OR for the event given that the previous outcome was 1 vs. 0.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>3. GEE (Generalised Estimating Equations) provide:</p>
+    <label class="quiz-option"><input type="radio" name="q3-2" value="a"> Subject-specific estimates</label>
+    <label class="quiz-option"><input type="radio" name="q3-2" value="b"> Population-averaged estimates with valid inference using robust standard errors</label>
+    <label class="quiz-option"><input type="radio" name="q3-2" value="c"> Exact likelihood-based inference</label>
+    <label class="quiz-option"><input type="radio" name="q3-2" value="d"> Estimates of random effects variances</label>
+    <div class="quiz-explanation">GEE is a marginal/PA approach that estimates population-level effects. With sandwich (robust) SEs, inference is valid even if the working correlation structure is misspecified, though efficiency improves with a better working correlation.</div>
+  </div>
+
+  <div class="quiz-result" id="quizResult-3"></div>
+  <div class="quiz-retry" id="quizRetry-3"><button class="btn btn-outline" onclick="retryQuiz(3)">Retry Quiz</button></div>
+  <button class="btn btn-primary" onclick="checkQuiz(3)" style="margin-top:12px;">Check Answers</button>
+</div>
+
+<div class="reflection-box">
+  <h3>Reflection</h3>
+  <p>Compare the GEE approach and the mixed model approach for analyzing repeated binary outcomes. In what research context would you prefer each approach, and why?</p>
+  <textarea id="reflection-4" placeholder="Type your reflection here..."></textarea>
+  <button class="btn-save" onclick="checkReflection(4)">Save Reflection</button>
+  <div class="reflection-status" id="reflectionStatus-4">Reflection saved!</div>
+</div>
+
+<div class="section-nav">
+  <button class="btn btn-outline" onclick="goToModule(2)">&larr; Section 3</button>
+  <div>
+    <button class="btn btn-primary disabled" id="nextBtn-3" onclick="goToModule(4)">Final Assessment &rarr;</button>
+    <div class="req-note" id="reqNote-3"><span class="req-pending">*</span> Complete the quiz and reflection to continue.</div>
+  </div>
+</div>
+
+</div>
+</div>
+
+<!-- ============ FINAL ASSESSMENT ============ -->
+<div class="module-page" id="page-4">
+<div class="module-header">
+  <div class="module-tag">Final Assessment</div>
+  <h1>Lesson 11 &mdash; Comprehensive Assessment</h1>
+  <div class="time">&#9201; Estimated time: 25 minutes</div>
+</div>
+<div class="module-body">
+
+<p>This final assessment covers all material from this lesson. You must answer all 15 questions correctly (100%) and complete the final reflection to finish the lesson.</p>
+
+<div class="reflection-box">
+  <h3>Final Reflection</h3>
+  <p>Reflecting on this entire lesson, how would you approach the analysis of a longitudinal study with 6 time points, some missing data, and a binary outcome? Walk through your analytical strategy from descriptive analysis to final model choice.</p>
+  <textarea id="reflection-final" placeholder="Type your final reflection here..."></textarea>
+  <button class="btn-save" onclick="checkReflection('final')">Save Reflection</button>
+  <div class="reflection-status" id="reflectionStatus-final">Reflection saved!</div>
+</div>
+
+<div class="quiz-section" id="quiz-4">
+  <h3>Final Assessment (15 Questions)</h3>
+
+  <div class="quiz-question" data-correct="b">
+    <p>1. Repeated measures data differs from standard clustered data primarily because:</p>
+    <label class="quiz-option"><input type="radio" name="qf-0" value="a"> It has more observations</label>
+    <label class="quiz-option"><input type="radio" name="qf-0" value="b"> The time ordering introduces autocorrelation among measurements</label>
+    <label class="quiz-option"><input type="radio" name="qf-0" value="c"> It always has binary outcomes</label>
+    <label class="quiz-option"><input type="radio" name="qf-0" value="d"> There is no clustering</label>
+    <div class="quiz-explanation">While repeated measures are clustered within subjects, the key distinguishing feature is that the temporal ordering of measurements creates autocorrelation &mdash; correlation that depends on the time distance between observations.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>2. A balanced, uniform, equidistant repeated measures design:</p>
+    <label class="quiz-option"><input type="radio" name="qf-1" value="a"> Is the most restrictive and most commonly encountered</label>
+    <label class="quiz-option"><input type="radio" name="qf-1" value="b"> Has the same number of measurements per subject, at the same time points, equally spaced</label>
+    <label class="quiz-option"><input type="radio" name="qf-1" value="c"> Has different numbers of measurements per subject</label>
+    <label class="quiz-option"><input type="radio" name="qf-1" value="d"> Requires no special analytical methods</label>
+    <div class="quiz-explanation">This is the most regular data structure: same number of measurements (balanced), same time points across subjects (uniform), and equal spacing between time points (equidistant).</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>3. Profile plots in repeated measures analysis show:</p>
+    <label class="quiz-option"><input type="radio" name="qf-2" value="a"> Only group means</label>
+    <label class="quiz-option"><input type="radio" name="qf-2" value="b"> Individual subjects' trajectories over time, revealing tracking and variability</label>
+    <label class="quiz-option"><input type="radio" name="qf-2" value="c"> Correlation matrices</label>
+    <label class="quiz-option"><input type="radio" name="qf-2" value="d"> Only missing data patterns</label>
+    <div class="quiz-explanation">Profile plots display each subject&rsquo;s series of measurements over time, allowing visual assessment of tracking (whether subjects maintain their relative positions), variability, and overall trends.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>4. The Bonferroni correction for separate time point analyses:</p>
+    <label class="quiz-option"><input type="radio" name="qf-3" value="a"> Increases statistical power</label>
+    <label class="quiz-option"><input type="radio" name="qf-3" value="b"> Divides the significance level by the number of tests to control the familywise error rate</label>
+    <label class="quiz-option"><input type="radio" name="qf-3" value="c"> Eliminates the need for repeated measures methods</label>
+    <label class="quiz-option"><input type="radio" name="qf-3" value="d"> Is always the best approach</label>
+    <div class="quiz-explanation">When performing separate analyses at each time point, the Bonferroni correction divides &alpha; by the number of tests, reducing the chance of false positives. However, this approach is conservative and wasteful of information.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="c">
+    <p>5. The summary statistic approach to repeated measures analysis:</p>
+    <label class="quiz-option"><input type="radio" name="qf-4" value="a"> Models the full correlation structure</label>
+    <label class="quiz-option"><input type="radio" name="qf-4" value="b"> Is complex and requires specialized software</label>
+    <label class="quiz-option"><input type="radio" name="qf-4" value="c"> Reduces each subject's data to a single value and performs a standard between-subjects analysis</label>
+    <label class="quiz-option"><input type="radio" name="qf-4" value="d"> Requires balanced data with no missing values</label>
+    <div class="quiz-explanation">By summarizing each subject&rsquo;s time series into one statistic (slope, AUC, drop, etc.), the method avoids modeling within-subject correlations. It&rsquo;s simple and robust but loses information about the temporal pattern.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>6. Compound symmetry assumes:</p>
+    <label class="quiz-option"><input type="radio" name="qf-5" value="a"> Correlations decrease with time distance</label>
+    <label class="quiz-option"><input type="radio" name="qf-5" value="b"> All pairs of measurements have the same correlation</label>
+    <label class="quiz-option"><input type="radio" name="qf-5" value="c"> No correlation between measurements</label>
+    <label class="quiz-option"><input type="radio" name="qf-5" value="d"> Correlations increase over time</label>
+    <div class="quiz-explanation">Compound symmetry (exchangeable correlation) assumes that the correlation between any two measurements on the same subject is the same, regardless of how far apart in time they are.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>7. The AR(1) correlation structure models correlations as:</p>
+    <label class="quiz-option"><input type="radio" name="qf-6" value="a"> Equal for all pairs</label>
+    <label class="quiz-option"><input type="radio" name="qf-6" value="b"> Decaying as powers of &rho; with increasing time lag</label>
+    <label class="quiz-option"><input type="radio" name="qf-6" value="c"> Increasing over time</label>
+    <label class="quiz-option"><input type="radio" name="qf-6" value="d"> Zero for all pairs</label>
+    <div class="quiz-explanation">In AR(1), corr(Y<sub>j</sub>, Y<sub>k</sub>) = &rho;<sup>|j&minus;k|</sup>. This produces correlations that decrease geometrically as the time gap between measurements increases, capturing the typical autocorrelation pattern.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>8. The unstructured covariance matrix:</p>
+    <label class="quiz-option"><input type="radio" name="qf-7" value="a"> Has the fewest parameters</label>
+    <label class="quiz-option"><input type="radio" name="qf-7" value="b"> Has the most parameters, allowing different variances and correlations for each pair</label>
+    <label class="quiz-option"><input type="radio" name="qf-7" value="c"> Assumes compound symmetry</label>
+    <label class="quiz-option"><input type="radio" name="qf-7" value="d"> Can only be used with 2 time points</label>
+    <div class="quiz-explanation">The unstructured covariance has m(m+1)/2 parameters for m time points, allowing completely flexible variances and covariances. Its drawback is the large number of parameters needed with many time points.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>9. Random intercepts combined with AR(1) errors:</p>
+    <label class="quiz-option"><input type="radio" name="qf-8" value="a"> Is redundant</label>
+    <label class="quiz-option"><input type="radio" name="qf-8" value="b"> Produces a correlation structure that does not decay to zero, combining between-subject and autocorrelation</label>
+    <label class="quiz-option"><input type="radio" name="qf-8" value="c"> Is the same as compound symmetry</label>
+    <label class="quiz-option"><input type="radio" name="qf-8" value="d"> Cannot be fitted</label>
+    <div class="quiz-explanation">Combining random intercepts with AR(1) errors produces a correlation structure where the base correlation (from the random intercept) doesn&rsquo;t decay to zero, while the AR(1) part adds additional correlation that does decay &mdash; more flexible than either alone.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>10. Trend models with random slopes for time:</p>
+    <label class="quiz-option"><input type="radio" name="qf-9" value="a"> Assume all subjects follow the same trajectory</label>
+    <label class="quiz-option"><input type="radio" name="qf-9" value="b"> Allow individual growth or decline rates, inducing autocorrelation through the random slopes</label>
+    <label class="quiz-option"><input type="radio" name="qf-9" value="c"> Cannot include covariates</label>
+    <label class="quiz-option"><input type="radio" name="qf-9" value="d"> Are only for balanced data</label>
+    <div class="quiz-explanation">Random slopes for time let each subject have their own rate of change, and this variation in trajectories naturally induces autocorrelation. Combined with random intercepts, they form a flexible model for longitudinal data.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>11. The main challenge of extending mixed models to discrete repeated measures data is:</p>
+    <label class="quiz-option"><input type="radio" name="qf-10" value="a"> Discrete data cannot have repeated measures</label>
+    <label class="quiz-option"><input type="radio" name="qf-10" value="b"> The correlation structure and the linear predictor operate on different scales in GLMs</label>
+    <label class="quiz-option"><input type="radio" name="qf-10" value="c"> There are no software implementations</label>
+    <label class="quiz-option"><input type="radio" name="qf-10" value="d"> Only continuous outcomes can be autocorrelated</label>
+    <div class="quiz-explanation">In GLMs, the mean and variance are on different scales (observation vs. link scale). This makes incorporating correlation structures into the error term fundamentally more complex than for linear mixed models.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>12. In a transition model, the parameter &gamma; for the lagged outcome Y<sub>i,j&minus;1</sub> represents:</p>
+    <label class="quiz-option"><input type="radio" name="qf-11" value="a"> The time effect</label>
+    <label class="quiz-option"><input type="radio" name="qf-11" value="b"> The log odds ratio comparing subjects with versus without the prior event</label>
+    <label class="quiz-option"><input type="radio" name="qf-11" value="c"> The ICC</label>
+    <label class="quiz-option"><input type="radio" name="qf-11" value="d"> The autocorrelation coefficient</label>
+    <div class="quiz-explanation">In the transition model logit(p<sub>ij</sub>) = X&beta; + Zu + &gamma;Y<sub>i,j&minus;1</sub>, &gamma; is the log OR for the current event given the prior event occurred vs. did not occur, capturing the temporal dependence informally.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>13. GEE uses a &ldquo;working&rdquo; correlation structure because:</p>
+    <label class="quiz-option"><input type="radio" name="qf-12" value="a"> The true correlation structure must be exactly specified</label>
+    <label class="quiz-option"><input type="radio" name="qf-12" value="b"> With robust standard errors, inference is valid even if the working correlation is wrong</label>
+    <label class="quiz-option"><input type="radio" name="qf-12" value="c"> GEE cannot handle any correlation</label>
+    <label class="quiz-option"><input type="radio" name="qf-12" value="d"> The working correlation must equal the true correlation</label>
+    <div class="quiz-explanation">GEE specifies a working correlation for efficiency, but the sandwich (robust) standard errors ensure valid inference regardless of whether the working correlation matches the true one. Better specification improves efficiency.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>14. GEE estimates are:</p>
+    <label class="quiz-option"><input type="radio" name="qf-13" value="a"> Subject-specific (conditional on random effects)</label>
+    <label class="quiz-option"><input type="radio" name="qf-13" value="b"> Population-averaged (marginal)</label>
+    <label class="quiz-option"><input type="radio" name="qf-13" value="c"> Neither marginal nor conditional</label>
+    <label class="quiz-option"><input type="radio" name="qf-13" value="d"> Only valid for continuous outcomes</label>
+    <div class="quiz-explanation">GEE provides population-averaged (marginal) estimates, which represent the average effect across the entire population. This contrasts with mixed models, which give subject-specific (conditional) estimates.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="c">
+    <p>15. When choosing between GEE and mixed models for repeated measures:</p>
+    <label class="quiz-option"><input type="radio" name="qf-14" value="a"> GEE is always preferred</label>
+    <label class="quiz-option"><input type="radio" name="qf-14" value="b"> Mixed models are always preferred</label>
+    <label class="quiz-option"><input type="radio" name="qf-14" value="c"> GEE is preferred for PA inference; mixed models for SS inference and when random effects are of interest</label>
+    <label class="quiz-option"><input type="radio" name="qf-14" value="d"> The choice doesn't matter</label>
+    <div class="quiz-explanation">The choice depends on the research question: GEE for population-level (PA) effects, mixed models when cluster-specific (SS) effects or variance components are of interest. Both have valid but different interpretations.</div>
+  </div>
+
+  <div class="quiz-result" id="quizResult-4"></div>
+  <div class="quiz-retry" id="quizRetry-4"><button class="btn btn-outline" onclick="retryQuiz(4)">Retry Quiz</button></div>
+  <button class="btn btn-accent" onclick="checkFinalAssessment()" style="margin-top:12px;">Submit Final Assessment</button>
+</div>
+
+<div class="completion-banner" id="completionBanner">
+  <h2>Lesson 11 Complete!</h2>
+  <p>Congratulations! You have successfully completed the Repeated Measures Data module. Your responses have been downloaded automatically.</p>
+</div>
+
+<div class="section-nav">
+  <button class="btn btn-outline" onclick="goToModule(3)">&larr; Section 4</button>
+  <div></div>
+</div>
+
+</div>
+</div>
+
+</div><!-- /main -->
+
+<!-- Card Modal -->
+<div class="card-modal-overlay" id="cardModalOverlay" onclick="closeCardModal(event)">
+  <div class="card-modal">
+    <button class="card-modal-close" onclick="document.getElementById('cardModalOverlay').classList.remove('show')">&times;</button>
+    <h3 id="cardModalTitle"></h3>
+    <div id="cardModalBody"></div>
+  </div>
+</div>
+
+<script>
+var modules = [
+  { id: -1, short: 'Welcome', title: 'Introduction' },
+  { id: 0, short: 'Section 1', title: 'Introduction & Descriptive Approaches' },
+  { id: 1, short: 'Section 2', title: 'Univariate & Multivariate Approaches' },
+  { id: 2, short: 'Section 3', title: 'Linear Mixed Models with Correlation Structure' },
+  { id: 3, short: 'Section 4', title: 'Trend Models, Discrete Outcomes & GEE' },
+  { id: 4, short: 'Section 5', title: 'Final Assessment' }
+];
+var currentModule = -1;
+var completed = new Set();
+var quizPassed = {};
+var reflectionDone = {};
+var modulesWithReflection = { 1: true, 2: true, 3: true, 4: true };
+
+function buildNav() {
+  var nav = document.getElementById('sidebarNav');
+  nav.innerHTML = '';
+  modules.forEach(function(m) {
+    var div = document.createElement('div');
+    div.className = 'nav-item';
+    var key = m.id === -1 ? 'welcome' : m.id;
+    if (completed.has(key)) div.classList.add('completed');
+    if (m.id === currentModule) div.classList.add('active');
+    div.innerHTML = '<div class="dot"></div><span>' + m.short + ': ' + m.title + '</span>';
+    div.onclick = function() { goToModule(m.id); closeSidebarMobile(); };
+    nav.appendChild(div);
+  });
+}
+
+function goToModule(id) {
+  currentModule = id;
+  document.querySelectorAll('.module-page').forEach(function(p) { p.classList.remove('active'); });
+  var pageId = id === -1 ? 'page-welcome' : 'page-' + id;
+  var page = document.getElementById(pageId);
+  if (page) page.classList.add('active');
+  if (id === -1) completed.add('welcome');
+  buildNav();
+  updateProgress();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function updateProgress() {
+  var total = modules.length;
+  var done = completed.size;
+  var pct = Math.round((done / total) * 100);
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressText').textContent = pct + '% complete';
+}
+
+function checkReflection(idx) {
+  var ta = document.getElementById('reflection-' + idx);
+  if (ta && ta.value.trim().length > 0) {
+    reflectionDone[idx === 'final' ? 4 : idx] = true;
+    var status = document.getElementById('reflectionStatus-' + idx);
+    if (status) status.classList.add('show');
+    if (idx !== 'final') updateNextButton(idx);
+  }
+}
+
+function updateNextButton(moduleIdx) {
+  var btn = document.getElementById('nextBtn-' + moduleIdx);
+  var note = document.getElementById('reqNote-' + moduleIdx);
+  if (!btn) return;
+  var quizOk = quizPassed[moduleIdx];
+  var refIdx = moduleIdx + 1;
+  var needsRef = modulesWithReflection[refIdx];
+  var refOk = !needsRef || reflectionDone[refIdx];
+  if (quizOk && refOk) {
+    btn.classList.remove('disabled');
+    completed.add(moduleIdx);
+    buildNav();
+    updateProgress();
+    if (note) note.innerHTML = '<span class="req-check">&#10003;</span> Section complete! You may continue.';
+  }
+}
+
+function checkQuiz(moduleIdx) {
+  var quiz = document.getElementById('quiz-' + moduleIdx);
+  var questions = quiz.querySelectorAll('.quiz-question');
+  var correct = 0;
+  var total = questions.length;
+  var allAnswered = true;
+  questions.forEach(function(q, i) {
+    var correctVal = q.dataset.correct;
+    var selected = quiz.querySelector('input[name="q' + moduleIdx + '-' + i + '"]:checked');
+    q.querySelectorAll('.quiz-option').forEach(function(opt) { opt.classList.remove('correct', 'incorrect'); });
+    if (!selected) { allAnswered = false; return; }
+    q.querySelectorAll('.quiz-option').forEach(function(opt) {
+      var inp = opt.querySelector('input');
+      if (inp.value === correctVal) opt.classList.add('correct');
+      else if (inp === selected && inp.value !== correctVal) opt.classList.add('incorrect');
+    });
+    q.querySelector('.quiz-explanation').classList.add('show');
+    if (selected.value === correctVal) correct++;
+  });
+  if (!allAnswered) { alert('Please answer all questions before checking.'); return; }
+  var result = document.getElementById('quizResult-' + moduleIdx);
+  var retryDiv = document.getElementById('quizRetry-' + moduleIdx);
+  result.style.display = 'block';
+  if (correct === total) {
+    result.className = 'quiz-result pass';
+    result.textContent = 'All correct! Great job.';
+    quizPassed[moduleIdx] = true;
+    if (retryDiv) retryDiv.classList.remove('show');
+    quiz.querySelectorAll('input[type="radio"]').forEach(function(r) { r.disabled = true; });
+    updateNextButton(moduleIdx);
+  } else {
+    result.className = 'quiz-result fail';
+    result.textContent = 'You got ' + correct + ' out of ' + total + ' correct. You need 100% to continue. Review the feedback and try again.';
+    quizPassed[moduleIdx] = false;
+    if (retryDiv) retryDiv.classList.add('show');
+  }
+}
+
+function retryQuiz(moduleIdx) {
+  var quiz = document.getElementById('quiz-' + moduleIdx);
+  quiz.querySelectorAll('.quiz-option').forEach(function(opt) { opt.classList.remove('correct', 'incorrect'); });
+  quiz.querySelectorAll('.quiz-explanation').forEach(function(exp) { exp.classList.remove('show'); });
+  quiz.querySelectorAll('input[type="radio"]').forEach(function(r) { r.checked = false; r.disabled = false; });
+  var result = document.getElementById('quizResult-' + moduleIdx);
+  result.style.display = 'none';
+  var retryDiv = document.getElementById('quizRetry-' + moduleIdx);
+  if (retryDiv) retryDiv.classList.remove('show');
+  quiz.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function checkFinalAssessment() {
+  if (!reflectionDone[4]) {
+    alert('Please complete the final reflection before submitting the assessment.');
+    return;
+  }
+  var quiz = document.getElementById('quiz-4');
+  var questions = quiz.querySelectorAll('.quiz-question');
+  var correct = 0;
+  var total = questions.length;
+  var allAnswered = true;
+  questions.forEach(function(q, i) {
+    var correctVal = q.dataset.correct;
+    var selected = quiz.querySelector('input[name="qf-' + i + '"]:checked');
+    q.querySelectorAll('.quiz-option').forEach(function(opt) { opt.classList.remove('correct', 'incorrect'); });
+    if (!selected) { allAnswered = false; return; }
+    q.querySelectorAll('.quiz-option').forEach(function(opt) {
+      var inp = opt.querySelector('input');
+      if (inp.value === correctVal) opt.classList.add('correct');
+      else if (inp === selected && inp.value !== correctVal) opt.classList.add('incorrect');
+    });
+    q.querySelector('.quiz-explanation').classList.add('show');
+    if (selected.value === correctVal) correct++;
+  });
+  if (!allAnswered) { alert('Please answer all 15 questions before submitting.'); return; }
+  var pct = Math.round((correct / total) * 100);
+  var passed = correct === total;
+  var result = document.getElementById('quizResult-4');
+  var retryDiv = document.getElementById('quizRetry-4');
+  result.style.display = 'block';
+  if (passed) {
+    result.className = 'quiz-result pass';
+    result.innerHTML = 'Congratulations! You scored ' + correct + '/' + total + ' (100%). You have completed Lesson 11!';
+    completed.add(4);
+    updateProgress();
+    buildNav();
+    if (retryDiv) retryDiv.classList.remove('show');
+    quiz.querySelectorAll('input[type="radio"]').forEach(function(r) { r.disabled = true; });
+    document.getElementById('completionBanner').style.display = 'block';
+    document.getElementById('completionBanner').scrollIntoView({ behavior: 'smooth' });
+    downloadResponses();
+  } else {
+    result.className = 'quiz-result fail';
+    result.innerHTML = 'You scored ' + correct + '/' + total + ' (' + pct + '%). You need 100% to complete the lesson. Review the feedback and try again.';
+    if (retryDiv) retryDiv.classList.add('show');
+  }
+}
+
+function toggleAccordion(header) {
+  var item = header.parentElement;
+  var wasOpen = item.classList.contains('open');
+  item.classList.toggle('open');
+  var body = item.querySelector('.accordion-body');
+  if (wasOpen) { body.style.maxHeight = null; }
+  else { body.style.maxHeight = body.scrollHeight + 'px'; }
+}
+
+function switchTab(e, panelId) {
+  var tabRow = e.target.closest('.tab-row');
+  var tabs = tabRow.parentElement;
+  tabs.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+  tabs.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
+  e.target.classList.add('active');
+  document.getElementById(panelId).classList.add('active');
+}
+
+function openCardModal(title, body) {
+  document.getElementById('cardModalTitle').textContent = title;
+  document.getElementById('cardModalBody').innerHTML = body;
+  document.getElementById('cardModalOverlay').classList.add('show');
+}
+
+function closeCardModal(e) {
+  if (!e || e.target === document.getElementById('cardModalOverlay')) {
+    document.getElementById('cardModalOverlay').classList.remove('show');
+  }
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.querySelector('.sidebar-overlay').classList.toggle('show');
+}
+
+function closeSidebarMobile() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.querySelector('.sidebar-overlay').classList.remove('show');
+}
+
+buildNav();
+updateProgress();
+
+function downloadResponses() {
+  var lines = [];
+  lines.push('Exploratory Data Analysis For Epidemiology, Lesson 11');
+  lines.push('Repeated Measures Data');
+  lines.push('');
+  lines.push('Name: ');
+  lines.push('Date: ' + new Date().toLocaleDateString());
+  lines.push('='.repeat(60));
+  lines.push('');
+
+  lines.push('REFLECTIONS');
+  lines.push('-'.repeat(40));
+  for (var r = 1; r <= 4; r++) {
+    var ta = document.getElementById('reflection-' + r);
+    if (ta) {
+      var box = ta.closest('.reflection-box');
+      var prompt = box ? box.querySelector('p') : null;
+      lines.push('');
+      lines.push('Section ' + r + ' Reflection:');
+      if (prompt) lines.push('Q: ' + prompt.textContent.trim());
+      lines.push('A: ' + (ta.value.trim() || '[No response]'));
+    }
+  }
+  var taFinal = document.getElementById('reflection-final');
+  if (taFinal) {
+    var box = taFinal.closest('.reflection-box');
+    var prompt = box ? box.querySelector('p') : null;
+    lines.push('');
+    lines.push('Final Reflection:');
+    if (prompt) lines.push('Q: ' + prompt.textContent.trim());
+    lines.push('A: ' + (taFinal.value.trim() || '[No response]'));
+  }
+  lines.push('');
+  lines.push('='.repeat(60));
+  lines.push('');
+
+  lines.push('SECTION QUIZ RESPONSES');
+  lines.push('-'.repeat(40));
+  for (var s = 0; s <= 3; s++) {
+    var quiz = document.getElementById('quiz-' + s);
+    if (!quiz) continue;
+    lines.push('');
+    lines.push('Section ' + (s + 1) + ' Quiz:');
+    var questions = quiz.querySelectorAll('.quiz-question');
+    questions.forEach(function(q, i) {
+      var qText = q.querySelector('p');
+      var selected = q.querySelector('input[type="radio"]:checked');
+      var selLabel = selected ? selected.closest('.quiz-option') || selected.parentElement : null;
+      lines.push('  Q' + (i + 1) + ': ' + (qText ? qText.textContent.trim() : ''));
+      lines.push('  Selected: ' + (selLabel ? selLabel.textContent.trim() : '[No answer]'));
+      var isCorrect = selected && q.querySelector('.quiz-option.correct input') === selected;
+      lines.push('  Result: ' + (selected ? (isCorrect ? 'Correct' : 'Incorrect') : 'Unanswered'));
+    });
+  }
+  lines.push('');
+  lines.push('='.repeat(60));
+  lines.push('');
+
+  lines.push('FINAL ASSESSMENT RESPONSES');
+  lines.push('-'.repeat(40));
+  var finalQuiz = document.getElementById('quiz-4');
+  if (finalQuiz) {
+    var questions = finalQuiz.querySelectorAll('.quiz-question');
+    questions.forEach(function(q, i) {
+      var qText = q.querySelector('p');
+      var selected = q.querySelector('input[type="radio"]:checked');
+      var selLabel = selected ? selected.closest('.quiz-option') || selected.parentElement : null;
+      lines.push('  Q' + (i + 1) + ': ' + (qText ? qText.textContent.trim() : ''));
+      lines.push('  Selected: ' + (selLabel ? selLabel.textContent.trim() : '[No answer]'));
+      var correctOpt = q.querySelector('.quiz-option.correct');
+      var isCorrect = selected && correctOpt && correctOpt.querySelector('input') === selected;
+      lines.push('  Result: ' + (selected ? (isCorrect ? 'Correct' : 'Incorrect') : 'Unanswered'));
+    });
+  }
+
+  var blob = new Blob([lines.join('\n')], { type: 'text/plain' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'HSCI410_Lesson11_Repeated_Measures_Responses.txt';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+</script>
+</body>
+</html>

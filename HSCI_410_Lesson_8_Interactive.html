@@ -1,0 +1,1312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 8: Introduction to Clustered Data &mdash; HSCI 410</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+
+:root {
+  --teal: #0B7B6B;
+  --dark-teal: #065C50;
+  --light-teal: #6BB5A6;
+  --very-light-teal: #E6F3F0;
+  --dark: #042A25;
+  --text: #2D3436;
+  --text-light: #555;
+  --bg: #FFFFFF;
+  --white: #fff;
+  --accent: #CC0033;
+  --accent-dark: #A3002A;
+  --accent-light: #FDEAEF;
+  --amber: #CC0033;
+  --light-amber: #FDEAEF;
+  --green: #0B7B6B;
+  --light-green: #D1F0EA;
+  --blue: #0B7B6B;
+  --light-blue: #E6F3F0;
+  --rose: #CC0033;
+  --light-rose: #FDEAEF;
+  --purple: #065C50;
+  --light-purple: #E6F3F0;
+  --grey: #E8ECEE;
+  --radius: 12px;
+  --shadow: 0 2px 12px rgba(0,0,0,0.08);
+  --shadow-lg: 0 8px 30px rgba(0,0,0,0.12);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { font-family: 'Open Sans', 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; }
+.sidebar {
+  position: fixed; top: 0; left: 0; width: 280px; height: 100vh;
+  background: linear-gradient(180deg, rgba(6,92,80,0.92) 0%, rgba(4,42,37,0.95) 100%), url('bg_texture.jpg') center/cover no-repeat;
+  color: #fff; z-index: 100; display: flex; flex-direction: column;
+  transition: transform 0.3s ease; overflow: hidden;
+}
+.sidebar-header { padding: 24px 20px 16px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+.sidebar-header h2 { font-size: 16px; font-weight: 600; line-height: 1.4; opacity: 0.95; color: #fff; }
+.sidebar-header p { font-size: 11px; opacity: 0.6; margin-top: 4px; }
+.sidebar-nav { flex: 1; overflow-y: auto; padding: 12px 0; }
+.sidebar-nav::-webkit-scrollbar { width: 4px; }
+.sidebar-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 2px; }
+.nav-item {
+  display: flex; align-items: center; gap: 12px; padding: 10px 20px;
+  cursor: pointer; transition: all 0.2s; font-size: 13.5px; position: relative;
+  color: rgba(255,255,255,0.7);
+}
+.nav-item:hover:not(.locked) { background: rgba(255,255,255,0.08); color: #fff; }
+.nav-item.active { background: rgba(255,255,255,0.12); color: #fff; font-weight: 600; }
+.nav-item.active::before {
+  content: ''; position: absolute; left: 0; top: 6px; bottom: 6px; width: 3px;
+  background: var(--accent); border-radius: 0 2px 2px 0;
+}
+.nav-item .dot {
+  width: 22px; height: 22px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.3);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  font-size: 11px; transition: all 0.3s;
+}
+.nav-item.completed .dot { background: var(--green); border-color: var(--green); }
+.nav-item.completed .dot::after { content: '\2713'; color: #fff; font-weight: 700; }
+.nav-item.active .dot { border-color: var(--accent); background: rgba(204,0,51,0.2); }
+.sidebar-footer { padding: 16px 20px; border-top: 1px solid rgba(255,255,255,0.1); }
+.progress-bar-bg { height: 6px; background: rgba(255,255,255,0.15); border-radius: 3px; overflow: hidden; }
+.progress-bar-fill { height: 100%; background: var(--green); border-radius: 3px; transition: width 0.5s ease; }
+.progress-text { font-size: 11px; opacity: 0.6; margin-top: 6px; }
+.main { margin-left: 280px; min-height: 100vh; }
+.module-page { display: none; animation: fadeIn 0.4s ease; }
+.module-page.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.module-header {
+  background: linear-gradient(135deg, rgba(6,92,80,0.88) 0%, rgba(11,123,107,0.85) 100%), url('bg_texture.jpg') center/cover no-repeat;
+  color: #fff; padding: 60px 48px 48px; position: relative; overflow: hidden;
+}
+.module-header::after {
+  content: ''; position: absolute; right: -60px; top: -60px; width: 300px; height: 300px;
+  background: radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 70%); border-radius: 50%;
+}
+.module-tag { display: inline-block; background: var(--accent); padding: 4px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 12px; }
+.module-header h1 { font-size: 32px; font-weight: 700; line-height: 1.3; max-width: 700px; color: #fff; }
+.module-header .time { font-size: 14px; opacity: 0.7; margin-top: 8px; }
+.module-body { max-width: 800px; margin: 0 auto; padding: 40px 48px 80px; }
+h2 { font-size: 22px; color: var(--dark-teal); margin: 36px 0 16px; font-weight: 700; }
+h3 { font-size: 18px; color: var(--teal); margin: 24px 0 12px; font-weight: 600; }
+p { margin-bottom: 16px; }
+ul, ol { margin: 0 0 16px 24px; }
+li { margin-bottom: 8px; }
+.info-box { border-radius: var(--radius); padding: 24px; margin: 24px 0; border-left: 4px solid var(--teal); }
+.info-box.teal { background: var(--very-light-teal); border-color: var(--teal); }
+.info-box.rose { background: var(--light-rose); border-color: var(--accent); }
+.info-box.amber { background: #FFF8E1; border-color: #FFA000; }
+.info-box .box-title { font-weight: 700; margin-bottom: 6px; color: inherit; }
+.flip-card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin: 24px 0; }
+.flip-card {
+  background: var(--white); border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 24px; text-align: center; cursor: pointer; transition: all 0.3s;
+  border: 2px solid var(--grey); position: relative; min-height: 120px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.flip-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); border-color: var(--teal); }
+.flip-card .card-icon { font-size: 28px; margin-bottom: 8px; }
+.flip-card .card-label { font-weight: 600; font-size: 14px; color: var(--dark-teal); }
+.flip-card .card-hint { font-size: 11px; color: var(--text-light); margin-top: 6px; }
+.accordion { margin: 20px 0; }
+.accordion-item { border: 1px solid var(--grey); border-radius: var(--radius); margin-bottom: 8px; overflow: hidden; }
+.accordion-header {
+  padding: 16px 20px; background: var(--white); cursor: pointer; font-weight: 600;
+  display: flex; justify-content: space-between; align-items: center; font-size: 15px;
+  transition: background 0.2s;
+}
+.accordion-header:hover { background: var(--very-light-teal); }
+.accordion-header::after { content: '+'; font-size: 20px; font-weight: 300; color: var(--teal); transition: transform 0.3s; }
+.accordion-item.open .accordion-header::after { content: '\2212'; }
+.accordion-body { max-height: 0; overflow: hidden; transition: max-height 0.4s ease; }
+.accordion-body-inner { padding: 16px 20px 20px; border-top: 1px solid var(--grey); line-height: 1.7; }
+.tabs { margin: 24px 0; }
+.tab-row { display: flex; border-bottom: 2px solid var(--grey); margin-bottom: 0; overflow-x: auto; }
+.tab-btn {
+  padding: 10px 20px; border: none; background: none; cursor: pointer;
+  font-weight: 600; font-size: 14px; color: var(--text-light); border-bottom: 2px solid transparent;
+  margin-bottom: -2px; transition: all 0.2s; white-space: nowrap;
+}
+.tab-btn.active { color: var(--teal); border-bottom-color: var(--teal); }
+.tab-panel { display: none; padding: 20px 0; }
+.tab-panel.active { display: block; }
+.data-table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; }
+.data-table th { background: var(--dark-teal); color: #fff; padding: 12px 16px; text-align: left; font-weight: 600; }
+.data-table td { padding: 10px 16px; border-bottom: 1px solid var(--grey); }
+.data-table tr:nth-child(even) td { background: #f8fafa; }
+.data-table tr:hover td { background: var(--very-light-teal); }
+.formula-box {
+  background: #f8fafc; border: 2px solid var(--grey); border-radius: var(--radius);
+  padding: 20px 24px; margin: 16px 0; text-align: center; font-size: 16px;
+  font-family: 'Georgia', serif;
+}
+.formula-box .formula-label { font-size: 12px; color: var(--text-light); margin-bottom: 6px; font-family: 'Open Sans', sans-serif; }
+.scenario-card {
+  background: linear-gradient(135deg, #f0faf8 0%, #e6f3f0 100%);
+  border-radius: var(--radius); padding: 24px; margin: 20px 0;
+  border: 1px solid rgba(11,123,107,0.15);
+}
+.scenario-card .scenario-title { font-weight: 700; color: var(--dark-teal); margin-bottom: 8px; }
+.quiz-section { background: #f8fafa; border-radius: var(--radius); padding: 32px; margin: 40px 0; border: 2px solid var(--grey); }
+.quiz-section h3 { margin-top: 0; }
+.quiz-question { margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid var(--grey); }
+.quiz-question:last-of-type { border-bottom: none; margin-bottom: 16px; padding-bottom: 0; }
+.quiz-question p { font-weight: 600; margin-bottom: 12px; }
+.quiz-option { display: block; padding: 10px 16px; margin: 6px 0; border-radius: 8px; cursor: pointer; transition: all 0.2s; border: 1px solid var(--grey); }
+.quiz-option:hover { background: var(--very-light-teal); }
+.quiz-option input { margin-right: 10px; }
+.quiz-option.correct { background: var(--light-green); border-color: var(--green); }
+.quiz-option.incorrect { background: var(--light-rose); border-color: var(--accent); }
+.quiz-explanation { display: none; margin-top: 8px; padding: 10px 14px; background: var(--very-light-teal); border-radius: 8px; font-size: 13.5px; }
+.quiz-explanation.show { display: block; }
+.quiz-result { padding: 16px 20px; border-radius: 8px; font-weight: 600; margin-top: 16px; display: none; }
+.quiz-result.pass { background: var(--light-green); color: var(--dark-teal); }
+.quiz-result.fail { background: var(--light-rose); color: var(--accent-dark); }
+.quiz-retry { display: none; margin-top: 12px; }
+.quiz-retry.show { display: block; }
+.btn {
+  display: inline-block; padding: 12px 28px; border-radius: 8px; font-weight: 600;
+  font-size: 15px; border: none; cursor: pointer; transition: all 0.2s;
+}
+.btn-primary { background: var(--teal); color: #fff; }
+.btn-primary:hover { background: var(--dark-teal); }
+.btn-accent { background: var(--accent); color: #fff; }
+.btn-accent:hover { background: var(--accent-dark); }
+.btn-outline { background: transparent; border: 2px solid var(--teal); color: var(--teal); }
+.btn-outline:hover { background: var(--teal); color: #fff; }
+.btn.disabled { opacity: 0.5; pointer-events: none; }
+.reflection-box {
+  background: linear-gradient(135deg, #fdf6ff 0%, #f5f0ff 100%);
+  border: 2px solid #d4bfff; border-radius: var(--radius); padding: 24px; margin: 24px 0;
+}
+.reflection-box h3 { color: #6B21A8; margin-top: 0; }
+.reflection-box textarea {
+  width: 100%; min-height: 100px; border: 1px solid #d4bfff; border-radius: 8px;
+  padding: 12px; font-family: inherit; font-size: 14px; resize: vertical; margin: 8px 0;
+}
+.reflection-box .btn-save { background: #7C3AED; color: #fff; border: none; padding: 8px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; }
+.reflection-box .btn-save:hover { background: #6B21A8; }
+.reflection-status { font-size: 13px; margin-top: 6px; color: #6B21A8; display: none; }
+.reflection-status.show { display: block; }
+.section-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 48px; padding-top: 24px; border-top: 2px solid var(--grey); }
+.req-note { font-size: 13px; margin-top: 12px; }
+.req-check { color: var(--green); }
+.req-pending { color: var(--accent); }
+.completion-banner {
+  display: none; background: linear-gradient(135deg, var(--teal) 0%, var(--dark-teal) 100%);
+  color: #fff; padding: 48px; border-radius: var(--radius); text-align: center; margin: 40px 0;
+}
+.completion-banner h2 { color: #fff; margin: 0 0 12px; font-size: 28px; }
+.sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 99; }
+.card-modal-overlay {
+  display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.6); z-index: 1000; align-items: center; justify-content: center; padding: 20px;
+}
+.card-modal-overlay.show { display: flex; }
+.card-modal {
+  background: #fff; border-radius: var(--radius); max-width: 600px; width: 100%;
+  max-height: 80vh; overflow-y: auto; padding: 32px; position: relative;
+  box-shadow: var(--shadow-lg);
+}
+.card-modal h3 { color: var(--dark-teal); margin: 0 0 16px; padding-right: 30px; }
+.card-modal-close {
+  position: absolute; top: 16px; right: 16px; background: none; border: none;
+  font-size: 24px; cursor: pointer; color: var(--text-light); width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center; border-radius: 50%;
+}
+.card-modal-close:hover { background: var(--grey); }
+.welcome-hero {
+  min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, rgba(6,92,80,0.88) 0%, rgba(4,42,37,0.92) 100%), url('bg_texture.jpg') center/cover no-repeat;
+  color: #fff; text-align: center; padding: 48px 24px; position: relative; overflow: hidden;
+}
+.welcome-hero::before {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(circle at 30% 70%, rgba(11,123,107,0.25) 0%, transparent 50%),
+              radial-gradient(circle at 70% 30%, rgba(107,181,166,0.12) 0%, transparent 40%);
+}
+.welcome-hero > * { position: relative; z-index: 1; }
+.welcome-hero h1 { font-size: 48px; font-weight: 800; margin-bottom: 12px; line-height: 1.2; }
+.welcome-hero .subtitle { font-size: 20px; opacity: 0.8; margin-bottom: 32px; }
+.welcome-hero .start-btn {
+  background: var(--accent); color: #fff; padding: 16px 40px; border-radius: 50px;
+  font-size: 17px; font-weight: 700; border: none; cursor: pointer;
+  transition: all 0.3s; box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+.welcome-hero .start-btn:hover { background: var(--accent-dark); transform: translateY(-2px) scale(1.02); box-shadow: 0 8px 30px rgba(0,0,0,0.3); }
+.welcome-details { max-width: 560px; margin-top: 40px; text-align: left; background: rgba(255,255,255,0.08); border-radius: 16px; padding: 28px; backdrop-filter: blur(10px); }
+.welcome-details h3 { font-size: 16px; margin-bottom: 12px; opacity: 0.9; color: #fff; }
+.welcome-details ul { list-style: none; margin: 0; padding: 0; }
+.welcome-details li { padding: 4px 0; font-size: 14px; opacity: 0.8; }
+.welcome-details li::before { content: '\2726 '; color: #fff; opacity: 0.6; }
+.mobile-header {
+  display: none; position: fixed; top: 0; left: 0; right: 0; height: 56px;
+  background: var(--dark); color: #fff; z-index: 101;
+  padding: 0 16px; align-items: center; gap: 12px;
+}
+.mobile-header button { background: none; border: none; color: #fff; font-size: 24px; cursor: pointer; padding: 4px; }
+.mobile-header h3 { font-size: 14px; font-weight: 600; color: #fff; }
+@media (max-width: 768px) {
+  .sidebar { transform: translateX(-100%); width: 280px; }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar-overlay.show { display: block; }
+  .mobile-header { display: flex; }
+  .main { margin-left: 0; padding-top: 56px; }
+  .module-header { padding: 32px 20px 28px; }
+  .module-header h1 { font-size: 24px; }
+  .module-body { padding: 24px 20px 60px; }
+  .flip-card-grid { grid-template-columns: 1fr; }
+}
+
+</style>
+</head>
+<body>
+<div class="mobile-header">
+  <button onclick="toggleSidebar()">&#9776;</button>
+  <h3>HSCI 410 &mdash; Lesson 8</h3>
+</div>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <img src="sfu_logo_white.webp" alt="SFU &mdash; Simon Fraser University" style="width:100%;max-width:180px;margin-bottom:12px;">
+    <h2>Exploratory Data Analysis For Epidemiology</h2>
+    <p>Kiffer G. Card, PhD</p>
+  </div>
+  <div class="sidebar-nav" id="sidebarNav"></div>
+  <div class="sidebar-footer">
+    <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressFill" style="width:0%"></div></div>
+    <div class="progress-text" id="progressText">0% complete</div>
+  </div>
+</div>
+
+<div class="main" id="mainContent">
+
+<!-- ============ WELCOME ============ -->
+<div class="module-page active" id="page-welcome">
+<div class="welcome-hero">
+  <h1>Introduction to Clustered Data</h1>
+  <p class="subtitle">Exploratory Data Analysis For Epidemiology</p>
+  <p style="font-size:15px;opacity:0.7;margin-bottom:32px;">Kiffer G. Card, PhD, Faculty of Health Sciences, Simon Fraser University</p>
+  <button class="start-btn" onclick="goToModule(0)">Begin Lesson &rarr;</button>
+  <div class="welcome-details">
+    <h3>Learning objectives for this lesson:</h3>
+    <ul>
+      <li>Recognize and describe different types of clustered (hierarchical) data structures in epidemiology</li>
+      <li>Explain why observations within clusters are correlated and how this affects standard statistical analyses</li>
+      <li>Calculate and interpret the intraclass correlation coefficient (ICC) and design effect (deff)</li>
+      <li>Understand the impact of clustering on standard errors and inference for both continuous and discrete outcomes</li>
+      <li>Describe key methods for dealing with clustering, including fixed effects, robust variance estimators, and survey methods</li>
+      <li>Evaluate the consequences of ignoring clustering in epidemiologic analyses</li>
+    </ul>
+  </div>
+  <p style="font-size:12px;opacity:0.5;margin-top:32px;max-width:560px;text-align:center;line-height:1.5;">This course was developed by Kiffer G. Card, PhD, as a companion to Dohoo, I. R., Martin, S. W., &amp; Stryhn, H. (2012). <em>Methods in Epidemiologic Research.</em> VER Inc.</p>
+</div>
+</div>
+
+<!-- ============ SECTION 1: Introduction & Types of Clustered Data ============ -->
+<div class="module-page" id="page-0">
+<div class="module-header">
+  <div class="module-tag">Section 1</div>
+  <h1>Introduction &amp; Types of Clustered Data</h1>
+  <div class="time">&#9201; Estimated time: 15 minutes</div>
+</div>
+<div class="module-body">
+
+<h2>What Is Clustered Data?</h2>
+<p>In many epidemiologic studies, observations are not independent. Instead, they are <strong>grouped within higher-level units</strong>&mdash;these groups are called <strong>clusters</strong>. Clustered (or hierarchical) data arises whenever the study design or the natural structure of the population creates groupings such that observations within the same group tend to be more similar to each other than to observations in other groups.</p>
+
+<div class="info-box teal">
+  <div class="box-title">Why Clustering Matters</div>
+  <p>Standard statistical methods assume observations are independent. When data are clustered, this assumption is violated: observations within the same cluster share common influences (e.g., the same hospital, the same household, the same geographic region). Ignoring clustering can lead to <strong>underestimated standard errors</strong>, <strong>inflated Type I error rates</strong>, and potentially <strong>biased point estimates</strong>.</p>
+</div>
+
+<h2>Types of Clustered Data</h2>
+<p>Clustering arises from many different sources. Understanding the type of clustering present in your data is the first step toward choosing an appropriate analytical strategy.</p>
+
+<div class="flip-card-grid">
+  <div class="flip-card" onclick="openCardModal('Common Environment Clustering', 'Observations share a common environment or context. Examples include animals in the same &lt;strong&gt;herd&lt;/strong&gt;, patients in the same &lt;strong&gt;hospital&lt;/strong&gt;, or students in the same &lt;strong&gt;school&lt;/strong&gt;. Subjects within the same environment are exposed to similar conditions (e.g., management practices, institutional policies, teaching quality), which induces correlation among their outcomes.')">
+    <div class="card-icon">&#127968;</div>
+    <div class="card-label">Common Environment</div>
+    <div class="card-hint">Click to learn more</div>
+  </div>
+  <div class="flip-card" onclick="openCardModal('Spatial Clustering', 'Geographic proximity leads to shared &lt;strong&gt;environmental exposures&lt;/strong&gt;. Subjects living in the same neighbourhood, city, or region may share air quality, water sources, socioeconomic conditions, and access to healthcare. This spatial correlation means that nearby observations are more alike than distant ones.')">
+    <div class="card-icon">&#127758;</div>
+    <div class="card-label">Spatial Clustering</div>
+    <div class="card-hint">Click to learn more</div>
+  </div>
+  <div class="flip-card" onclick="openCardModal('Repeated Measures', 'Multiple observations on the &lt;strong&gt;same subject&lt;/strong&gt; over time. Each subject serves as their own cluster. Measurements taken on the same individual are correlated because they share the same genetic makeup, baseline health, and other stable characteristics. Longitudinal studies and crossover trials produce this type of clustering.')">
+    <div class="card-icon">&#128337;</div>
+    <div class="card-label">Repeated Measures</div>
+    <div class="card-hint">Click to learn more</div>
+  </div>
+  <div class="flip-card" onclick="openCardModal('Hierarchical Structures', 'Data with multiple levels of nesting. For example, &lt;strong&gt;patients&lt;/strong&gt; nested within &lt;strong&gt;practices&lt;/strong&gt; nested within &lt;strong&gt;regions&lt;/strong&gt;. Each level of the hierarchy introduces its own source of variation. The correlation between two observations depends on how many levels of the hierarchy they share.')">
+    <div class="card-icon">&#128200;</div>
+    <div class="card-label">Hierarchical</div>
+    <div class="card-hint">Click to learn more</div>
+  </div>
+  <div class="flip-card" onclick="openCardModal('Cross-Classified Structures', 'Units are simultaneously classified by &lt;strong&gt;two or more non-nested&lt;/strong&gt; grouping factors. For example, students classified by both &lt;strong&gt;school&lt;/strong&gt; and &lt;strong&gt;neighbourhood&lt;/strong&gt;&mdash;schools do not nest within neighbourhoods or vice versa. Cross-classified structures require special modelling approaches that account for both grouping factors simultaneously.')">
+    <div class="card-icon">&#128256;</div>
+    <div class="card-label">Cross-Classified</div>
+    <div class="card-hint">Click to learn more</div>
+  </div>
+</div>
+
+<div class="accordion">
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">Common environment: Animals in herds, patients in hospitals</div>
+    <div class="accordion-body"><div class="accordion-body-inner">
+      <p>In veterinary epidemiology, animals within the same herd share management practices, nutrition, housing, and disease exposure. Similarly, patients within the same hospital share institutional protocols, staffing levels, and local disease ecology. These shared exposures create <strong>within-cluster correlation</strong>&mdash;outcomes for subjects in the same cluster are more alike than for subjects in different clusters.</p>
+    </div></div>
+  </div>
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">Spatial clustering: Geographic proximity and shared exposures</div>
+    <div class="accordion-body"><div class="accordion-body-inner">
+      <p>People living near each other are often exposed to similar environmental factors: air pollution, water quality, neighbourhood safety, socioeconomic deprivation, and access to healthcare services. This means that health outcomes for individuals in the same geographic area are correlated. Studies that sample from defined geographic areas (e.g., census tracts, postal codes) must account for this spatial clustering.</p>
+    </div></div>
+  </div>
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">Repeated measures: Longitudinal and crossover designs</div>
+    <div class="accordion-body"><div class="accordion-body-inner">
+      <p>When the same subjects are measured multiple times (e.g., before and after treatment, or at regular intervals in a cohort study), each subject forms a cluster. The repeated observations within a subject are correlated because stable individual characteristics (genetics, baseline health, behaviour) influence all measurements. The correlation structure depends on the timing and spacing of measurements.</p>
+    </div></div>
+  </div>
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">Hierarchical structures: Multi-level nesting</div>
+    <div class="accordion-body"><div class="accordion-body-inner">
+      <p>Many real-world data structures have multiple levels. For example, students are nested within classrooms, classrooms within schools, and schools within districts. Each level contributes its own source of variation. In epidemiology, patients may be nested within physician practices, practices within health regions, and regions within provinces. <strong>Split-plot designs</strong> from experimental settings also create hierarchical structures where treatments are applied at different levels of the hierarchy.</p>
+    </div></div>
+  </div>
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">Cross-classified and split-plot designs</div>
+    <div class="accordion-body"><div class="accordion-body-inner">
+      <p>Cross-classified structures arise when subjects belong to multiple grouping factors that do not nest within each other. For example, students may be classified by both school and neighbourhood&mdash;students from the same neighbourhood may attend different schools, and students from the same school may live in different neighbourhoods. <strong>Split-plot designs</strong>, common in agricultural experiments, have some factors applied at the whole-plot (cluster) level and others at the subplot (individual) level.</p>
+    </div></div>
+  </div>
+</div>
+
+<h2>Sources of Variation &amp; Predictor Clustering</h2>
+<p>In clustered data, the total variation in the outcome can be decomposed into <strong>between-cluster variation</strong> (differences between groups) and <strong>within-cluster variation</strong> (differences among individuals within the same group). The relative magnitude of these two sources of variation determines the strength of the clustering effect.</p>
+
+<p>An important consideration is <strong>predictor clustering</strong>&mdash;when predictor variables also vary between clusters. If both the exposure and the outcome vary at the cluster level, group-level associations may differ from individual-level associations. This is the basis of the <strong>ecological fallacy</strong>: inferring individual-level relationships from aggregate (group-level) data.</p>
+
+<div class="formula-box">
+  <div class="formula-label">Correlation Between Observations in the Same Cluster (Eq 20.1)</div>
+  &rho; = cov(<em>Y</em><sub>ij</sub>, <em>Y</em><sub>ik</sub>) / &radic;(var(<em>Y</em><sub>ij</sub>) &times; var(<em>Y</em><sub>ik</sub>))
+</div>
+
+<!-- Section 1 Quiz -->
+<div class="quiz-section" id="quiz-0">
+  <h3>Section 1 Knowledge Check</h3>
+  <div class="quiz-question" data-correct="b">
+    <p>1. Which is an example of clustered data?</p>
+    <label class="quiz-option"><input type="radio" name="q0-0" value="a"> Independent random samples from different populations</label>
+    <label class="quiz-option"><input type="radio" name="q0-0" value="b"> Patients nested within hospitals where outcomes may be correlated</label>
+    <label class="quiz-option"><input type="radio" name="q0-0" value="c"> A single measurement per subject</label>
+    <label class="quiz-option"><input type="radio" name="q0-0" value="d"> Data with no hierarchical structure</label>
+    <div class="quiz-explanation">Clustering occurs when observations are grouped within higher-level units (like hospitals), creating potential correlation among observations within the same group.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>2. What is cross-classified data?</p>
+    <label class="quiz-option"><input type="radio" name="q0-1" value="a"> Data where each observation belongs to exactly one cluster</label>
+    <label class="quiz-option"><input type="radio" name="q0-1" value="b"> Data where units are simultaneously classified by two or more non-nested grouping factors</label>
+    <label class="quiz-option"><input type="radio" name="q0-1" value="c"> Data with only one level of hierarchy</label>
+    <label class="quiz-option"><input type="radio" name="q0-1" value="d"> Data where all observations are independent</label>
+    <div class="quiz-explanation">Cross-classified structures occur when units belong to multiple grouping factors simultaneously (e.g., students classified by both school and neighbourhood), unlike nested/hierarchical structures.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="c">
+    <p>3. Why does predictor clustering matter?</p>
+    <label class="quiz-option"><input type="radio" name="q0-2" value="a"> It makes computation faster</label>
+    <label class="quiz-option"><input type="radio" name="q0-2" value="b"> It has no practical effect</label>
+    <label class="quiz-option"><input type="radio" name="q0-2" value="c"> Group-level associations may differ from individual-level associations (ecological fallacy)</label>
+    <label class="quiz-option"><input type="radio" name="q0-2" value="d"> It eliminates confounding</label>
+    <div class="quiz-explanation">When predictors are clustered, the relationship observed at the group (ecological) level may not reflect the individual-level relationship&mdash;this is the ecological fallacy.</div>
+  </div>
+
+  <div class="quiz-result" id="quizResult-0"></div>
+  <div class="quiz-retry" id="quizRetry-0"><button class="btn btn-outline" onclick="retryQuiz(0)">Retry Quiz</button></div>
+  <button class="btn btn-primary" onclick="checkQuiz(0)" style="margin-top:12px;">Check Answers</button>
+</div>
+
+<div class="reflection-box">
+  <h3>Reflection</h3>
+  <p>Think of a research study in your field. What natural clustering structures might exist in the data? How might ignoring this clustering affect your conclusions?</p>
+  <textarea id="reflection-1" placeholder="Type your reflection here..."></textarea>
+  <button class="btn-save" onclick="checkReflection(1)">Save Reflection</button>
+  <div class="reflection-status" id="reflectionStatus-1">Reflection saved!</div>
+</div>
+
+<div class="section-nav">
+  <button class="btn btn-outline" onclick="goToModule(-1)">&larr; Welcome</button>
+  <div>
+    <button class="btn btn-primary disabled" id="nextBtn-0" onclick="goToModule(1)">Next Section &rarr;</button>
+    <div class="req-note" id="reqNote-0"><span class="req-pending">*</span> Complete the quiz and reflection to continue.</div>
+  </div>
+</div>
+
+</div>
+</div>
+
+<!-- ============ SECTION 2: Effects of Clustering on Statistical Analysis ============ -->
+<div class="module-page" id="page-1">
+<div class="module-header">
+  <div class="module-tag">Section 2</div>
+  <h1>Effects of Clustering on Statistical Analysis</h1>
+  <div class="time">&#9201; Estimated time: 20 minutes</div>
+</div>
+<div class="module-body">
+
+<h2>Impact on Standard Errors</h2>
+<p>The most important consequence of clustering is its effect on <strong>standard errors</strong>. When observations within clusters are positively correlated (as is almost always the case), treating them as independent leads to standard errors that are <strong>too small</strong>. This in turn produces test statistics that are too large, P-values that are too small, and confidence intervals that are too narrow&mdash;all of which inflate the <strong>Type I error rate</strong>.</p>
+
+<div class="scenario-card">
+  <div class="scenario-title">How Ignoring Clustering Inflates Significance</div>
+  <p>Imagine a study of 1,000 patients in 20 hospitals (50 per hospital). If the ICC is 0.05, the design effect is 1 + (50 &minus; 1)(0.05) = <strong>3.45</strong>. The effective sample size is only 1,000/3.45 &asymp; <strong>290</strong> rather than 1,000. A naive analysis treating all 1,000 observations as independent would dramatically overstate the precision of estimates.</p>
+</div>
+
+<h2>The Intraclass Correlation Coefficient (ICC)</h2>
+<p>For continuous outcomes, the <strong>ICC</strong> (intraclass correlation coefficient) measures the proportion of total variance that is attributable to <strong>between-cluster differences</strong>. It quantifies the degree of similarity among observations within the same cluster.</p>
+
+<div class="formula-box">
+  <div class="formula-label">Intraclass Correlation Coefficient (Eq 20.2)</div>
+  &rho; = &sigma;&sup2;<sub>g</sub> / (&sigma;&sup2;<sub>g</sub> + &sigma;&sup2;)
+</div>
+
+<p>Here, &sigma;&sup2;<sub>g</sub> is the between-cluster variance and &sigma;&sup2; is the within-cluster variance. An ICC of 0 means no clustering effect (all variance is within clusters), while an ICC of 1 means all variance is between clusters.</p>
+
+<h2>The Design Effect (deff)</h2>
+<p>The <strong>design effect</strong> (also called the variance inflation factor in the clustering context) quantifies how much the variance of an estimate is inflated due to clustering, compared to what it would be under simple random sampling.</p>
+
+<div class="formula-box">
+  <div class="formula-label">Design Effect (Eq 20.3)</div>
+  deff = 1 + (m&#772; &minus; 1)&rho;
+</div>
+
+<p>Where m&#772; is the average cluster size and &rho; is the ICC. The practical meaning: if ICC = 0.05 and cluster size = 20, then deff = 1 + (20 &minus; 1)(0.05) = <strong>1.95</strong>, meaning the effective sample size is roughly halved.</p>
+
+<div class="formula-box">
+  <div class="formula-label">Corrected Variance (Eq 20.4)</div>
+  var<sub>corrected</sub> = deff &times; var<sub>naive</sub>
+</div>
+
+<div class="tabs">
+  <div class="tab-row">
+    <button class="tab-btn active" onclick="switchTab(event,'tab-continuous')">Continuous Outcomes</button>
+    <button class="tab-btn" onclick="switchTab(event,'tab-discrete')">Discrete Outcomes</button>
+  </div>
+  <div class="tab-panel active" id="tab-continuous">
+    <h3>Effects on Continuous Outcomes</h3>
+    <p>For continuous outcomes, the ICC directly measures the proportion of total variance due to between-cluster differences. The design effect formula deff = 1 + (m&#772; &minus; 1)&rho; applies straightforwardly. The corrected standard error is obtained by multiplying the naive SE by &radic;deff.</p>
+    <p><strong>Example:</strong> With 20 clusters of 50 subjects each (n = 1,000), ICC = 0.05, the deff = 3.45. A naive SE of 0.50 would become 0.50 &times; &radic;3.45 = <strong>0.93</strong>&mdash;nearly double the naive estimate.</p>
+  </div>
+  <div class="tab-panel" id="tab-discrete">
+    <h3>Effects on Discrete Outcomes</h3>
+    <p>With binary or other discrete outcomes, the effects of clustering are analogous but more complex. Clustering affects not only the standard error estimation but can also influence <strong>point estimates</strong>. The design effect concept extends to discrete outcomes, but the ICC for binary data is defined differently and its estimation is more involved.</p>
+    <p>For binary outcomes, the variance of a proportion under clustering is inflated by a factor analogous to the deff. The practical consequence is the same: ignoring clustering leads to underestimated SEs and inflated Type I error.</p>
+  </div>
+</div>
+
+<div class="data-table" style="overflow-x:auto;">
+<table class="data-table">
+  <thead>
+    <tr><th>Analysis Approach</th><th>SE Estimate</th><th>95% CI Width</th><th>P-value</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Naive (ignoring clustering)</td><td>0.50</td><td>1.96</td><td>0.001</td></tr>
+    <tr><td>Cluster-adjusted (deff = 3.45)</td><td>0.93</td><td>3.64</td><td>0.087</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>This table illustrates how accounting for clustering nearly doubles the standard error, widens the confidence interval, and can change a &ldquo;significant&rdquo; result to a non-significant one.</p>
+
+<!-- Section 2 Quiz -->
+<div class="quiz-section" id="quiz-1">
+  <h3>Section 2 Knowledge Check</h3>
+  <div class="quiz-question" data-correct="c">
+    <p>1. If the ICC is 0.10 and average cluster size is 21, what is the design effect?</p>
+    <label class="quiz-option"><input type="radio" name="q1-0" value="a"> 1.10</label>
+    <label class="quiz-option"><input type="radio" name="q1-0" value="b"> 2.00</label>
+    <label class="quiz-option"><input type="radio" name="q1-0" value="c"> 3.00</label>
+    <label class="quiz-option"><input type="radio" name="q1-0" value="d"> 21.00</label>
+    <div class="quiz-explanation">deff = 1 + (m&#772; &minus; 1)&rho; = 1 + (21 &minus; 1)(0.10) = 1 + 2.0 = 3.0. This means the effective sample size is only about one-third of the nominal sample size.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="c">
+    <p>2. What happens to Type I error rates when clustering is ignored?</p>
+    <label class="quiz-option"><input type="radio" name="q1-1" value="a"> They decrease</label>
+    <label class="quiz-option"><input type="radio" name="q1-1" value="b"> They remain the same</label>
+    <label class="quiz-option"><input type="radio" name="q1-1" value="c"> They increase because standard errors are underestimated</label>
+    <label class="quiz-option"><input type="radio" name="q1-1" value="d"> They become unpredictable</label>
+    <div class="quiz-explanation">Ignoring clustering leads to artificially small standard errors, which makes test statistics too large and P-values too small, inflating the Type I error rate (false positives).</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>3. The ICC represents:</p>
+    <label class="quiz-option"><input type="radio" name="q1-2" value="a"> The correlation between different clusters</label>
+    <label class="quiz-option"><input type="radio" name="q1-2" value="b"> The proportion of total variance that is between clusters</label>
+    <label class="quiz-option"><input type="radio" name="q1-2" value="c"> The within-cluster variance only</label>
+    <label class="quiz-option"><input type="radio" name="q1-2" value="d"> The measurement error</label>
+    <div class="quiz-explanation">The ICC = &sigma;&sup2;<sub>g</sub> / (&sigma;&sup2;<sub>g</sub> + &sigma;&sup2;) quantifies the proportion of total variance attributable to differences between clusters. Higher ICC means more clustering effect.</div>
+  </div>
+
+  <div class="quiz-result" id="quizResult-1"></div>
+  <div class="quiz-retry" id="quizRetry-1"><button class="btn btn-outline" onclick="retryQuiz(1)">Retry Quiz</button></div>
+  <button class="btn btn-primary" onclick="checkQuiz(1)" style="margin-top:12px;">Check Answers</button>
+</div>
+
+<div class="reflection-box">
+  <h3>Reflection</h3>
+  <p>A study reports p = 0.03 for a treatment effect, but the data come from 10 hospitals with 50 patients each. If the ICC is 0.05, calculate the design effect and discuss whether the finding might still be significant after accounting for clustering.</p>
+  <textarea id="reflection-2" placeholder="Type your reflection here..."></textarea>
+  <button class="btn-save" onclick="checkReflection(2)">Save Reflection</button>
+  <div class="reflection-status" id="reflectionStatus-2">Reflection saved!</div>
+</div>
+
+<div class="section-nav">
+  <button class="btn btn-outline" onclick="goToModule(0)">&larr; Section 1</button>
+  <div>
+    <button class="btn btn-primary disabled" id="nextBtn-1" onclick="goToModule(2)">Next Section &rarr;</button>
+    <div class="req-note" id="reqNote-1"><span class="req-pending">*</span> Complete the quiz and reflection to continue.</div>
+  </div>
+</div>
+
+</div>
+</div>
+
+<!-- ============ SECTION 3: Simulation Studies & Impact of Clustering ============ -->
+<div class="module-page" id="page-2">
+<div class="module-header">
+  <div class="module-tag">Section 3</div>
+  <h1>Simulation Studies &amp; Impact of Clustering</h1>
+  <div class="time">&#9201; Estimated time: 15 minutes</div>
+</div>
+<div class="module-body">
+
+<h2>Why Simulation Studies?</h2>
+<p>Simulation studies allow us to examine the <strong>practical consequences</strong> of ignoring clustering under controlled conditions. By generating data with known clustering structures and then analysing it both correctly and incorrectly, we can quantify the bias and Type I error inflation that results from ignoring the cluster structure.</p>
+
+<div class="info-box rose">
+  <div class="box-title">Warning: Ignoring Clustering Can Be Dangerous</div>
+  <p>Even <strong>moderate ICC values</strong> (e.g., 0.01&ndash;0.05) can lead to substantially inflated Type I error rates when cluster sizes are large. A study with ICC = 0.01 and 50 clusters of 50 subjects can have an actual Type I error rate of <strong>10&ndash;15%</strong> instead of the nominal 5%. Researchers who ignore clustering risk reporting findings that appear statistically significant but are actually false positives.</p>
+</div>
+
+<h2>Binary Outcome Simulations</h2>
+<p>Simulation studies with binary outcomes demonstrate that the consequences of ignoring clustering can be severe. Even when the ICC is small, the combination of within-cluster correlation and moderate-to-large cluster sizes can inflate the actual Type I error rate well beyond the nominal 5% level.</p>
+
+<div class="accordion">
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">Scenario 1: Small ICC, large clusters (ICC = 0.01, n = 50 per cluster)</div>
+    <div class="accordion-body"><div class="accordion-body-inner">
+      <p>With ICC = 0.01 and 50 subjects per cluster, the design effect is deff = 1 + (50 &minus; 1)(0.01) = <strong>1.49</strong>. Although this seems modest, simulation studies show the actual Type I error rate can reach <strong>10&ndash;15%</strong> depending on the number of clusters and the analysis method. The inflation occurs because the naive analysis assumes 50 independent observations per cluster when, in reality, the effective number is only about 34.</p>
+    </div></div>
+  </div>
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">Scenario 2: Moderate ICC, moderate clusters (ICC = 0.05, n = 20 per cluster)</div>
+    <div class="accordion-body"><div class="accordion-body-inner">
+      <p>With ICC = 0.05 and 20 subjects per cluster, the design effect is deff = 1 + (20 &minus; 1)(0.05) = <strong>1.95</strong>. The effective sample size is nearly halved. Simulation studies show actual Type I error rates of <strong>15&ndash;25%</strong> when the naive analysis is used. This means that one in four or five &ldquo;significant&rdquo; findings may be false positives.</p>
+    </div></div>
+  </div>
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">Scenario 3: Large ICC, any cluster size (ICC = 0.10, n = 30 per cluster)</div>
+    <div class="accordion-body"><div class="accordion-body-inner">
+      <p>With ICC = 0.10 and 30 subjects per cluster, the design effect is deff = 1 + (30 &minus; 1)(0.10) = <strong>3.90</strong>. The effective sample size is reduced to about one-quarter of the nominal size. Simulation studies demonstrate Type I error rates exceeding <strong>30&ndash;40%</strong> when clustering is ignored. This level of inflation makes the naive analysis essentially unreliable.</p>
+    </div></div>
+  </div>
+</div>
+
+<h2>Confounding by Cluster</h2>
+<p>Beyond inflating standard errors, clustering can also introduce <strong>confounding</strong>. If a cluster-level variable is associated with both the exposure and the outcome, it acts as a confounder. Failure to account for the clustering structure means this confounding is not addressed, which can lead to <strong>biased point estimates</strong>&mdash;not just incorrect standard errors.</p>
+
+<div class="scenario-card">
+  <div class="scenario-title">Example: Confounding by Region</div>
+  <p>Suppose disease prevalence varies by region, and exposure to a risk factor also varies by region. If we analyse the data without accounting for region (the cluster), the association between exposure and disease will be confounded by regional differences. The estimated exposure effect may be biased upward or downward depending on the direction and magnitude of the confounding.</p>
+  <p>The magnitude of this bias depends on the <strong>correlation between the predictor and the cluster-level confounder</strong>. Stronger correlations produce greater bias.</p>
+</div>
+
+<!-- Section 3 Quiz -->
+<div class="quiz-section" id="quiz-2">
+  <h3>Section 3 Knowledge Check</h3>
+  <div class="quiz-question" data-correct="c">
+    <p>1. In simulations with binary outcomes and moderate ICC, ignoring clustering:</p>
+    <label class="quiz-option"><input type="radio" name="q2-0" value="a"> Has minimal effect</label>
+    <label class="quiz-option"><input type="radio" name="q2-0" value="b"> Only affects confidence intervals</label>
+    <label class="quiz-option"><input type="radio" name="q2-0" value="c"> Can inflate actual Type I error rates well beyond the nominal 5% level</label>
+    <label class="quiz-option"><input type="radio" name="q2-0" value="d"> Improves statistical power</label>
+    <div class="quiz-explanation">Simulation studies consistently show that even moderate ICCs (e.g., 0.01&ndash;0.05) combined with moderate-to-large cluster sizes can inflate actual Type I error rates to 10&ndash;15% or higher when clustering is ignored.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>2. How can clustering lead to confounding?</p>
+    <label class="quiz-option"><input type="radio" name="q2-1" value="a"> It cannot&mdash;clustering only affects variance</label>
+    <label class="quiz-option"><input type="radio" name="q2-1" value="b"> Cluster-level variables correlated with both exposure and outcome create confounding</label>
+    <label class="quiz-option"><input type="radio" name="q2-1" value="c"> Clustering eliminates all confounding</label>
+    <label class="quiz-option"><input type="radio" name="q2-1" value="d"> Only individual-level variables can confound</label>
+    <div class="quiz-explanation">If a cluster-level variable (e.g., region) is associated with both the exposure and the outcome, it acts as a confounder. Ignoring the clustering structure means this confounding is not addressed.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="c">
+    <p>3. The inflation of Type I error due to clustering depends on:</p>
+    <label class="quiz-option"><input type="radio" name="q2-2" value="a"> Only the ICC</label>
+    <label class="quiz-option"><input type="radio" name="q2-2" value="b"> Only the cluster size</label>
+    <label class="quiz-option"><input type="radio" name="q2-2" value="c"> Both the ICC and the cluster size</label>
+    <label class="quiz-option"><input type="radio" name="q2-2" value="d"> Neither&mdash;it is always the same</label>
+    <div class="quiz-explanation">The design effect formula deff = 1 + (m&#772; &minus; 1)&rho; shows that both the ICC (&rho;) and the average cluster size (m&#772;) jointly determine how much clustering inflates variance and affects inference.</div>
+  </div>
+
+  <div class="quiz-result" id="quizResult-2"></div>
+  <div class="quiz-retry" id="quizRetry-2"><button class="btn btn-outline" onclick="retryQuiz(2)">Retry Quiz</button></div>
+  <button class="btn btn-primary" onclick="checkQuiz(2)" style="margin-top:12px;">Check Answers</button>
+</div>
+
+<div class="reflection-box">
+  <h3>Reflection</h3>
+  <p>Why might even a small ICC (e.g., 0.02) be problematic in a large cluster randomized trial with 100 participants per cluster? Calculate the design effect and discuss the implications.</p>
+  <textarea id="reflection-3" placeholder="Type your reflection here..."></textarea>
+  <button class="btn-save" onclick="checkReflection(3)">Save Reflection</button>
+  <div class="reflection-status" id="reflectionStatus-3">Reflection saved!</div>
+</div>
+
+<div class="section-nav">
+  <button class="btn btn-outline" onclick="goToModule(1)">&larr; Section 2</button>
+  <div>
+    <button class="btn btn-primary disabled" id="nextBtn-2" onclick="goToModule(3)">Next Section &rarr;</button>
+    <div class="req-note" id="reqNote-2"><span class="req-pending">*</span> Complete the quiz and reflection to continue.</div>
+  </div>
+</div>
+
+</div>
+</div>
+
+<!-- ============ SECTION 4: Methods for Dealing with Clustering ============ -->
+<div class="module-page" id="page-3">
+<div class="module-header">
+  <div class="module-tag">Section 4</div>
+  <h1>Methods for Dealing with Clustering</h1>
+  <div class="time">&#9201; Estimated time: 20 minutes</div>
+</div>
+<div class="module-body">
+
+<h2>Detecting Clustering</h2>
+<p>Before choosing a method for handling clustering, you must first detect and quantify it. Common approaches include <strong>visual inspection</strong> (e.g., plotting outcomes by cluster), <strong>ICC estimation</strong> (fitting a random-intercept model to estimate the between-cluster variance), and <strong>likelihood ratio tests</strong> (comparing models with and without cluster-level random effects).</p>
+
+<h2>Methods for Handling Clustered Data</h2>
+
+<div class="tabs">
+  <div class="tab-row">
+    <button class="tab-btn active" onclick="switchTab(event,'tab-fixed')">Fixed Effects</button>
+    <button class="tab-btn" onclick="switchTab(event,'tab-correction')">Correction Factors</button>
+    <button class="tab-btn" onclick="switchTab(event,'tab-robust')">Robust Variance</button>
+    <button class="tab-btn" onclick="switchTab(event,'tab-survey')">Survey Methods</button>
+  </div>
+  <div class="tab-panel active" id="tab-fixed">
+    <h3>Fixed Effects &amp; Stratification</h3>
+    <p>Include cluster indicators as <strong>fixed effects</strong> in the model. This effectively stratifies the analysis by cluster, adjusting for all cluster-level confounders (both measured and unmeasured). However, this approach uses many degrees of freedom (one for each cluster minus one) and does not allow estimation of cluster-level predictor effects.</p>
+    <p><strong>Best when:</strong> There are relatively few clusters, cluster-level confounding is the primary concern, and you do not need to estimate effects of cluster-level variables.</p>
+  </div>
+  <div class="tab-panel" id="tab-correction">
+    <h3>Correction Factor Methods</h3>
+    <p><strong>deff-based correction:</strong> Divide test statistics by &radic;deff or multiply standard errors by &radic;deff. This is a simple post-hoc adjustment that requires an estimate of the ICC and the average cluster size.</p>
+    <p><strong>Overdispersion-based correction:</strong> A similar principle using a dispersion parameter estimated from the data. The Pearson or deviance goodness-of-fit statistic divided by its degrees of freedom provides a scale factor that can be applied to the variance-covariance matrix.</p>
+    <p><strong>Best when:</strong> A quick adjustment is needed and a more sophisticated approach is not feasible.</p>
+  </div>
+  <div class="tab-panel" id="tab-robust">
+    <h3>Robust (Sandwich) Variance Estimator</h3>
+    <p>The robust variance estimator does <strong>not assume a specific correlation structure</strong> within clusters. It provides valid standard errors even if the within-cluster correlation is misspecified. This makes it very attractive for practical use.</p>
+    <p>However, it requires a <strong>moderate-to-large number of clusters</strong> (rule of thumb: at least 20&ndash;30). With too few clusters, the sandwich estimator can underestimate the true variance.</p>
+    <p><strong>Best when:</strong> You have enough clusters and want valid inference without specifying the exact correlation structure.</p>
+  </div>
+  <div class="tab-panel" id="tab-survey">
+    <h3>Survey Methods</h3>
+    <p>Survey methods account for <strong>complex sampling designs</strong> including stratification, clustering, and unequal selection probabilities (weighting). They use <strong>design-based inference</strong> rather than model-based inference, which means the validity of the analysis depends on the sampling design rather than distributional assumptions.</p>
+    <p>Available in most statistical software: Stata&rsquo;s <code>svy</code> commands, SAS <code>PROC SURVEY</code> procedures, R&rsquo;s <code>survey</code> package.</p>
+    <p><strong>Best when:</strong> The data come from a complex survey design with known selection probabilities.</p>
+  </div>
+</div>
+
+<div class="data-table" style="overflow-x:auto;">
+<table class="data-table">
+  <thead>
+    <tr><th>Method</th><th>Handles Confounding</th><th>Min. Clusters</th><th>Assumptions</th><th>Software</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Fixed Effects</td><td>All cluster-level</td><td>Few OK</td><td>None for cluster effects</td><td>All packages</td></tr>
+    <tr><td>deff Correction</td><td>No</td><td>Any</td><td>Known ICC</td><td>Manual calculation</td></tr>
+    <tr><td>Robust Variance</td><td>No</td><td>&ge;20&ndash;30</td><td>None for correlation</td><td>Stata, R, SAS</td></tr>
+    <tr><td>Survey Methods</td><td>Design-based</td><td>Varies</td><td>Known design</td><td>Stata svy, SAS PROC SURVEY, R survey</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="flip-card-grid">
+  <div class="flip-card" onclick="openCardModal('Few Clusters (&lt;20)?', 'With fewer than 20 clusters, consider &lt;strong&gt;fixed effects&lt;/strong&gt; for cluster indicators or &lt;strong&gt;small-sample corrections&lt;/strong&gt; for the sandwich estimator. The standard robust variance estimator may underestimate variance with too few clusters. Alternatively, use the deff-based correction if the ICC can be estimated.')">
+    <div class="card-icon">&#128270;</div>
+    <div class="card-label">Few Clusters?</div>
+    <div class="card-hint">Click for guidance</div>
+  </div>
+  <div class="flip-card" onclick="openCardModal('Many Clusters (&ge;30)?', 'With 30 or more clusters, the &lt;strong&gt;robust (sandwich) variance estimator&lt;/strong&gt; is a reliable and convenient choice. It does not require specifying the within-cluster correlation structure and provides consistent standard errors. Combined with GEE or cluster-robust regression, this is a widely used approach.')">
+    <div class="card-icon">&#128201;</div>
+    <div class="card-label">Many Clusters?</div>
+    <div class="card-hint">Click for guidance</div>
+  </div>
+  <div class="flip-card" onclick="openCardModal('Complex Survey Design?', 'If the data come from a &lt;strong&gt;complex survey&lt;/strong&gt; with known stratification, clustering, and selection probabilities, use &lt;strong&gt;survey methods&lt;/strong&gt; (design-based inference). These methods properly account for all features of the sampling design and are implemented in most major statistical packages.')">
+    <div class="card-icon">&#128202;</div>
+    <div class="card-label">Survey Design?</div>
+    <div class="card-hint">Click for guidance</div>
+  </div>
+</div>
+
+<div class="info-box amber">
+  <div class="box-title">Practical Recommendations</div>
+  <p>Always check for clustering before finalising your analysis. Estimate the ICC, calculate the design effect, and choose a method appropriate to your study design and the number of clusters. When in doubt, use multiple methods and compare results. If the conclusions are consistent across approaches, you can be more confident in your findings.</p>
+</div>
+
+<!-- Section 4 Quiz -->
+<div class="quiz-section" id="quiz-3">
+  <h3>Section 4 Knowledge Check</h3>
+  <div class="quiz-question" data-correct="c">
+    <p>1. The robust (sandwich) variance estimator:</p>
+    <label class="quiz-option"><input type="radio" name="q3-0" value="a"> Requires knowing the exact within-cluster correlation structure</label>
+    <label class="quiz-option"><input type="radio" name="q3-0" value="b"> Works well with any number of clusters</label>
+    <label class="quiz-option"><input type="radio" name="q3-0" value="c"> Provides valid standard errors without assuming a specific correlation structure, but requires enough clusters</label>
+    <label class="quiz-option"><input type="radio" name="q3-0" value="d"> Can only be used with continuous outcomes</label>
+    <div class="quiz-explanation">The sandwich estimator is attractive because it produces consistent SEs regardless of the true correlation structure. However, it requires a sufficient number of clusters (typically &ge;20&ndash;30) to perform well.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>2. When would fixed effects for clusters be most appropriate?</p>
+    <label class="quiz-option"><input type="radio" name="q3-1" value="a"> When there are thousands of small clusters</label>
+    <label class="quiz-option"><input type="radio" name="q3-1" value="b"> When there are few clusters and cluster-level confounding is the primary concern</label>
+    <label class="quiz-option"><input type="radio" name="q3-1" value="c"> When the number of clusters equals the number of observations</label>
+    <label class="quiz-option"><input type="radio" name="q3-1" value="d"> When you want to generalize to new clusters</label>
+    <div class="quiz-explanation">Fixed effects for clusters are most useful when there are relatively few clusters and the goal is to control for cluster-level confounding. With many clusters, this approach uses too many degrees of freedom.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>3. Survey methods for clustered data:</p>
+    <label class="quiz-option"><input type="radio" name="q3-2" value="a"> Only work with simple random samples</label>
+    <label class="quiz-option"><input type="radio" name="q3-2" value="b"> Account for stratification, clustering, and unequal selection probabilities in the study design</label>
+    <label class="quiz-option"><input type="radio" name="q3-2" value="c"> Cannot handle missing data</label>
+    <label class="quiz-option"><input type="radio" name="q3-2" value="d"> Are only available in specialized software</label>
+    <div class="quiz-explanation">Survey methods use design-based inference to properly account for complex sampling features including stratification, clustering, and differential selection/weighting, and are available in most major statistical packages.</div>
+  </div>
+
+  <div class="quiz-result" id="quizResult-3"></div>
+  <div class="quiz-retry" id="quizRetry-3"><button class="btn btn-outline" onclick="retryQuiz(3)">Retry Quiz</button></div>
+  <button class="btn btn-primary" onclick="checkQuiz(3)" style="margin-top:12px;">Check Answers</button>
+</div>
+
+<div class="reflection-box">
+  <h3>Reflection</h3>
+  <p>You are analyzing data from a multi-site clinical trial with 25 sites and approximately 40 patients per site. Which method(s) for handling clustering would you recommend, and why?</p>
+  <textarea id="reflection-4" placeholder="Type your reflection here..."></textarea>
+  <button class="btn-save" onclick="checkReflection(4)">Save Reflection</button>
+  <div class="reflection-status" id="reflectionStatus-4">Reflection saved!</div>
+</div>
+
+<div class="section-nav">
+  <button class="btn btn-outline" onclick="goToModule(2)">&larr; Section 3</button>
+  <div>
+    <button class="btn btn-primary disabled" id="nextBtn-3" onclick="goToModule(4)">Final Assessment &rarr;</button>
+    <div class="req-note" id="reqNote-3"><span class="req-pending">*</span> Complete the quiz and reflection to continue.</div>
+  </div>
+</div>
+
+</div>
+</div>
+
+<!-- ============ FINAL ASSESSMENT ============ -->
+<div class="module-page" id="page-4">
+<div class="module-header">
+  <div class="module-tag">Final Assessment</div>
+  <h1>Lesson 8 &mdash; Comprehensive Assessment</h1>
+  <div class="time">&#9201; Estimated time: 25 minutes</div>
+</div>
+<div class="module-body">
+
+<p>This final assessment covers all material from this lesson. You must answer all 15 questions correctly (100%) and complete the final reflection to finish the lesson.</p>
+
+<div class="reflection-box">
+  <h3>Final Reflection</h3>
+  <p>Reflecting on this lesson, how has your understanding of clustered data changed? Describe a specific analytical situation where accounting for clustering would be critical and explain which method you would choose to address it.</p>
+  <textarea id="reflection-final" placeholder="Type your final reflection here..."></textarea>
+  <button class="btn-save" onclick="checkReflection('final')">Save Reflection</button>
+  <div class="reflection-status" id="reflectionStatus-final">Reflection saved!</div>
+</div>
+
+<div class="quiz-section" id="quiz-4">
+  <h3>Final Assessment (15 Questions)</h3>
+
+  <div class="quiz-question" data-correct="b">
+    <p>1. Clustered data is characterized by:</p>
+    <label class="quiz-option"><input type="radio" name="qf-0" value="a"> All observations being independent</label>
+    <label class="quiz-option"><input type="radio" name="qf-0" value="b"> Observations grouped within higher-level units with potential within-group correlation</label>
+    <label class="quiz-option"><input type="radio" name="qf-0" value="c"> Data with no variance</label>
+    <label class="quiz-option"><input type="radio" name="qf-0" value="d"> Single-level structures only</label>
+    <div class="quiz-explanation">Clustered data has a hierarchical structure where observations within the same group (cluster) tend to be more similar to each other than to observations in other groups.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="c">
+    <p>2. Which is NOT a source of clustering?</p>
+    <label class="quiz-option"><input type="radio" name="qf-1" value="a"> Patients within hospitals</label>
+    <label class="quiz-option"><input type="radio" name="qf-1" value="b"> Students within classrooms</label>
+    <label class="quiz-option"><input type="radio" name="qf-1" value="c"> Simple random sampling from a single homogeneous population</label>
+    <label class="quiz-option"><input type="radio" name="qf-1" value="d"> Repeated measures on the same subject</label>
+    <div class="quiz-explanation">Simple random sampling from a homogeneous population produces independent observations. The other options all involve natural grouping that creates within-group correlation.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="a">
+    <p>3. The ecological fallacy occurs when:</p>
+    <label class="quiz-option"><input type="radio" name="qf-2" value="a"> Group-level associations are incorrectly assumed to hold at the individual level</label>
+    <label class="quiz-option"><input type="radio" name="qf-2" value="b"> Individual data is aggregated</label>
+    <label class="quiz-option"><input type="radio" name="qf-2" value="c"> The ICC is zero</label>
+    <label class="quiz-option"><input type="radio" name="qf-2" value="d"> Clusters are of equal size</label>
+    <div class="quiz-explanation">The ecological fallacy is the error of assuming that relationships observed at the group (aggregate) level apply to individuals. Group-level and individual-level associations can differ substantially.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="c">
+    <p>4. The ICC ranges from:</p>
+    <label class="quiz-option"><input type="radio" name="qf-3" value="a"> -1 to +1</label>
+    <label class="quiz-option"><input type="radio" name="qf-3" value="b"> 0 to infinity</label>
+    <label class="quiz-option"><input type="radio" name="qf-3" value="c"> 0 to 1 (for most practical applications)</label>
+    <label class="quiz-option"><input type="radio" name="qf-3" value="d"> -infinity to +infinity</label>
+    <div class="quiz-explanation">For most practical applications, the ICC ranges from 0 (no clustering effect) to 1 (all variance is between clusters). Technically it can be slightly negative but this is rare and usually indicates no meaningful clustering.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>5. If &sigma;&sup2;<sub>g</sub> = 4 and &sigma;&sup2; = 16, the ICC is:</p>
+    <label class="quiz-option"><input type="radio" name="qf-4" value="a"> 0.10</label>
+    <label class="quiz-option"><input type="radio" name="qf-4" value="b"> 0.20</label>
+    <label class="quiz-option"><input type="radio" name="qf-4" value="c"> 0.25</label>
+    <label class="quiz-option"><input type="radio" name="qf-4" value="d"> 0.40</label>
+    <div class="quiz-explanation">ICC = &sigma;&sup2;<sub>g</sub> / (&sigma;&sup2;<sub>g</sub> + &sigma;&sup2;) = 4 / (4 + 16) = 4/20 = 0.20.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>6. A design effect of 5 means the effective sample size is approximately:</p>
+    <label class="quiz-option"><input type="radio" name="qf-5" value="a"> 5 times the nominal sample size</label>
+    <label class="quiz-option"><input type="radio" name="qf-5" value="b"> One-fifth of the nominal sample size</label>
+    <label class="quiz-option"><input type="radio" name="qf-5" value="c"> Equal to the nominal sample size</label>
+    <label class="quiz-option"><input type="radio" name="qf-5" value="d"> 50% of the nominal sample size</label>
+    <div class="quiz-explanation">The design effect inflates the variance by a factor of 5, which means the effective sample size is reduced to approximately 1/5 (one-fifth) of the nominal sample size.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>7. Ignoring clustering in analysis primarily leads to:</p>
+    <label class="quiz-option"><input type="radio" name="qf-6" value="a"> Overestimated standard errors</label>
+    <label class="quiz-option"><input type="radio" name="qf-6" value="b"> Underestimated standard errors and inflated Type I error</label>
+    <label class="quiz-option"><input type="radio" name="qf-6" value="c"> No effect on inference</label>
+    <label class="quiz-option"><input type="radio" name="qf-6" value="d"> Biased point estimates only</label>
+    <div class="quiz-explanation">The most common consequence of ignoring clustering is underestimated SEs, leading to test statistics that are too large, P-values that are too small, and confidence intervals that are too narrow&mdash;inflating Type I error.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="c">
+    <p>8. In a study with ICC = 0.05 and 40 subjects per cluster, the design effect is:</p>
+    <label class="quiz-option"><input type="radio" name="qf-7" value="a"> 1.95</label>
+    <label class="quiz-option"><input type="radio" name="qf-7" value="b"> 2.00</label>
+    <label class="quiz-option"><input type="radio" name="qf-7" value="c"> 2.95</label>
+    <label class="quiz-option"><input type="radio" name="qf-7" value="d"> 3.95</label>
+    <div class="quiz-explanation">deff = 1 + (m&#772; &minus; 1)&rho; = 1 + (40 &minus; 1)(0.05) = 1 + 1.95 = 2.95.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>9. Cross-classified data structures differ from nested structures because:</p>
+    <label class="quiz-option"><input type="radio" name="qf-8" value="a"> They have no grouping factors</label>
+    <label class="quiz-option"><input type="radio" name="qf-8" value="b"> Units belong to multiple non-nested grouping factors simultaneously</label>
+    <label class="quiz-option"><input type="radio" name="qf-8" value="c"> They always have higher ICC</label>
+    <label class="quiz-option"><input type="radio" name="qf-8" value="d"> They cannot be analyzed with standard software</label>
+    <div class="quiz-explanation">In cross-classified structures, units are simultaneously classified by two or more grouping factors that are not nested within each other (e.g., students classified by both school and neighbourhood).</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>10. Confounding by cluster occurs when:</p>
+    <label class="quiz-option"><input type="radio" name="qf-9" value="a"> The cluster variable is unrelated to both exposure and outcome</label>
+    <label class="quiz-option"><input type="radio" name="qf-9" value="b"> A cluster-level variable is associated with both the exposure and the outcome</label>
+    <label class="quiz-option"><input type="radio" name="qf-9" value="c"> All clusters are identical</label>
+    <label class="quiz-option"><input type="radio" name="qf-9" value="d"> The ICC is exactly zero</label>
+    <div class="quiz-explanation">Confounding by cluster happens when a characteristic of the cluster (e.g., hospital quality, regional socioeconomic status) is related to both the predictor and the outcome, creating a spurious or biased association.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="c">
+    <p>11. The robust (sandwich) variance estimator requires:</p>
+    <label class="quiz-option"><input type="radio" name="qf-10" value="a"> Exactly 2 clusters</label>
+    <label class="quiz-option"><input type="radio" name="qf-10" value="b"> Knowledge of the exact correlation structure</label>
+    <label class="quiz-option"><input type="radio" name="qf-10" value="c"> A sufficient number of clusters, typically at least 20&ndash;30</label>
+    <label class="quiz-option"><input type="radio" name="qf-10" value="d"> Only continuous outcomes</label>
+    <div class="quiz-explanation">The sandwich estimator&rsquo;s consistency relies on having enough clusters for the between-cluster variance to be well estimated. With too few clusters, it can underestimate the true variance.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>12. Fixed effects for clusters:</p>
+    <label class="quiz-option"><input type="radio" name="qf-11" value="a"> Allow generalization to new clusters</label>
+    <label class="quiz-option"><input type="radio" name="qf-11" value="b"> Control for all cluster-level confounders but use many degrees of freedom</label>
+    <label class="quiz-option"><input type="radio" name="qf-11" value="c"> Require no additional parameters</label>
+    <label class="quiz-option"><input type="radio" name="qf-11" value="d"> Can only be used with binary outcomes</label>
+    <div class="quiz-explanation">Fixed effects for clusters add indicator variables for each cluster, which controls for all measured and unmeasured cluster-level confounders but consumes degrees of freedom equal to the number of clusters minus one.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="a">
+    <p>13. Which statement about simulation studies on clustering is TRUE?</p>
+    <label class="quiz-option"><input type="radio" name="qf-12" value="a"> Even small ICCs with large cluster sizes can substantially inflate Type I error</label>
+    <label class="quiz-option"><input type="radio" name="qf-12" value="b"> ICCs below 0.05 never matter</label>
+    <label class="quiz-option"><input type="radio" name="qf-12" value="c"> Clustering only affects continuous outcomes</label>
+    <label class="quiz-option"><input type="radio" name="qf-12" value="d"> Type I error is always at the nominal level</label>
+    <div class="quiz-explanation">Simulations show that even ICC values as small as 0.01&ndash;0.02, when combined with large cluster sizes, can inflate actual Type I error rates well beyond the nominal level, because deff depends on both ICC and cluster size.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>14. Survey methods for analyzing clustered data:</p>
+    <label class="quiz-option"><input type="radio" name="qf-13" value="a"> Ignore the sampling design</label>
+    <label class="quiz-option"><input type="radio" name="qf-13" value="b"> Use design-based inference accounting for stratification, clustering, and weights</label>
+    <label class="quiz-option"><input type="radio" name="qf-13" value="c"> Require a model-based approach only</label>
+    <label class="quiz-option"><input type="radio" name="qf-13" value="d"> Cannot handle unequal cluster sizes</label>
+    <div class="quiz-explanation">Survey methods use design-based inference that explicitly accounts for the features of the sampling design (stratification, clustering, and differential selection probabilities/weights).</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>15. The deff-based correction for clustering involves:</p>
+    <label class="quiz-option"><input type="radio" name="qf-14" value="a"> Ignoring the design effect</label>
+    <label class="quiz-option"><input type="radio" name="qf-14" value="b"> Multiplying standard errors by the square root of the design effect</label>
+    <label class="quiz-option"><input type="radio" name="qf-14" value="c"> Dividing the sample size by the ICC</label>
+    <label class="quiz-option"><input type="radio" name="qf-14" value="d"> Adding more clusters to the study</label>
+    <div class="quiz-explanation">The correction involves multiplying naive SEs by &radic;deff (or equivalently, dividing test statistics by &radic;deff) to account for the variance inflation due to clustering.</div>
+  </div>
+
+  <div class="quiz-result" id="quizResult-4"></div>
+  <div class="quiz-retry" id="quizRetry-4"><button class="btn btn-outline" onclick="retryQuiz(4)">Retry Quiz</button></div>
+  <button class="btn btn-accent" onclick="checkFinalAssessment()" style="margin-top:12px;">Submit Final Assessment</button>
+</div>
+
+<div class="completion-banner" id="completionBanner">
+  <h2>Lesson 8 Complete!</h2>
+  <p>Congratulations! You have successfully completed the Introduction to Clustered Data module. Your responses have been downloaded automatically.</p>
+</div>
+
+<div class="section-nav">
+  <button class="btn btn-outline" onclick="goToModule(3)">&larr; Section 4</button>
+  <div></div>
+</div>
+
+</div>
+</div>
+
+</div><!-- /main -->
+
+<!-- Card Modal -->
+<div class="card-modal-overlay" id="cardModalOverlay" onclick="closeCardModal(event)">
+  <div class="card-modal">
+    <button class="card-modal-close" onclick="document.getElementById('cardModalOverlay').classList.remove('show')">&times;</button>
+    <h3 id="cardModalTitle"></h3>
+    <div id="cardModalBody"></div>
+  </div>
+</div>
+
+<script>
+var modules = [
+  { id: -1, short: 'Welcome', title: 'Introduction' },
+  { id: 0, short: 'Section 1', title: 'Introduction & Types of Clustered Data' },
+  { id: 1, short: 'Section 2', title: 'Effects of Clustering' },
+  { id: 2, short: 'Section 3', title: 'Simulation Studies & Impact' },
+  { id: 3, short: 'Section 4', title: 'Methods for Dealing with Clustering' },
+  { id: 4, short: 'Section 5', title: 'Final Assessment' }
+];
+var currentModule = -1;
+var completed = new Set();
+var quizPassed = {};
+var reflectionDone = {};
+var modulesWithReflection = { 1: true, 2: true, 3: true, 4: true };
+
+function buildNav() {
+  var nav = document.getElementById('sidebarNav');
+  nav.innerHTML = '';
+  modules.forEach(function(m) {
+    var div = document.createElement('div');
+    div.className = 'nav-item';
+    var key = m.id === -1 ? 'welcome' : m.id;
+    if (completed.has(key)) div.classList.add('completed');
+    if (m.id === currentModule) div.classList.add('active');
+    div.innerHTML = '<div class="dot"></div><span>' + m.short + ': ' + m.title + '</span>';
+    div.onclick = function() { goToModule(m.id); closeSidebarMobile(); };
+    nav.appendChild(div);
+  });
+}
+
+function goToModule(id) {
+  currentModule = id;
+  document.querySelectorAll('.module-page').forEach(function(p) { p.classList.remove('active'); });
+  var pageId = id === -1 ? 'page-welcome' : 'page-' + id;
+  var page = document.getElementById(pageId);
+  if (page) page.classList.add('active');
+  if (id === -1) completed.add('welcome');
+  buildNav();
+  updateProgress();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function updateProgress() {
+  var total = modules.length;
+  var done = completed.size;
+  var pct = Math.round((done / total) * 100);
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressText').textContent = pct + '% complete';
+}
+
+function checkReflection(idx) {
+  var ta = document.getElementById('reflection-' + idx);
+  if (ta && ta.value.trim().length > 0) {
+    reflectionDone[idx === 'final' ? 4 : idx] = true;
+    var status = document.getElementById('reflectionStatus-' + idx);
+    if (status) status.classList.add('show');
+    if (idx !== 'final') updateNextButton(idx);
+  }
+}
+
+function updateNextButton(moduleIdx) {
+  var btn = document.getElementById('nextBtn-' + moduleIdx);
+  var note = document.getElementById('reqNote-' + moduleIdx);
+  if (!btn) return;
+  var quizOk = quizPassed[moduleIdx];
+  var refIdx = moduleIdx + 1;
+  var needsRef = modulesWithReflection[refIdx];
+  var refOk = !needsRef || reflectionDone[refIdx];
+  if (quizOk && refOk) {
+    btn.classList.remove('disabled');
+    completed.add(moduleIdx);
+    buildNav();
+    updateProgress();
+    if (note) note.innerHTML = '<span class="req-check">&#10003;</span> Section complete! You may continue.';
+  }
+}
+
+function checkQuiz(moduleIdx) {
+  var quiz = document.getElementById('quiz-' + moduleIdx);
+  var questions = quiz.querySelectorAll('.quiz-question');
+  var correct = 0;
+  var total = questions.length;
+  var allAnswered = true;
+  questions.forEach(function(q, i) {
+    var correctVal = q.dataset.correct;
+    var selected = quiz.querySelector('input[name="q' + moduleIdx + '-' + i + '"]:checked');
+    q.querySelectorAll('.quiz-option').forEach(function(opt) { opt.classList.remove('correct', 'incorrect'); });
+    if (!selected) { allAnswered = false; return; }
+    q.querySelectorAll('.quiz-option').forEach(function(opt) {
+      var inp = opt.querySelector('input');
+      if (inp.value === correctVal) opt.classList.add('correct');
+      else if (inp === selected && inp.value !== correctVal) opt.classList.add('incorrect');
+    });
+    q.querySelector('.quiz-explanation').classList.add('show');
+    if (selected.value === correctVal) correct++;
+  });
+  if (!allAnswered) { alert('Please answer all questions before checking.'); return; }
+  var result = document.getElementById('quizResult-' + moduleIdx);
+  var retryDiv = document.getElementById('quizRetry-' + moduleIdx);
+  result.style.display = 'block';
+  if (correct === total) {
+    result.className = 'quiz-result pass';
+    result.textContent = 'All correct! Great job.';
+    quizPassed[moduleIdx] = true;
+    if (retryDiv) retryDiv.classList.remove('show');
+    quiz.querySelectorAll('input[type="radio"]').forEach(function(r) { r.disabled = true; });
+    updateNextButton(moduleIdx);
+  } else {
+    result.className = 'quiz-result fail';
+    result.textContent = 'You got ' + correct + ' out of ' + total + ' correct. You need 100% to continue. Review the feedback and try again.';
+    quizPassed[moduleIdx] = false;
+    if (retryDiv) retryDiv.classList.add('show');
+  }
+}
+
+function retryQuiz(moduleIdx) {
+  var quiz = document.getElementById('quiz-' + moduleIdx);
+  quiz.querySelectorAll('.quiz-option').forEach(function(opt) { opt.classList.remove('correct', 'incorrect'); });
+  quiz.querySelectorAll('.quiz-explanation').forEach(function(exp) { exp.classList.remove('show'); });
+  quiz.querySelectorAll('input[type="radio"]').forEach(function(r) { r.checked = false; r.disabled = false; });
+  var result = document.getElementById('quizResult-' + moduleIdx);
+  result.style.display = 'none';
+  var retryDiv = document.getElementById('quizRetry-' + moduleIdx);
+  if (retryDiv) retryDiv.classList.remove('show');
+  quiz.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function checkFinalAssessment() {
+  if (!reflectionDone[4]) {
+    alert('Please complete the final reflection before submitting the assessment.');
+    return;
+  }
+  var quiz = document.getElementById('quiz-4');
+  var questions = quiz.querySelectorAll('.quiz-question');
+  var correct = 0;
+  var total = questions.length;
+  var allAnswered = true;
+  questions.forEach(function(q, i) {
+    var correctVal = q.dataset.correct;
+    var selected = quiz.querySelector('input[name="qf-' + i + '"]:checked');
+    q.querySelectorAll('.quiz-option').forEach(function(opt) { opt.classList.remove('correct', 'incorrect'); });
+    if (!selected) { allAnswered = false; return; }
+    q.querySelectorAll('.quiz-option').forEach(function(opt) {
+      var inp = opt.querySelector('input');
+      if (inp.value === correctVal) opt.classList.add('correct');
+      else if (inp === selected && inp.value !== correctVal) opt.classList.add('incorrect');
+    });
+    q.querySelector('.quiz-explanation').classList.add('show');
+    if (selected.value === correctVal) correct++;
+  });
+  if (!allAnswered) { alert('Please answer all 15 questions before submitting.'); return; }
+  var pct = Math.round((correct / total) * 100);
+  var passed = correct === total;
+  var result = document.getElementById('quizResult-4');
+  var retryDiv = document.getElementById('quizRetry-4');
+  result.style.display = 'block';
+  if (passed) {
+    result.className = 'quiz-result pass';
+    result.innerHTML = 'Congratulations! You scored ' + correct + '/' + total + ' (100%). You have completed Lesson 8!';
+    completed.add(4);
+    updateProgress();
+    buildNav();
+    if (retryDiv) retryDiv.classList.remove('show');
+    quiz.querySelectorAll('input[type="radio"]').forEach(function(r) { r.disabled = true; });
+    document.getElementById('completionBanner').style.display = 'block';
+    document.getElementById('completionBanner').scrollIntoView({ behavior: 'smooth' });
+    downloadResponses();
+  } else {
+    result.className = 'quiz-result fail';
+    result.innerHTML = 'You scored ' + correct + '/' + total + ' (' + pct + '%). You need 100% to complete the lesson. Review the feedback and try again.';
+    if (retryDiv) retryDiv.classList.add('show');
+  }
+}
+
+function toggleAccordion(header) {
+  var item = header.parentElement;
+  var wasOpen = item.classList.contains('open');
+  item.classList.toggle('open');
+  var body = item.querySelector('.accordion-body');
+  if (wasOpen) { body.style.maxHeight = null; }
+  else { body.style.maxHeight = body.scrollHeight + 'px'; }
+}
+
+function switchTab(e, panelId) {
+  var tabRow = e.target.closest('.tab-row');
+  var tabs = tabRow.parentElement;
+  tabs.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+  tabs.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
+  e.target.classList.add('active');
+  document.getElementById(panelId).classList.add('active');
+}
+
+function openCardModal(title, body) {
+  document.getElementById('cardModalTitle').textContent = title;
+  document.getElementById('cardModalBody').innerHTML = body;
+  document.getElementById('cardModalOverlay').classList.add('show');
+}
+
+function closeCardModal(e) {
+  if (!e || e.target === document.getElementById('cardModalOverlay')) {
+    document.getElementById('cardModalOverlay').classList.remove('show');
+  }
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.querySelector('.sidebar-overlay').classList.toggle('show');
+}
+
+function closeSidebarMobile() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.querySelector('.sidebar-overlay').classList.remove('show');
+}
+
+buildNav();
+updateProgress();
+
+function downloadResponses() {
+  var lines = [];
+  lines.push('Exploratory Data Analysis For Epidemiology, Lesson 8');
+  lines.push('Introduction to Clustered Data');
+  lines.push('');
+  lines.push('Name: ');
+  lines.push('Date: ' + new Date().toLocaleDateString());
+  lines.push('='.repeat(60));
+  lines.push('');
+
+  lines.push('REFLECTIONS');
+  lines.push('-'.repeat(40));
+  for (var r = 1; r <= 4; r++) {
+    var ta = document.getElementById('reflection-' + r);
+    if (ta) {
+      var box = ta.closest('.reflection-box');
+      var prompt = box ? box.querySelector('p') : null;
+      lines.push('');
+      lines.push('Section ' + r + ' Reflection:');
+      if (prompt) lines.push('Q: ' + prompt.textContent.trim());
+      lines.push('A: ' + (ta.value.trim() || '[No response]'));
+    }
+  }
+  var taFinal = document.getElementById('reflection-final');
+  if (taFinal) {
+    var box = taFinal.closest('.reflection-box');
+    var prompt = box ? box.querySelector('p') : null;
+    lines.push('');
+    lines.push('Final Reflection:');
+    if (prompt) lines.push('Q: ' + prompt.textContent.trim());
+    lines.push('A: ' + (taFinal.value.trim() || '[No response]'));
+  }
+  lines.push('');
+  lines.push('='.repeat(60));
+  lines.push('');
+
+  lines.push('SECTION QUIZ RESPONSES');
+  lines.push('-'.repeat(40));
+  for (var s = 0; s <= 3; s++) {
+    var quiz = document.getElementById('quiz-' + s);
+    if (!quiz) continue;
+    lines.push('');
+    lines.push('Section ' + (s + 1) + ' Quiz:');
+    var questions = quiz.querySelectorAll('.quiz-question');
+    questions.forEach(function(q, i) {
+      var qText = q.querySelector('p');
+      var selected = q.querySelector('input[type="radio"]:checked');
+      var selLabel = selected ? selected.closest('.quiz-option') || selected.parentElement : null;
+      lines.push('  Q' + (i + 1) + ': ' + (qText ? qText.textContent.trim() : ''));
+      lines.push('  Selected: ' + (selLabel ? selLabel.textContent.trim() : '[No answer]'));
+      var isCorrect = selected && q.querySelector('.quiz-option.correct input') === selected;
+      lines.push('  Result: ' + (selected ? (isCorrect ? 'Correct' : 'Incorrect') : 'Unanswered'));
+    });
+  }
+  lines.push('');
+  lines.push('='.repeat(60));
+  lines.push('');
+
+  lines.push('FINAL ASSESSMENT RESPONSES');
+  lines.push('-'.repeat(40));
+  var finalQuiz = document.getElementById('quiz-4');
+  if (finalQuiz) {
+    var questions = finalQuiz.querySelectorAll('.quiz-question');
+    questions.forEach(function(q, i) {
+      var qText = q.querySelector('p');
+      var selected = q.querySelector('input[type="radio"]:checked');
+      var selLabel = selected ? selected.closest('.quiz-option') || selected.parentElement : null;
+      lines.push('  Q' + (i + 1) + ': ' + (qText ? qText.textContent.trim() : ''));
+      lines.push('  Selected: ' + (selLabel ? selLabel.textContent.trim() : '[No answer]'));
+      var correctOpt = q.querySelector('.quiz-option.correct');
+      var isCorrect = selected && correctOpt && correctOpt.querySelector('input') === selected;
+      lines.push('  Result: ' + (selected ? (isCorrect ? 'Correct' : 'Incorrect') : 'Unanswered'));
+    });
+  }
+
+  var blob = new Blob([lines.join('\n')], { type: 'text/plain' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'HSCI410_Lesson8_Clustered_Data_Responses.txt';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+</script>
+</body>
+</html>

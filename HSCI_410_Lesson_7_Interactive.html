@@ -1,0 +1,1501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 7: Modelling Survival Data &mdash; HSCI 410</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+
+:root {
+  --teal: #0B7B6B;
+  --dark-teal: #065C50;
+  --light-teal: #6BB5A6;
+  --very-light-teal: #E6F3F0;
+  --dark: #042A25;
+  --text: #2D3436;
+  --text-light: #555;
+  --bg: #FFFFFF;
+  --white: #fff;
+  --accent: #CC0033;
+  --accent-dark: #A3002A;
+  --accent-light: #FDEAEF;
+  --amber: #CC0033;
+  --light-amber: #FDEAEF;
+  --green: #0B7B6B;
+  --light-green: #D1F0EA;
+  --blue: #0B7B6B;
+  --light-blue: #E6F3F0;
+  --rose: #CC0033;
+  --light-rose: #FDEAEF;
+  --purple: #065C50;
+  --light-purple: #E6F3F0;
+  --grey: #E8ECEE;
+  --radius: 12px;
+  --shadow: 0 2px 12px rgba(0,0,0,0.08);
+  --shadow-lg: 0 8px 30px rgba(0,0,0,0.12);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { font-family: 'Open Sans', 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; }
+.sidebar {
+  position: fixed; top: 0; left: 0; width: 280px; height: 100vh;
+  background: linear-gradient(180deg, rgba(6,92,80,0.92) 0%, rgba(4,42,37,0.95) 100%), url('bg_texture.jpg') center/cover no-repeat;
+  color: #fff; z-index: 100; display: flex; flex-direction: column;
+  transition: transform 0.3s ease; overflow: hidden;
+}
+.sidebar-header { padding: 24px 20px 16px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+.sidebar-header h2 { font-size: 16px; font-weight: 600; line-height: 1.4; opacity: 0.95; color: #fff; }
+.sidebar-header p { font-size: 11px; opacity: 0.6; margin-top: 4px; }
+.sidebar-nav { flex: 1; overflow-y: auto; padding: 12px 0; }
+.sidebar-nav::-webkit-scrollbar { width: 4px; }
+.sidebar-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 2px; }
+.nav-item {
+  display: flex; align-items: center; gap: 12px; padding: 10px 20px;
+  cursor: pointer; transition: all 0.2s; font-size: 13.5px; position: relative;
+  color: rgba(255,255,255,0.7);
+}
+.nav-item:hover:not(.locked) { background: rgba(255,255,255,0.08); color: #fff; }
+.nav-item.active { background: rgba(255,255,255,0.12); color: #fff; font-weight: 600; }
+.nav-item.active::before {
+  content: ''; position: absolute; left: 0; top: 6px; bottom: 6px; width: 3px;
+  background: var(--accent); border-radius: 0 2px 2px 0;
+}
+.nav-item .dot {
+  width: 22px; height: 22px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.3);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  font-size: 11px; transition: all 0.3s;
+}
+.nav-item.completed .dot { background: var(--green); border-color: var(--green); }
+.nav-item.completed .dot::after { content: '\2713'; color: #fff; font-weight: 700; }
+.nav-item.active .dot { border-color: var(--accent); background: rgba(204,0,51,0.2); }
+.sidebar-footer { padding: 16px 20px; border-top: 1px solid rgba(255,255,255,0.1); }
+.progress-bar-bg { height: 6px; background: rgba(255,255,255,0.15); border-radius: 3px; overflow: hidden; }
+.progress-bar-fill { height: 100%; background: var(--green); border-radius: 3px; transition: width 0.5s ease; }
+.progress-text { font-size: 11px; opacity: 0.6; margin-top: 6px; }
+.main { margin-left: 280px; min-height: 100vh; }
+.module-page { display: none; animation: fadeIn 0.4s ease; }
+.module-page.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.module-header {
+  background: linear-gradient(135deg, rgba(6,92,80,0.88) 0%, rgba(11,123,107,0.85) 100%), url('bg_texture.jpg') center/cover no-repeat;
+  color: #fff; padding: 60px 48px 48px; position: relative; overflow: hidden;
+}
+.module-header::after {
+  content: ''; position: absolute; right: -60px; top: -60px; width: 300px; height: 300px;
+  background: radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 70%); border-radius: 50%;
+}
+.module-tag { display: inline-block; background: var(--accent); padding: 4px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 12px; }
+.module-header h1 { font-size: 32px; font-weight: 700; line-height: 1.3; max-width: 700px; color: #fff; }
+.module-header .time { font-size: 14px; opacity: 0.7; margin-top: 8px; }
+.module-body { max-width: 800px; margin: 0 auto; padding: 40px 48px 80px; }
+h2 { font-size: 22px; color: var(--dark-teal); margin: 36px 0 16px; font-weight: 700; }
+h3 { font-size: 18px; color: var(--teal); margin: 24px 0 12px; font-weight: 600; }
+p { margin-bottom: 16px; }
+ul, ol { margin: 0 0 16px 24px; }
+li { margin-bottom: 8px; }
+.info-box { border-radius: var(--radius); padding: 24px; margin: 24px 0; border-left: 4px solid var(--teal); }
+.info-box.teal { background: var(--very-light-teal); border-color: var(--teal); }
+.info-box.rose { background: var(--light-rose); border-color: var(--accent); }
+.info-box.amber { background: #FFF8E1; border-color: #FFA000; }
+.info-box .box-title { font-weight: 700; margin-bottom: 6px; color: inherit; }
+.flip-card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin: 24px 0; }
+.flip-card {
+  background: var(--white); border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 24px; text-align: center; cursor: pointer; transition: all 0.3s;
+  border: 2px solid var(--grey); position: relative; min-height: 120px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.flip-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); border-color: var(--teal); }
+.flip-card .card-icon { font-size: 28px; margin-bottom: 8px; }
+.flip-card .card-label { font-weight: 600; font-size: 14px; color: var(--dark-teal); }
+.flip-card .card-hint { font-size: 11px; color: var(--text-light); margin-top: 6px; }
+.accordion { margin: 20px 0; }
+.accordion-item { border: 1px solid var(--grey); border-radius: var(--radius); margin-bottom: 8px; overflow: hidden; }
+.accordion-header {
+  padding: 16px 20px; background: var(--white); cursor: pointer; font-weight: 600;
+  display: flex; justify-content: space-between; align-items: center; font-size: 15px;
+  transition: background 0.2s;
+}
+.accordion-header:hover { background: var(--very-light-teal); }
+.accordion-header::after { content: '+'; font-size: 20px; font-weight: 300; color: var(--teal); transition: transform 0.3s; }
+.accordion-item.open .accordion-header::after { content: '\2212'; }
+.accordion-body { max-height: 0; overflow: hidden; transition: max-height 0.4s ease; }
+.accordion-body-inner { padding: 16px 20px 20px; border-top: 1px solid var(--grey); line-height: 1.7; }
+.tabs { margin: 24px 0; }
+.tab-row { display: flex; border-bottom: 2px solid var(--grey); margin-bottom: 0; overflow-x: auto; }
+.tab-btn {
+  padding: 10px 20px; border: none; background: none; cursor: pointer;
+  font-weight: 600; font-size: 14px; color: var(--text-light); border-bottom: 2px solid transparent;
+  margin-bottom: -2px; transition: all 0.2s; white-space: nowrap;
+}
+.tab-btn.active { color: var(--teal); border-bottom-color: var(--teal); }
+.tab-panel { display: none; padding: 20px 0; }
+.tab-panel.active { display: block; }
+.data-table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; }
+.data-table th { background: var(--dark-teal); color: #fff; padding: 12px 16px; text-align: left; font-weight: 600; }
+.data-table td { padding: 10px 16px; border-bottom: 1px solid var(--grey); }
+.data-table tr:nth-child(even) td { background: #f8fafa; }
+.data-table tr:hover td { background: var(--very-light-teal); }
+.formula-box {
+  background: #f8fafc; border: 2px solid var(--grey); border-radius: var(--radius);
+  padding: 20px 24px; margin: 16px 0; text-align: center; font-size: 16px;
+  font-family: 'Georgia', serif;
+}
+.formula-box .formula-label { font-size: 12px; color: var(--text-light); margin-bottom: 6px; font-family: 'Open Sans', sans-serif; }
+.scenario-card {
+  background: linear-gradient(135deg, #f0faf8 0%, #e6f3f0 100%);
+  border-radius: var(--radius); padding: 24px; margin: 20px 0;
+  border: 1px solid rgba(11,123,107,0.15);
+}
+.scenario-card .scenario-title { font-weight: 700; color: var(--dark-teal); margin-bottom: 8px; }
+.quiz-section { background: #f8fafa; border-radius: var(--radius); padding: 32px; margin: 40px 0; border: 2px solid var(--grey); }
+.quiz-section h3 { margin-top: 0; }
+.quiz-question { margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid var(--grey); }
+.quiz-question:last-of-type { border-bottom: none; margin-bottom: 16px; padding-bottom: 0; }
+.quiz-question p { font-weight: 600; margin-bottom: 12px; }
+.quiz-option { display: block; padding: 10px 16px; margin: 6px 0; border-radius: 8px; cursor: pointer; transition: all 0.2s; border: 1px solid var(--grey); }
+.quiz-option:hover { background: var(--very-light-teal); }
+.quiz-option input { margin-right: 10px; }
+.quiz-option.correct { background: var(--light-green); border-color: var(--green); }
+.quiz-option.incorrect { background: var(--light-rose); border-color: var(--accent); }
+.quiz-explanation { display: none; margin-top: 8px; padding: 10px 14px; background: var(--very-light-teal); border-radius: 8px; font-size: 13.5px; }
+.quiz-explanation.show { display: block; }
+.quiz-result { padding: 16px 20px; border-radius: 8px; font-weight: 600; margin-top: 16px; display: none; }
+.quiz-result.pass { background: var(--light-green); color: var(--dark-teal); }
+.quiz-result.fail { background: var(--light-rose); color: var(--accent-dark); }
+.quiz-retry { display: none; margin-top: 12px; }
+.quiz-retry.show { display: block; }
+.btn {
+  display: inline-block; padding: 12px 28px; border-radius: 8px; font-weight: 600;
+  font-size: 15px; border: none; cursor: pointer; transition: all 0.2s;
+}
+.btn-primary { background: var(--teal); color: #fff; }
+.btn-primary:hover { background: var(--dark-teal); }
+.btn-accent { background: var(--accent); color: #fff; }
+.btn-accent:hover { background: var(--accent-dark); }
+.btn-outline { background: transparent; border: 2px solid var(--teal); color: var(--teal); }
+.btn-outline:hover { background: var(--teal); color: #fff; }
+.btn.disabled { opacity: 0.5; pointer-events: none; }
+.reflection-box {
+  background: linear-gradient(135deg, #fdf6ff 0%, #f5f0ff 100%);
+  border: 2px solid #d4bfff; border-radius: var(--radius); padding: 24px; margin: 24px 0;
+}
+.reflection-box h3 { color: #6B21A8; margin-top: 0; }
+.reflection-box textarea {
+  width: 100%; min-height: 100px; border: 1px solid #d4bfff; border-radius: 8px;
+  padding: 12px; font-family: inherit; font-size: 14px; resize: vertical; margin: 8px 0;
+}
+.reflection-box .btn-save { background: #7C3AED; color: #fff; border: none; padding: 8px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; }
+.reflection-box .btn-save:hover { background: #6B21A8; }
+.reflection-status { font-size: 13px; margin-top: 6px; color: #6B21A8; display: none; }
+.reflection-status.show { display: block; }
+.section-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 48px; padding-top: 24px; border-top: 2px solid var(--grey); }
+.req-note { font-size: 13px; margin-top: 12px; }
+.req-check { color: var(--green); }
+.req-pending { color: var(--accent); }
+.completion-banner {
+  display: none; background: linear-gradient(135deg, var(--teal) 0%, var(--dark-teal) 100%);
+  color: #fff; padding: 48px; border-radius: var(--radius); text-align: center; margin: 40px 0;
+}
+.completion-banner h2 { color: #fff; margin: 0 0 12px; font-size: 28px; }
+.sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 99; }
+.card-modal-overlay {
+  display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.6); z-index: 1000; align-items: center; justify-content: center; padding: 20px;
+}
+.card-modal-overlay.show { display: flex; }
+.card-modal {
+  background: #fff; border-radius: var(--radius); max-width: 600px; width: 100%;
+  max-height: 80vh; overflow-y: auto; padding: 32px; position: relative;
+  box-shadow: var(--shadow-lg);
+}
+.card-modal h3 { color: var(--dark-teal); margin: 0 0 16px; padding-right: 30px; }
+.card-modal-close {
+  position: absolute; top: 16px; right: 16px; background: none; border: none;
+  font-size: 24px; cursor: pointer; color: var(--text-light); width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center; border-radius: 50%;
+}
+.card-modal-close:hover { background: var(--grey); }
+.welcome-hero {
+  min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, rgba(6,92,80,0.88) 0%, rgba(4,42,37,0.92) 100%), url('bg_texture.jpg') center/cover no-repeat;
+  color: #fff; text-align: center; padding: 48px 24px; position: relative; overflow: hidden;
+}
+.welcome-hero::before {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(circle at 30% 70%, rgba(11,123,107,0.25) 0%, transparent 50%),
+              radial-gradient(circle at 70% 30%, rgba(107,181,166,0.12) 0%, transparent 40%);
+}
+.welcome-hero > * { position: relative; z-index: 1; }
+.welcome-hero h1 { font-size: 48px; font-weight: 800; margin-bottom: 12px; line-height: 1.2; }
+.welcome-hero .subtitle { font-size: 20px; opacity: 0.8; margin-bottom: 32px; }
+.welcome-hero .start-btn {
+  background: var(--accent); color: #fff; padding: 16px 40px; border-radius: 50px;
+  font-size: 17px; font-weight: 700; border: none; cursor: pointer;
+  transition: all 0.3s; box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+.welcome-hero .start-btn:hover { background: var(--accent-dark); transform: translateY(-2px) scale(1.02); box-shadow: 0 8px 30px rgba(0,0,0,0.3); }
+.welcome-details { max-width: 560px; margin-top: 40px; text-align: left; background: rgba(255,255,255,0.08); border-radius: 16px; padding: 28px; backdrop-filter: blur(10px); }
+.welcome-details h3 { font-size: 16px; margin-bottom: 12px; opacity: 0.9; color: #fff; }
+.welcome-details ul { list-style: none; margin: 0; padding: 0; }
+.welcome-details li { padding: 4px 0; font-size: 14px; opacity: 0.8; }
+.welcome-details li::before { content: '\2726 '; color: #fff; opacity: 0.6; }
+.mobile-header {
+  display: none; position: fixed; top: 0; left: 0; right: 0; height: 56px;
+  background: var(--dark); color: #fff; z-index: 101;
+  padding: 0 16px; align-items: center; gap: 12px;
+}
+.mobile-header button { background: none; border: none; color: #fff; font-size: 24px; cursor: pointer; padding: 4px; }
+.mobile-header h3 { font-size: 14px; font-weight: 600; color: #fff; }
+@media (max-width: 768px) {
+  .sidebar { transform: translateX(-100%); width: 280px; }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar-overlay.show { display: block; }
+  .mobile-header { display: flex; }
+  .main { margin-left: 0; padding-top: 56px; }
+  .module-header { padding: 32px 20px 28px; }
+  .module-header h1 { font-size: 24px; }
+  .module-body { padding: 24px 20px 60px; }
+  .flip-card-grid { grid-template-columns: 1fr; }
+}
+
+</style>
+</head>
+<body>
+<div class="mobile-header">
+  <button onclick="toggleSidebar()">&#9776;</button>
+  <h3>HSCI 410 &mdash; Lesson 7</h3>
+</div>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <img src="sfu_logo_white.webp" alt="SFU &mdash; Simon Fraser University" style="width:100%;max-width:180px;margin-bottom:12px;">
+    <h2>Exploratory Data Analysis For Epidemiology</h2>
+    <p>Kiffer G. Card, PhD</p>
+  </div>
+  <div class="sidebar-nav" id="sidebarNav"></div>
+  <div class="sidebar-footer">
+    <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressFill" style="width:0%"></div></div>
+    <div class="progress-text" id="progressText">0% complete</div>
+  </div>
+</div>
+
+<div class="main" id="mainContent">
+
+<!-- ============ WELCOME ============ -->
+<div class="module-page active" id="page-welcome">
+<div class="welcome-hero">
+  <h1>Modelling Survival Data</h1>
+  <p class="subtitle">Exploratory Data Analysis For Epidemiology</p>
+  <p style="font-size:15px;opacity:0.7;margin-bottom:32px;">Kiffer G. Card, PhD, Faculty of Health Sciences, Simon Fraser University</p>
+  <button class="start-btn" onclick="goToModule(0)">Begin Lesson &rarr;</button>
+  <div class="welcome-details">
+    <h3>Learning objectives for this lesson:</h3>
+    <ul>
+      <li>Distinguish between non-parametric, semi-parametric, and parametric analyses of survival data</li>
+      <li>Carry out non-parametric analyses using actuarial and Kaplan-Meier life tables</li>
+      <li>Generate and interpret survivor and cumulative hazard function graphs</li>
+      <li>Understand relationships among survivor S(t), failure F(t), hazard h(t), and cumulative hazard H(t) functions</li>
+      <li>Fit and interpret a Cox proportional hazards model including hazard ratios</li>
+      <li>Evaluate the proportional hazards assumption using graphical and statistical methods</li>
+      <li>Incorporate time-varying covariates and stratified analyses in Cox models</li>
+      <li>Describe parametric survival models (exponential, Weibull, Gompertz) and accelerated failure time models</li>
+      <li>Understand frailty models for accounting for unmeasured covariates</li>
+    </ul>
+  </div>
+  <p style="font-size:12px;opacity:0.5;margin-top:32px;max-width:560px;text-align:center;line-height:1.5;">This course was developed by Kiffer G. Card, PhD, as a companion to Dohoo, I. R., Martin, S. W., &amp; Stryhn, H. (2012). <em>Methods in Epidemiologic Research.</em> VER Inc.</p>
+</div>
+</div>
+
+<!-- ============ SECTION 1: Introduction & Non-Parametric Analyses ============ -->
+<div class="module-page" id="page-0">
+<div class="module-header">
+  <div class="module-tag">Section 1</div>
+  <h1>Introduction &amp; Non-Parametric Analyses</h1>
+  <div class="time">&#9201; Estimated time: 20 minutes</div>
+</div>
+<div class="module-body">
+
+<h2>What Is Survival Analysis?</h2>
+<p>Survival analysis (also called <strong>time-to-event analysis</strong>) is concerned with a specific type of outcome: the <strong>time</strong> that passes before a particular event of interest occurs. The event might be death, disease onset, recovery, relapse, or any other well-defined transition. What distinguishes survival data from other continuous outcomes is the presence of <strong>censoring</strong>&mdash;incomplete information about when the event occurred for some individuals.</p>
+
+<p>Survival data have two important structural features. First, the time variable is subject to <strong>strict left truncation</strong>&mdash;no values can be less than zero. Second, the distribution of survival times is typically <strong>right-skewed</strong>, meaning that a few individuals have very long survival times that pull the mean to the right. These features make standard linear regression inappropriate for modelling survival outcomes.</p>
+
+<div class="info-box teal">
+  <div class="box-title">Understanding Censoring</div>
+  <p>Censoring is a unique and defining feature of survival analysis. It occurs when we have <strong>incomplete information</strong> about a subject's survival time. A censored observation tells us that the true event time exceeds the observed follow-up time, but we do not know the exact event time. Standard regression methods cannot properly handle censored observations&mdash;survival analysis methods are specifically designed to extract the maximum information from both censored and uncensored observations.</p>
+</div>
+
+<h2>Types of Censoring</h2>
+<p>There are several types of censoring, each arising from different circumstances. Understanding the type of censoring present in your data is critical for choosing the appropriate analytical method.</p>
+
+<div class="flip-card-grid">
+  <div class="flip-card" onclick="openCardModal('Right Censoring', 'Right censoring is the &lt;strong&gt;most common&lt;/strong&gt; form of censoring in survival analysis. It occurs when the study ends or a subject is lost to follow-up &lt;em&gt;before&lt;/em&gt; the event of interest is observed. We know the subject survived at least until the censoring time, but we do not know when (or if) the event ultimately occurred. Examples include: a patient still alive at the end of a clinical trial, or a subject who moves away and is lost to follow-up.')">
+    <div class="card-icon">&#9654;</div>
+    <div class="card-label">Right Censoring</div>
+    <div class="card-hint">Click to learn more</div>
+  </div>
+  <div class="flip-card" onclick="openCardModal('Interval Censoring', 'Interval censoring occurs when we only know that the event happened &lt;strong&gt;between two time points&lt;/strong&gt;, but not the exact time. This is common when subjects are examined at periodic visits. For example, if a patient tests negative for a disease at visit 3 (month 6) but positive at visit 4 (month 12), we know the event occurred somewhere in the interval (6, 12) but cannot pinpoint the exact time.')">
+    <div class="card-icon">&#8596;</div>
+    <div class="card-label">Interval Censoring</div>
+    <div class="card-hint">Click to learn more</div>
+  </div>
+  <div class="flip-card" onclick="openCardModal('Left Censoring', 'Left censoring occurs when the event has &lt;strong&gt;already happened&lt;/strong&gt; before the subject enters the study, but the exact time is unknown. For example, if we are studying the age at which children first develop a certain antibody, a child who already has the antibody at the time of first testing is left-censored&mdash;we know the event occurred before their entry, but not exactly when.')">
+    <div class="card-icon">&#9664;</div>
+    <div class="card-label">Left Censoring</div>
+    <div class="card-hint">Click to learn more</div>
+  </div>
+</div>
+
+<div class="info-box amber">
+  <div class="box-title">Truncation vs Censoring</div>
+  <p><strong>Truncation</strong> differs from censoring in an important way. With censoring, we know the subject exists but have incomplete event time information. With truncation, the subject is entirely <strong>excluded</strong> from the study because their event time falls outside an observable window. Left truncation (delayed entry) occurs when subjects are only observed if they have survived long enough to enter the study. This distinction affects how the risk set is calculated.</p>
+</div>
+
+<h2>Quantifying Survival Time</h2>
+<p>Several summary measures can describe survival data:</p>
+<ul>
+  <li><strong>Mean survival time</strong>&mdash;often difficult to estimate accurately because the longest survival times may be censored</li>
+  <li><strong>Median survival time</strong>&mdash;the time at which 50% of subjects have experienced the event; more robust to censoring than the mean</li>
+  <li><strong>n-year survival</strong>&mdash;the proportion of subjects surviving beyond a specified time point (e.g., 5-year survival rate)</li>
+  <li><strong>Incidence rate</strong>&mdash;the number of events divided by the total person-time at risk</li>
+</ul>
+
+<h2>Three Approaches to Survival Analysis</h2>
+<p>There are three broad approaches to analysing survival data, each with different assumptions and capabilities:</p>
+<ul>
+  <li><strong>Non-parametric methods</strong>&mdash;make no assumptions about the shape of the survival or hazard function (e.g., Kaplan-Meier, actuarial life tables)</li>
+  <li><strong>Semi-parametric methods</strong>&mdash;leave the baseline hazard unspecified while modelling the effect of predictors parametrically (e.g., Cox proportional hazards model)</li>
+  <li><strong>Parametric methods</strong>&mdash;specify a particular distributional form for the baseline hazard (e.g., exponential, Weibull, Gompertz models)</li>
+</ul>
+
+<h2>Actuarial Life Tables</h2>
+<p>The actuarial (or life-table) method is one of the oldest approaches to estimating survival. Time is divided into <strong>pre-specified intervals</strong>, and survival is estimated within each interval. The key quantities in an actuarial life table are:</p>
+
+<div class="data-table" style="overflow-x:auto;">
+<table class="data-table">
+  <thead>
+    <tr><th>Symbol</th><th>Quantity</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><em>l</em><sub>j</sub></td><td>Starting number at risk</td><td>Number of subjects alive at the start of interval <em>j</em></td></tr>
+    <tr><td><em>w</em><sub>j</sub></td><td>Withdrawals</td><td>Number censored (withdrawn) during interval <em>j</em></td></tr>
+    <tr><td><em>r</em><sub>j</sub></td><td>Adjusted risk set</td><td><em>r</em><sub>j</sub> = <em>l</em><sub>j</sub> &minus; <em>w</em><sub>j</sub>/2 (assumes withdrawals at midpoint)</td></tr>
+    <tr><td><em>d</em><sub>j</sub></td><td>Failures (events)</td><td>Number experiencing the event during interval <em>j</em></td></tr>
+    <tr><td><em>q</em><sub>j</sub></td><td>Risk of failure</td><td><em>q</em><sub>j</sub> = <em>d</em><sub>j</sub> / <em>r</em><sub>j</sub></td></tr>
+    <tr><td><em>p</em><sub>j</sub></td><td>Survival probability</td><td><em>p</em><sub>j</sub> = 1 &minus; <em>q</em><sub>j</sub></td></tr>
+    <tr><td><em>S</em><sub>j</sub></td><td>Cumulative survival</td><td>Product of all <em>p</em><sub>j</sub> values up to interval <em>j</em></td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2>The Kaplan-Meier Estimator</h2>
+<p>The <strong>Kaplan-Meier</strong> (KM) estimator, also called the <strong>product-limit</strong> estimator, is the most widely used non-parametric method for estimating the survivor function. Unlike the actuarial method, the KM estimator recalculates the survival probability at each <strong>actual event time</strong> rather than at pre-specified intervals.</p>
+
+<div class="formula-box">
+  <div class="formula-label">Kaplan-Meier Estimator (Eq 19.1)</div>
+  <em>S</em>(<em>t</em>) = &Pi; (<em>r</em><sub>j</sub> &minus; <em>d</em><sub>j</sub>) / <em>r</em><sub>j</sub>
+</div>
+
+<p>Key properties of the Kaplan-Meier estimator:</p>
+<ul>
+  <li>It is a <strong>step function</strong> that only changes at observed failure times</li>
+  <li>It is <strong>piecewise constant</strong> between events</li>
+  <li>It is <strong>non-increasing</strong>&mdash;the estimated survival can only stay the same or decrease over time</li>
+  <li>It is <strong>right-continuous</strong>&mdash;at each event time, the function takes the value after the drop</li>
+</ul>
+
+<h2>The Nelson-Aalen Estimator</h2>
+<p>While the Kaplan-Meier estimator directly estimates the survivor function S(<em>t</em>), the <strong>Nelson-Aalen</strong> estimator provides a non-parametric estimate of the <strong>cumulative hazard function</strong> H(<em>t</em>).</p>
+
+<div class="formula-box">
+  <div class="formula-label">Nelson-Aalen Cumulative Hazard Estimator (Eq 19.2)</div>
+  <em>H</em>(<em>t</em>) = &Sigma; <em>d</em><sub>j</sub> / <em>r</em><sub>j</sub>
+</div>
+
+<p>The Nelson-Aalen estimator sums the ratio of events to the risk set at each failure time up to time <em>t</em>. It estimates the <strong>expected number of events</strong> that would have occurred up to time <em>t</em> if the process could be repeated. Note that the survivor function can be estimated from the cumulative hazard as S(<em>t</em>) = e<sup>&minus;H(<em>t</em>)</sup>.</p>
+
+<!-- Section 1 Quiz -->
+<div class="quiz-section" id="quiz-0">
+  <h3>Section 1 Knowledge Check</h3>
+  <div class="quiz-question" data-correct="b">
+    <p>1. Right censoring occurs when:</p>
+    <label class="quiz-option"><input type="radio" name="q0-0" value="a"> An event happens before the study begins</label>
+    <label class="quiz-option"><input type="radio" name="q0-0" value="b"> A person is lost to follow-up before the event is observed</label>
+    <label class="quiz-option"><input type="radio" name="q0-0" value="c"> The exact event time is known</label>
+    <label class="quiz-option"><input type="radio" name="q0-0" value="d"> The event occurs at the start of observation</label>
+    <div class="quiz-explanation">Right censoring is the most common form &mdash; the person leaves the study (or the study ends) before the event is observed. We know the subject survived at least until the censoring time.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>2. The Kaplan-Meier estimator differs from the actuarial method because:</p>
+    <label class="quiz-option"><input type="radio" name="q0-1" value="a"> It requires pre-specified time intervals</label>
+    <label class="quiz-option"><input type="radio" name="q0-1" value="b"> It recalculates at each actual event time</label>
+    <label class="quiz-option"><input type="radio" name="q0-1" value="c"> It assumes constant hazard</label>
+    <label class="quiz-option"><input type="radio" name="q0-1" value="d"> It cannot handle censoring</label>
+    <div class="quiz-explanation">The K-M method recalculates at each observed failure time rather than using arbitrary fixed intervals, making it more precise and the most commonly used non-parametric survival estimator.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>3. The Nelson-Aalen estimator provides an estimate of:</p>
+    <label class="quiz-option"><input type="radio" name="q0-2" value="a"> The survivor function</label>
+    <label class="quiz-option"><input type="radio" name="q0-2" value="b"> The cumulative hazard function</label>
+    <label class="quiz-option"><input type="radio" name="q0-2" value="c"> The probability density function</label>
+    <label class="quiz-option"><input type="radio" name="q0-2" value="d"> The hazard ratio</label>
+    <div class="quiz-explanation">The Nelson-Aalen estimator H(<em>t</em>) = &Sigma; <em>d</em><sub>j</sub>/<em>r</em><sub>j</sub> estimates the cumulative hazard &mdash; the expected number of events up to time <em>t</em>.</div>
+  </div>
+
+  <div class="quiz-result" id="quizResult-0"></div>
+  <div class="quiz-retry" id="quizRetry-0"><button class="btn btn-outline" onclick="retryQuiz(0)">Retry Quiz</button></div>
+  <button class="btn btn-primary" onclick="checkQuiz(0)" style="margin-top:12px;">Check Answers</button>
+</div>
+
+<div class="reflection-box">
+  <h3>Reflection</h3>
+  <p>Why is censoring a unique challenge in survival analysis compared to other regression approaches? How might ignoring censored observations bias your results?</p>
+  <textarea id="reflection-1" placeholder="Type your reflection here..."></textarea>
+  <button class="btn-save" onclick="checkReflection(1)">Save Reflection</button>
+  <div class="reflection-status" id="reflectionStatus-1">Reflection saved!</div>
+</div>
+
+<div class="section-nav">
+  <button class="btn btn-outline" onclick="goToModule(-1)">&larr; Welcome</button>
+  <div>
+    <button class="btn btn-primary disabled" id="nextBtn-0" onclick="goToModule(1)">Next Section &rarr;</button>
+    <div class="req-note" id="reqNote-0"><span class="req-pending">*</span> Complete the quiz and reflection to continue.</div>
+  </div>
+</div>
+
+</div>
+</div>
+
+<!-- ============ SECTION 2: Survivor, Failure & Hazard Functions ============ -->
+<div class="module-page" id="page-1">
+<div class="module-header">
+  <div class="module-tag">Section 2</div>
+  <h1>Survivor, Failure &amp; Hazard Functions</h1>
+  <div class="time">&#9201; Estimated time: 20 minutes</div>
+</div>
+<div class="module-body">
+
+<h2>The Survivor Function</h2>
+<p>The <strong>survivor function</strong> (also called the survival function) is the cornerstone quantity in survival analysis. It gives the probability that an individual survives beyond a specified time <em>t</em>.</p>
+
+<div class="formula-box">
+  <div class="formula-label">Survivor Function (Eq 19.3)</div>
+  <em>S</em>(<em>t</em>) = P(<em>T</em> &ge; <em>t</em>)
+</div>
+
+<p>At time <em>t</em> = 0, S(0) = 1 (everyone is alive). As time increases, S(<em>t</em>) decreases. If we follow subjects long enough, S(<em>t</em>) will approach zero. A steep decline in the survivor function indicates rapid event occurrence, while a gradual decline indicates slow event occurrence.</p>
+
+<h2>The Failure Function</h2>
+<p>The <strong>failure function</strong> (also called the cumulative distribution function, CDF) is simply the complement of the survivor function. It gives the probability that the event has already occurred by time <em>t</em>.</p>
+
+<div class="formula-box">
+  <div class="formula-label">Failure Function (Eq 19.4)</div>
+  <em>F</em>(<em>t</em>) = 1 &minus; <em>S</em>(<em>t</em>) = P(<em>T</em> &lt; <em>t</em>)
+</div>
+
+<h2>The Probability Density Function and Hazard Function</h2>
+<p>The <strong>probability density function</strong> f(<em>t</em>) = dF(<em>t</em>)/d<em>t</em> describes the instantaneous rate of failure events at time <em>t</em>. However, in survival analysis, the most important function is the <strong>hazard function</strong>, which conditions on survival up to time <em>t</em>.</p>
+
+<div class="formula-box">
+  <div class="formula-label">Hazard Function (Eq 19.5&ndash;19.7)</div>
+  <em>h</em>(<em>t</em>) = <em>f</em>(<em>t</em>) / <em>S</em>(<em>t</em>) = lim<sub>&Delta;t&rarr;0</sub> P(<em>t</em> &le; <em>T</em> &lt; <em>t</em> + &Delta;<em>t</em> | <em>T</em> &ge; <em>t</em>) / &Delta;<em>t</em>
+</div>
+
+<p>The hazard function gives the <strong>instantaneous rate</strong> of the event at time <em>t</em>, <strong>conditional on having survived</strong> to that point. It is not a probability (it can exceed 1) but rather a rate per unit time. The hazard is the quantity most directly related to the biological or clinical mechanism driving events.</p>
+
+<h2>The Cumulative Hazard Function</h2>
+<p>The cumulative hazard integrates the hazard over time and has a direct relationship with the survivor function:</p>
+
+<div class="formula-box">
+  <div class="formula-label">Cumulative Hazard (Eq 19.8)</div>
+  <em>H</em>(<em>t</em>) = &minus;ln <em>S</em>(<em>t</em>)
+</div>
+
+<div class="info-box teal">
+  <div class="box-title">Key Relationships Among Functions</div>
+  <p>The remarkable feature of these functions is that <strong>knowing any one determines all others</strong> (Eq 19.9&ndash;19.10). For example, from the survivor function alone we can derive: F(<em>t</em>) = 1 &minus; S(<em>t</em>), H(<em>t</em>) = &minus;ln S(<em>t</em>), f(<em>t</em>) = &minus;dS(<em>t</em>)/d<em>t</em>, and h(<em>t</em>) = f(<em>t</em>)/S(<em>t</em>). This means that if we can estimate any one of these functions, we automatically have estimates of all the others.</p>
+</div>
+
+<h2>Hazard Function Shapes</h2>
+<p>The shape of the hazard function tells us about the underlying process generating the events. Different parametric distributions correspond to different hazard shapes.</p>
+
+<div class="tabs">
+  <div class="tab-row">
+    <button class="tab-btn active" onclick="switchTab(event,'tab-constant')">Constant Hazard</button>
+    <button class="tab-btn" onclick="switchTab(event,'tab-weibull-inc')">Weibull (Increasing)</button>
+    <button class="tab-btn" onclick="switchTab(event,'tab-weibull-dec')">Weibull (Decreasing)</button>
+  </div>
+  <div class="tab-panel active" id="tab-constant">
+    <h3>Constant Hazard (Exponential Distribution)</h3>
+    <p>When the hazard is constant over time&mdash;h(<em>t</em>) = &lambda;&mdash;the underlying survival times follow an <strong>exponential distribution</strong> (Eq 19.11). The survivor function is S(<em>t</em>) = e<sup>&minus;&lambda;<em>t</em></sup>. A constant hazard means the risk of the event is the same regardless of how long the subject has already survived. This implies a &ldquo;memoryless&rdquo; property: the risk at time <em>t</em> = 100 is the same as at time <em>t</em> = 1.</p>
+    <p><strong>Example:</strong> Certain infectious diseases where the risk of contracting the infection is roughly constant over time, regardless of how long the individual has been at risk.</p>
+  </div>
+  <div class="tab-panel" id="tab-weibull-inc">
+    <h3>Increasing Hazard (Weibull with <em>p</em> &gt; 1)</h3>
+    <p>When the Weibull shape parameter <em>p</em> &gt; 1, the hazard <em>h</em>(<em>t</em>) = &lambda;<em>p</em><em>t</em><sup><em>p</em>&minus;1</sup> is <strong>monotonically increasing</strong> over time (Eq 19.12). The survivor function is S(<em>t</em>) = exp(&minus;&lambda;<em>t</em><sup><em>p</em></sup>). This means the risk of the event grows as time passes&mdash;a phenomenon often seen in aging-related diseases or mechanical wear-out.</p>
+    <p><strong>Example:</strong> Age-related diseases such as cancer or cardiovascular disease, where the risk increases progressively with duration of exposure or age.</p>
+  </div>
+  <div class="tab-panel" id="tab-weibull-dec">
+    <h3>Decreasing Hazard (Weibull with <em>p</em> &lt; 1)</h3>
+    <p>When <em>p</em> &lt; 1, the Weibull hazard is <strong>monotonically decreasing</strong> over time. The risk is highest at the beginning of the observation period and diminishes as time progresses. This pattern is common in situations where the most vulnerable individuals fail early, leaving a &ldquo;healthier&rdquo; surviving cohort.</p>
+    <p><strong>Example:</strong> Post-surgical mortality, where the risk is highest immediately after surgery and decreases as patients recover; or infant mortality, where risk is highest in the neonatal period.</p>
+  </div>
+</div>
+
+<h2>Comparing Survival Curves</h2>
+<p>When comparing the survival experience of two or more groups, several statistical tests are available. Each test weights the contributions of different time points differently.</p>
+
+<div class="accordion">
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">Log-Rank Test</div>
+    <div class="accordion-body"><div class="accordion-body-inner">
+      <p>The <strong>log-rank test</strong> assigns equal weight to all time points. It is the most commonly used test for comparing survival curves and is optimal when the hazards are truly proportional (constant hazard ratio over time). It is equivalent to a stratified Mantel-Haenszel test.</p>
+    </div></div>
+  </div>
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">Wilcoxon (Breslow) Test</div>
+    <div class="accordion-body"><div class="accordion-body-inner">
+      <p>The <strong>Wilcoxon test</strong> (also called the Breslow or generalised Wilcoxon test) weights each time point by the number of subjects still at risk. This gives more weight to <strong>early differences</strong> in survival (when the risk set is large) and is more sensitive to detecting differences that occur in the early part of follow-up.</p>
+    </div></div>
+  </div>
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">Tarone-Ware Test</div>
+    <div class="accordion-body"><div class="accordion-body-inner">
+      <p>The <strong>Tarone-Ware test</strong> uses the square root of the number at risk as the weight. It represents a compromise between the log-rank and Wilcoxon tests, giving moderate emphasis to early time points.</p>
+    </div></div>
+  </div>
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">Peto-Peto-Prentice Test</div>
+    <div class="accordion-body"><div class="accordion-body-inner">
+      <p>The <strong>Peto-Peto-Prentice test</strong> uses the Kaplan-Meier estimate of the survival function as weights. Like the Wilcoxon test, it is more sensitive to early differences but is less influenced by outlying late events. It is also more robust when censoring patterns differ between groups.</p>
+    </div></div>
+  </div>
+</div>
+
+<div class="scenario-card">
+  <div class="scenario-title">Scenario: Comparing Post-Heart Attack Survival</div>
+  <p>Imagine you are comparing two-year survival after a heart attack between patients who received a new drug versus standard care. You plot Kaplan-Meier curves for both groups. The curves separate early (within the first 3 months) and then run roughly parallel. In this case, the <strong>log-rank test</strong> (which assumes proportional hazards) would be appropriate since the hazard ratio appears constant after the initial separation. However, if the curves crossed midway through follow-up, you would need to consider that the proportional hazards assumption is violated and might report results from different tests or time-specific analyses.</p>
+</div>
+
+<!-- Section 2 Quiz -->
+<div class="quiz-section" id="quiz-1">
+  <h3>Section 2 Knowledge Check</h3>
+  <div class="quiz-question" data-correct="b">
+    <p>1. The hazard function h(t) represents:</p>
+    <label class="quiz-option"><input type="radio" name="q1-0" value="a"> The cumulative probability of failure</label>
+    <label class="quiz-option"><input type="radio" name="q1-0" value="b"> The instantaneous rate of the event given survival to time t</label>
+    <label class="quiz-option"><input type="radio" name="q1-0" value="c"> The probability of surviving past time t</label>
+    <label class="quiz-option"><input type="radio" name="q1-0" value="d"> The average survival time</label>
+    <div class="quiz-explanation">The hazard is the instantaneous probability of the event at time <em>t</em>, conditional on having survived to that point. It is a rate (not a probability) and can exceed 1.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="c">
+    <p>2. If a Weibull model has shape parameter p &lt; 1, the hazard is:</p>
+    <label class="quiz-option"><input type="radio" name="q1-1" value="a"> Increasing over time</label>
+    <label class="quiz-option"><input type="radio" name="q1-1" value="b"> Constant over time</label>
+    <label class="quiz-option"><input type="radio" name="q1-1" value="c"> Decreasing over time</label>
+    <label class="quiz-option"><input type="radio" name="q1-1" value="d"> U-shaped</label>
+    <div class="quiz-explanation">When <em>p</em> &lt; 1, the Weibull hazard decreases monotonically &mdash; appropriate for situations like post-surgical mortality where risk is highest initially and decreases as patients recover.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>3. The log-rank test assumes:</p>
+    <label class="quiz-option"><input type="radio" name="q1-2" value="a"> Normal distribution of survival times</label>
+    <label class="quiz-option"><input type="radio" name="q1-2" value="b"> Constant (proportional) hazard ratios across all time points</label>
+    <label class="quiz-option"><input type="radio" name="q1-2" value="c"> Equal sample sizes in both groups</label>
+    <label class="quiz-option"><input type="radio" name="q1-2" value="d"> No censored observations</label>
+    <div class="quiz-explanation">The log-rank test assumes proportional hazards &mdash; that the ratio of hazards between groups is constant across all time points. It is most powerful under this assumption.</div>
+  </div>
+
+  <div class="quiz-result" id="quizResult-1"></div>
+  <div class="quiz-retry" id="quizRetry-1"><button class="btn btn-outline" onclick="retryQuiz(1)">Retry Quiz</button></div>
+  <button class="btn btn-primary" onclick="checkQuiz(1)" style="margin-top:12px;">Check Answers</button>
+</div>
+
+<div class="reflection-box">
+  <h3>Reflection</h3>
+  <p>Consider how different hazard function shapes (constant, increasing, decreasing) might apply to different diseases or health conditions. What does the shape of the hazard tell us about the underlying biological process?</p>
+  <textarea id="reflection-2" placeholder="Type your reflection here..."></textarea>
+  <button class="btn-save" onclick="checkReflection(2)">Save Reflection</button>
+  <div class="reflection-status" id="reflectionStatus-2">Reflection saved!</div>
+</div>
+
+<div class="section-nav">
+  <button class="btn btn-outline" onclick="goToModule(0)">&larr; Section 1</button>
+  <div>
+    <button class="btn btn-primary disabled" id="nextBtn-1" onclick="goToModule(2)">Next Section &rarr;</button>
+    <div class="req-note" id="reqNote-1"><span class="req-pending">*</span> Complete the quiz and reflection to continue.</div>
+  </div>
+</div>
+
+</div>
+</div>
+
+<!-- ============ SECTION 3: Cox Proportional Hazards Model ============ -->
+<div class="module-page" id="page-2">
+<div class="module-header">
+  <div class="module-tag">Section 3</div>
+  <h1>Cox Proportional Hazards Model</h1>
+  <div class="time">&#9201; Estimated time: 25 minutes</div>
+</div>
+<div class="module-body">
+
+<h2>The Cox Model</h2>
+<p>The <strong>Cox proportional hazards model</strong> is the most widely used regression model for survival data. Introduced by Sir David Cox in 1972, it is a <strong>semi-parametric</strong> model&mdash;it models the effect of predictors on the hazard without making any assumptions about the shape of the baseline hazard function.</p>
+
+<div class="formula-box">
+  <div class="formula-label">Cox Proportional Hazards Model (Eq 19.13)</div>
+  <em>h</em>(<em>t</em>) = <em>h</em><sub>0</sub>(<em>t</em>) &times; e<sup>&beta;<em>X</em></sup>
+</div>
+
+<p>In this model, <em>h</em><sub>0</sub>(<em>t</em>) is the <strong>baseline hazard</strong> (the hazard when all predictors are zero), and e<sup>&beta;<em>X</em></sup> is the multiplicative effect of the predictor(s). The baseline hazard <em>h</em><sub>0</sub>(<em>t</em>) is left completely unspecified&mdash;it can take any shape. This is the key advantage of the Cox model: <strong>no distributional assumption</strong> about the underlying survival times is needed.</p>
+
+<h2>The Hazard Ratio</h2>
+
+<div class="formula-box">
+  <div class="formula-label">Hazard Ratio (Eq 19.14)</div>
+  HR = <em>h</em>(<em>t</em>) / <em>h</em><sub>0</sub>(<em>t</em>) = e<sup>&beta;<em>X</em></sup>
+</div>
+
+<p>The <strong>hazard ratio</strong> (HR) is the primary measure of effect in the Cox model. For a one-unit increase in a predictor <em>X</em>, the hazard is multiplied by e<sup>&beta;</sup>. For example, if &beta; = 0.693 for a treatment variable, then HR = e<sup>0.693</sup> = 2.0, meaning the treated group has <strong>twice the hazard</strong> (rate of events) compared to the reference group. An HR &gt; 1 indicates increased hazard (shorter survival), while HR &lt; 1 indicates decreased hazard (longer survival).</p>
+
+<div class="formula-box">
+  <div class="formula-label">Log-Hazard Form (Eq 19.15)</div>
+  ln <em>h</em>(<em>t</em>) = ln <em>h</em><sub>0</sub>(<em>t</em>) + &beta;<em>X</em>
+</div>
+
+<div class="info-box teal">
+  <div class="box-title">The Proportional Hazards Assumption</div>
+  <p>The Cox model assumes that the hazard ratio between any two individuals is <strong>constant over time</strong>. This means the effect of a predictor does not change as time passes. For example, if treatment halves the hazard at 1 month, it must also halve the hazard at 12 months. When this assumption is violated, the estimated hazard ratio represents a weighted average of the time-varying effects, and its interpretation becomes ambiguous. Testing this assumption is a critical step in Cox model validation.</p>
+</div>
+
+<h2>Estimation: Partial Likelihood</h2>
+<p>Because the baseline hazard is left unspecified, the Cox model cannot use standard maximum likelihood estimation. Instead, it uses <strong>partial likelihood</strong> (also called conditional likelihood), which estimates the &beta; coefficients without needing to estimate <em>h</em><sub>0</sub>(<em>t</em>). The partial likelihood considers only the ordering of events&mdash;at each failure time, it asks: given the current risk set, what is the probability that this particular individual was the one to fail?</p>
+
+<h3>Handling Ties</h3>
+<p>When two or more events occur at exactly the same time (ties), the exact partial likelihood becomes computationally expensive. Several approximations are available:</p>
+<ul>
+  <li><strong>Breslow method</strong>&mdash;the simplest approximation, adequate when ties are few</li>
+  <li><strong>Efron method</strong>&mdash;a better approximation that is the default in many software packages</li>
+  <li><strong>Exact methods</strong>&mdash;computationally intensive but most accurate when ties are common</li>
+</ul>
+
+<h2>Example: Cox Model Results</h2>
+<div class="data-table" style="overflow-x:auto;">
+<table class="data-table">
+  <thead>
+    <tr><th>Predictor</th><th>&beta;</th><th>SE(&beta;)</th><th>HR (e<sup>&beta;</sup>)</th><th>95% CI</th><th>P-value</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Treatment (1 = new drug)</td><td>&minus;0.47</td><td>0.14</td><td>0.63</td><td>0.48&ndash;0.82</td><td>0.001</td></tr>
+    <tr><td>Age (per 10 years)</td><td>0.35</td><td>0.08</td><td>1.42</td><td>1.21&ndash;1.66</td><td>&lt;0.001</td></tr>
+    <tr><td>Stage III vs I</td><td>1.10</td><td>0.20</td><td>3.00</td><td>2.04&ndash;4.44</td><td>&lt;0.001</td></tr>
+    <tr><td>Stage II vs I</td><td>0.52</td><td>0.18</td><td>1.68</td><td>1.18&ndash;2.40</td><td>0.004</td></tr>
+  </tbody>
+</table>
+</div>
+<p>In this example, patients receiving the new drug have 37% lower hazard of death (HR = 0.63) compared to the control group, after adjusting for age and disease stage. Each 10-year increase in age is associated with a 42% increase in the hazard. Stage III patients have 3 times the hazard compared to Stage I patients.</p>
+
+<h2>Stratified Cox Models</h2>
+
+<div class="formula-box">
+  <div class="formula-label">Stratified Cox Model (Eq 19.16)</div>
+  <em>h</em><sub>j</sub>(<em>t</em>) = <em>h</em><sub>0j</sub>(<em>t</em>) &times; e<sup>&beta;<em>X</em></sup>
+</div>
+
+<p>When the proportional hazards assumption is violated for a particular variable, one solution is to <strong>stratify</strong> on that variable. In the stratified Cox model, each stratum <em>j</em> has its own baseline hazard <em>h</em><sub>0j</sub>(<em>t</em>), but the regression coefficients (&beta;) are assumed to be the <strong>same across all strata</strong>. This allows the stratifying variable to have a completely flexible effect on survival without needing to estimate or specify its functional form.</p>
+
+<h2>Time-Varying Predictors and Effects</h2>
+<p>The standard Cox model assumes that predictor values are measured at baseline and remain constant. However, some predictors change over the course of follow-up:</p>
+<ul>
+  <li><strong>Time-varying predictors</strong>: The actual value of the predictor changes during follow-up (e.g., a patient is discharged from hospital and their treatment status changes from &ldquo;inpatient&rdquo; to &ldquo;outpatient&rdquo;). This requires splitting the follow-up time into intervals and updating predictor values.</li>
+  <li><strong>Time-varying effects</strong>: The predictor itself may be fixed at baseline, but its effect on the hazard changes over time. This is modelled by including a predictor &times; time interaction term and indicates a violation of the proportional hazards assumption.</li>
+</ul>
+
+<h2>Validating the Cox Model</h2>
+<p>Thorough model validation involves checking several aspects of model performance. Different types of residuals serve different diagnostic purposes.</p>
+
+<div class="flip-card-grid">
+  <div class="flip-card" onclick="openCardModal('Cox-Snell Residuals', 'Cox-Snell residuals assess the &lt;strong&gt;overall fit&lt;/strong&gt; of the model. If the model is correct, these residuals should follow a standard exponential distribution (or equivalently, the cumulative hazard of the residuals should be a straight line through the origin with slope 1). Departures from this pattern indicate lack of fit.')">
+    <div class="card-icon">&#128202;</div>
+    <div class="card-label">Cox-Snell Residuals</div>
+    <div class="card-hint">Click to learn more</div>
+  </div>
+  <div class="flip-card" onclick="openCardModal('Schoenfeld Residuals', 'Schoenfeld (partial) residuals are used to assess the &lt;strong&gt;proportional hazards assumption&lt;/strong&gt;. There is one residual per predictor per event time. When plotted against time, a non-zero slope suggests that the effect of the predictor changes over time (violating PH). A statistical test of zero slope provides a formal test of the PH assumption for each predictor.')">
+    <div class="card-icon">&#128200;</div>
+    <div class="card-label">Schoenfeld Residuals</div>
+    <div class="card-hint">Click to learn more</div>
+  </div>
+  <div class="flip-card" onclick="openCardModal('Martingale Residuals', 'Martingale residuals assess the &lt;strong&gt;functional form&lt;/strong&gt; of continuous predictors. They are defined as the difference between the observed event indicator and the expected number of events for each subject. Plotting martingale residuals against a continuous predictor reveals whether the assumed linear form is appropriate or whether a transformation is needed.')">
+    <div class="card-icon">&#128209;</div>
+    <div class="card-label">Martingale Residuals</div>
+    <div class="card-hint">Click to learn more</div>
+  </div>
+  <div class="flip-card" onclick="openCardModal('Deviance Residuals', 'Deviance residuals are a transformation of martingale residuals that are more symmetrically distributed around zero. They are used to detect &lt;strong&gt;outliers&lt;/strong&gt;&mdash;individuals whose observed outcome is very different from what the model predicts. Large positive values indicate subjects who died &ldquo;too soon&rdquo; and large negative values indicate subjects who survived &ldquo;too long&rdquo; given their predicted risk.')">
+    <div class="card-icon">&#128270;</div>
+    <div class="card-label">Deviance Residuals</div>
+    <div class="card-hint">Click to learn more</div>
+  </div>
+  <div class="flip-card" onclick="openCardModal('Score Residuals', 'Score (and scaled score) residuals identify &lt;strong&gt;influential observations&lt;/strong&gt;&mdash;subjects whose removal would substantially change the estimated regression coefficients. They are the survival analysis analogue of leverage and Cook&rsquo;s distance in linear regression. Scaled score residuals are standardized to make comparison across predictors easier.')">
+    <div class="card-icon">&#9888;</div>
+    <div class="card-label">Score Residuals</div>
+    <div class="card-hint">Click to learn more</div>
+  </div>
+</div>
+
+<div class="accordion">
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">Graphical assessment of proportional hazards</div>
+    <div class="accordion-body"><div class="accordion-body-inner">
+      <p>Two graphical methods are commonly used. First, <strong>log-cumulative hazard plots</strong>: plot ln H(<em>t</em>) (or equivalently, ln(&minus;ln S(<em>t</em>))) against ln(<em>t</em>) for each group. If the curves are roughly parallel, the PH assumption is reasonable. Second, <strong>observed vs predicted plots</strong>: compare the Kaplan-Meier survival curves to the Cox model-predicted curves for each group. Good agreement supports the model.</p>
+    </div></div>
+  </div>
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">Statistical tests for proportional hazards</div>
+    <div class="accordion-body"><div class="accordion-body-inner">
+      <p>The most common statistical test uses <strong>Schoenfeld residuals</strong>. The test regresses the scaled Schoenfeld residuals against time (or a function of time). A significant P-value indicates that the effect of the predictor changes with time, violating the PH assumption. A global test that combines results across all predictors is also available.</p>
+    </div></div>
+  </div>
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">Overall model fit and discrimination</div>
+    <div class="accordion-body"><div class="accordion-body-inner">
+      <p>Several measures assess how well the model fits and discriminates. <strong>Cox-Snell residuals</strong> assess overall goodness-of-fit. <strong>Harrell&rsquo;s C concordance statistic</strong> measures discriminative ability&mdash;the proportion of all pairs of subjects that the model correctly orders by predicted risk. Values of C range from 0.5 (chance) to 1.0 (perfect discrimination). An <strong>R&sup2;</strong> analogue has also been proposed for survival models.</p>
+    </div></div>
+  </div>
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">Independent censoring assumption</div>
+    <div class="accordion-body"><div class="accordion-body-inner">
+      <p>All standard survival analysis methods assume that censoring is <strong>independent</strong> (non-informative)&mdash;meaning that censored subjects have the same future risk of the event as uncensored subjects who are still being followed. If sicker patients are more likely to drop out (informative censoring), the survival estimates will be biased. This assumption cannot be fully tested from the data, but sensitivity analyses can explore the impact of different censoring mechanisms.</p>
+    </div></div>
+  </div>
+</div>
+
+<!-- Section 3 Quiz -->
+<div class="quiz-section" id="quiz-2">
+  <h3>Section 3 Knowledge Check</h3>
+  <div class="quiz-question" data-correct="b">
+    <p>1. The Cox proportional hazards model assumes:</p>
+    <label class="quiz-option"><input type="radio" name="q2-0" value="a"> A specific distribution for survival times</label>
+    <label class="quiz-option"><input type="radio" name="q2-0" value="b"> Constant hazard ratios over time</label>
+    <label class="quiz-option"><input type="radio" name="q2-0" value="c"> Normally distributed residuals</label>
+    <label class="quiz-option"><input type="radio" name="q2-0" value="d"> Linear relationship between outcome and predictors</label>
+    <div class="quiz-explanation">The key assumption is that the ratio of hazards for any two individuals is constant over time (proportional hazards), though no assumption is made about the baseline hazard shape.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>2. Schoenfeld residuals are primarily used to:</p>
+    <label class="quiz-option"><input type="radio" name="q2-1" value="a"> Detect outliers</label>
+    <label class="quiz-option"><input type="radio" name="q2-1" value="b"> Assess the proportional hazards assumption</label>
+    <label class="quiz-option"><input type="radio" name="q2-1" value="c"> Evaluate overall model fit</label>
+    <label class="quiz-option"><input type="radio" name="q2-1" value="d"> Check the functional form of predictors</label>
+    <div class="quiz-explanation">Schoenfeld (partial) residuals, when plotted against time, assess whether the effect of a predictor changes over time &mdash; i.e., whether proportional hazards holds.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>3. In a stratified Cox model, the strata:</p>
+    <label class="quiz-option"><input type="radio" name="q2-2" value="a"> Have different regression coefficients</label>
+    <label class="quiz-option"><input type="radio" name="q2-2" value="b"> Have different baseline hazard functions</label>
+    <label class="quiz-option"><input type="radio" name="q2-2" value="c"> Must have equal sample sizes</label>
+    <label class="quiz-option"><input type="radio" name="q2-2" value="d"> Cannot include interactions</label>
+    <div class="quiz-explanation">Stratification allows each stratum to have its own baseline hazard while assuming the effects of predictors (&beta; coefficients) are the same across strata.</div>
+  </div>
+
+  <div class="quiz-result" id="quizResult-2"></div>
+  <div class="quiz-retry" id="quizRetry-2"><button class="btn btn-outline" onclick="retryQuiz(2)">Retry Quiz</button></div>
+  <button class="btn btn-primary" onclick="checkQuiz(2)" style="margin-top:12px;">Check Answers</button>
+</div>
+
+<div class="reflection-box">
+  <h3>Reflection</h3>
+  <p>When the proportional hazards assumption is violated for a predictor, what are the practical implications for interpreting the hazard ratio? How would you communicate this to a clinical audience?</p>
+  <textarea id="reflection-3" placeholder="Type your reflection here..."></textarea>
+  <button class="btn-save" onclick="checkReflection(3)">Save Reflection</button>
+  <div class="reflection-status" id="reflectionStatus-3">Reflection saved!</div>
+</div>
+
+<div class="section-nav">
+  <button class="btn btn-outline" onclick="goToModule(1)">&larr; Section 2</button>
+  <div>
+    <button class="btn btn-primary disabled" id="nextBtn-2" onclick="goToModule(3)">Next Section &rarr;</button>
+    <div class="req-note" id="reqNote-2"><span class="req-pending">*</span> Complete the quiz and reflection to continue.</div>
+  </div>
+</div>
+
+</div>
+</div>
+
+<!-- ============ SECTION 4: Parametric Models, AFT & Frailty ============ -->
+<div class="module-page" id="page-3">
+<div class="module-header">
+  <div class="module-tag">Section 4</div>
+  <h1>Parametric Models, AFT &amp; Frailty</h1>
+  <div class="time">&#9201; Estimated time: 20 minutes</div>
+</div>
+<div class="module-body">
+
+<h2>Why Parametric Models?</h2>
+<p>While the Cox model&rsquo;s flexibility is a strength, parametric models offer important advantages when the distributional assumption is correct. By specifying the form of the baseline hazard <em>h</em><sub>0</sub>(<em>t</em>), parametric models are <strong>more statistically efficient</strong>&mdash;they produce narrower confidence intervals and more powerful tests. They also allow direct estimation of the baseline hazard, prediction of survival times, and extrapolation beyond the observed data.</p>
+
+<div class="info-box teal">
+  <div class="box-title">Semi-Parametric vs Parametric: A Comparison</div>
+  <p>The <strong>Cox model</strong> (semi-parametric) leaves the baseline hazard unspecified&mdash;maximum flexibility but less efficiency. <strong>Parametric models</strong> specify the baseline hazard&mdash;more efficient if the assumption is correct, but biased if it is wrong. In practice, the Cox model is preferred when the shape of the baseline hazard is unknown or when the primary interest is in hazard ratios rather than absolute survival predictions. Parametric models are preferred when the distributional form is well justified or when extrapolation is needed.</p>
+</div>
+
+<h2>Common Parametric Models</h2>
+
+<div class="tabs">
+  <div class="tab-row">
+    <button class="tab-btn active" onclick="switchTab(event,'tab-exponential')">Exponential</button>
+    <button class="tab-btn" onclick="switchTab(event,'tab-weibull')">Weibull</button>
+    <button class="tab-btn" onclick="switchTab(event,'tab-gompertz')">Gompertz</button>
+  </div>
+  <div class="tab-panel active" id="tab-exponential">
+    <h3>Exponential Model</h3>
+    <p>The simplest parametric model assumes a <strong>constant hazard</strong> over time (Eq 19.17):</p>
+    <div class="formula-box">
+      <div class="formula-label">Exponential Hazard</div>
+      <em>h</em>(<em>t</em>) = &lambda; = exp(&beta;<sub>0</sub> + &beta;<sub>1</sub><em>X</em><sub>1</sub> + &hellip;)
+    </div>
+    <p>The exponential model includes an intercept &beta;<sub>0</sub> (unlike the Cox model). The constant hazard assumption is very restrictive and is appropriate only when the risk truly does not change over time. This model has the &ldquo;memoryless&rdquo; property&mdash;the predicted future survival does not depend on how long the subject has already survived.</p>
+  </div>
+  <div class="tab-panel" id="tab-weibull">
+    <h3>Weibull Model</h3>
+    <p>The Weibull model extends the exponential by adding a <strong>shape parameter</strong> <em>p</em> (Eq 19.18):</p>
+    <div class="formula-box">
+      <div class="formula-label">Weibull Hazard</div>
+      <em>h</em>(<em>t</em>) = &lambda;<em>p</em><em>t</em><sup><em>p</em>&minus;1</sup> &times; e<sup>&beta;<em>X</em></sup>
+    </div>
+    <p>When <em>p</em> = 1, the Weibull reduces to the exponential. When <em>p</em> &lt; 1, the hazard decreases over time; when <em>p</em> &gt; 1, the hazard increases over time. The Weibull model can be assessed by plotting ln H(<em>t</em>) vs ln(<em>t</em>)&mdash;if the data follow a Weibull distribution, this plot should be approximately linear with slope <em>p</em> and intercept ln &lambda;. The Weibull is the most commonly used parametric survival model because of its flexibility.</p>
+  </div>
+  <div class="tab-panel" id="tab-gompertz">
+    <h3>Gompertz Model</h3>
+    <p>The Gompertz model has a baseline hazard that changes <strong>exponentially</strong> with time (Eq 19.19):</p>
+    <div class="formula-box">
+      <div class="formula-label">Gompertz Baseline Hazard</div>
+      <em>h</em><sub>0</sub>(<em>t</em>) = &lambda;e<sup><em>p</em><em>t</em></sup>
+    </div>
+    <p>The log of the baseline hazard is linear in time: ln <em>h</em><sub>0</sub>(<em>t</em>) = ln &lambda; + <em>p</em><em>t</em>. When <em>p</em> &gt; 0, the hazard increases exponentially; when <em>p</em> &lt; 0, it decreases. The Gompertz model is widely used in demography and actuarial science because human mortality rates often increase approximately exponentially with age over much of the adult lifespan.</p>
+  </div>
+</div>
+
+<h2>Accelerated Failure Time (AFT) Models</h2>
+<p>Parametric survival models can also be formulated as <strong>accelerated failure time</strong> models, which model the effect of predictors on the <strong>log of survival time</strong> directly, rather than on the hazard.</p>
+
+<div class="formula-box">
+  <div class="formula-label">Accelerated Failure Time Model (Eq 19.20)</div>
+  ln <em>t</em> = &beta;<em>X</em> + ln &tau;
+</div>
+
+<p>In the AFT framework, the measure of effect is the <strong>time ratio</strong> (TR = e<sup>&beta;</sup>) rather than the hazard ratio. A time ratio of 2 means the expected survival time is <strong>doubled</strong>; a TR of 0.5 means it is halved. The AFT model essentially &ldquo;accelerates&rdquo; or &ldquo;decelerates&rdquo; time for different covariate patterns.</p>
+
+<div class="flip-card-grid">
+  <div class="flip-card" onclick="openCardModal('Log-Logistic Distribution', 'The &lt;strong&gt;log-logistic&lt;/strong&gt; distribution is commonly used in AFT models. Its unique property is that the hazard function can &lt;strong&gt;rise and then fall&lt;/strong&gt;, which is appropriate for conditions where risk increases initially and then decreases (e.g., certain cancers where the hazard peaks in the first few years after diagnosis and then declines). The log-logistic does not have a proportional hazards parameterisation, so it is only available as an AFT model.')">
+    <div class="card-icon">&#128200;</div>
+    <div class="card-label">Log-Logistic</div>
+    <div class="card-hint">Click to learn more</div>
+  </div>
+  <div class="flip-card" onclick="openCardModal('Log-Normal Distribution', 'The &lt;strong&gt;log-normal&lt;/strong&gt; distribution assumes that the log of survival time is normally distributed. Like the log-logistic, its hazard can rise and then fall. It is appropriate when there is a &ldquo;peak&rdquo; period of risk followed by declining risk. The log-normal is only available as an AFT model (no proportional hazards form).')">
+    <div class="card-icon">&#128202;</div>
+    <div class="card-label">Log-Normal</div>
+    <div class="card-hint">Click to learn more</div>
+  </div>
+  <div class="flip-card" onclick="openCardModal('Generalised Gamma Distribution', 'The &lt;strong&gt;generalised gamma&lt;/strong&gt; distribution is a very flexible family that includes several common distributions as special cases. When the shape parameter &kappa; = 1, it reduces to the &lt;strong&gt;Weibull&lt;/strong&gt;; when &kappa; = 0, it reduces to the &lt;strong&gt;log-normal&lt;/strong&gt;; when &kappa; = 1 and &sigma; = 1, it becomes the &lt;strong&gt;exponential&lt;/strong&gt;. Fitting the generalised gamma can therefore help guide the choice of a simpler parametric model.')">
+    <div class="card-icon">&#128300;</div>
+    <div class="card-label">Generalised Gamma</div>
+    <div class="card-hint">Click to learn more</div>
+  </div>
+</div>
+
+<h2>Choosing a Parametric Model</h2>
+<p>Several strategies help guide the choice of parametric distribution:</p>
+<ul>
+  <li>Fit the <strong>generalised gamma</strong> model and test whether simpler models are adequate (&kappa; = 1 for Weibull, &kappa; = 0 for log-normal, etc.)</li>
+  <li>Compare models using <strong>AIC</strong> (Akaike Information Criterion)&mdash;lower values indicate better fit after penalising for complexity</li>
+  <li>Examine diagnostic plots (e.g., ln H(<em>t</em>) vs ln(<em>t</em>) for Weibull, ln H(<em>t</em>) vs <em>t</em> for Gompertz)</li>
+  <li>Consider the <strong>biological plausibility</strong> of the hazard shape implied by each distribution</li>
+</ul>
+
+<div class="scenario-card">
+  <div class="scenario-title">Scenario: Choosing Between Models</div>
+  <p>You are analysing time to recurrence of a tumour after surgical removal. You suspect the hazard may not be constant&mdash;risk is likely highest in the first year post-surgery and then declines. You fit several models: the exponential model gives AIC = 842; the Weibull gives AIC = 810 with <em>p</em> = 0.72 (decreasing hazard); the log-logistic gives AIC = 806 with a hazard that rises briefly and then falls. The generalised gamma model confirms that the Weibull is significantly better than the exponential (&kappa; significantly different from 1 is rejected, but the Weibull shape is significantly different from 1). Based on AIC and biological plausibility, you select the <strong>log-logistic AFT model</strong>, which captures the initial rise in hazard risk followed by a decline as patients who survive the early period enter a lower-risk phase.</p>
+</div>
+
+<h2>Frailty Models</h2>
+<p><strong>Frailty</strong> models address the problem of unmeasured heterogeneity in survival data. Even after including all known predictors, individuals may differ in their underlying susceptibility to the event due to unmeasured factors. Frailty models introduce a random effect &alpha; that represents this unobserved heterogeneity.</p>
+
+<div class="formula-box">
+  <div class="formula-label">Individual Frailty Model (Eq 19.27)</div>
+  <em>h</em>(<em>t</em> | &alpha;) = &alpha; &times; <em>h</em>(<em>t</em>)
+</div>
+
+<div class="accordion">
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">Individual Frailty</div>
+    <div class="accordion-body"><div class="accordion-body-inner">
+      <p><strong>Individual frailty</strong> accounts for unmeasured individual-level covariates that create extra variation in survival times beyond what measured predictors explain. It is analogous to <strong>overdispersion</strong> in Poisson models&mdash;just as the negative binomial adds extra-Poisson variation, the frailty model adds extra variation to the survival model. Subjects with &alpha; &gt; 1 are more &ldquo;frail&rdquo; (higher hazard), while those with &alpha; &lt; 1 are more robust. The frailty is typically assumed to follow a gamma or inverse Gaussian distribution with mean 1.</p>
+    </div></div>
+  </div>
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">Shared Frailty (Eq 19.28&ndash;19.29)</div>
+    <div class="accordion-body"><div class="accordion-body-inner">
+      <p><strong>Shared frailty</strong> models account for <strong>clustering</strong> of observations within groups. All members of a group (e.g., patients treated at the same hospital, animals in the same herd) share the same frailty value &alpha;<sub>k</sub>. This is analogous to <strong>random effects</strong> in mixed models. The shared frailty induces positive within-group correlation in survival times&mdash;subjects in the same cluster tend to have more similar survival experiences than subjects in different clusters.</p>
+    </div></div>
+  </div>
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">Multiple Outcome Events</div>
+    <div class="accordion-body"><div class="accordion-body-inner">
+      <p>Several extensions handle multiple or recurring events. <strong>Competing risks</strong> models handle situations where different types of events can occur (e.g., death from cancer vs death from heart disease). <strong>Recurrence data</strong> models handle repeated events (e.g., hospital readmissions). The <strong>Anderson-Gill</strong> model treats each event independently (assuming events are independent), while the <strong>Prentice-Williams-Peterson</strong> models account for event ordering. <strong>Discrete-time survival analysis</strong> is used when event times are recorded in intervals rather than exactly.</p>
+    </div></div>
+  </div>
+</div>
+
+<!-- Section 4 Quiz -->
+<div class="quiz-section" id="quiz-3">
+  <h3>Section 4 Knowledge Check</h3>
+  <div class="quiz-question" data-correct="b">
+    <p>1. The Weibull model reduces to the exponential model when:</p>
+    <label class="quiz-option"><input type="radio" name="q3-0" value="a"> p = 0</label>
+    <label class="quiz-option"><input type="radio" name="q3-0" value="b"> p = 1</label>
+    <label class="quiz-option"><input type="radio" name="q3-0" value="c"> p = 2</label>
+    <label class="quiz-option"><input type="radio" name="q3-0" value="d"> &lambda; = 0</label>
+    <div class="quiz-explanation">When the shape parameter <em>p</em> = 1, the Weibull hazard becomes <em>h</em>(<em>t</em>) = &lambda; (constant), which is the exponential model.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>2. In an AFT model, the time ratio (TR) is interpreted as:</p>
+    <label class="quiz-option"><input type="radio" name="q3-1" value="a"> The hazard ratio</label>
+    <label class="quiz-option"><input type="radio" name="q3-1" value="b"> The multiplicative change in expected survival time</label>
+    <label class="quiz-option"><input type="radio" name="q3-1" value="c"> The odds ratio</label>
+    <label class="quiz-option"><input type="radio" name="q3-1" value="d"> The incidence rate ratio</label>
+    <div class="quiz-explanation">TR = e<sup>&beta;</sup> represents how the expected survival time is multiplied &mdash; a TR of 2 means the expected survival time doubles.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="c">
+    <p>3. Shared frailty models account for:</p>
+    <label class="quiz-option"><input type="radio" name="q3-2" value="a"> Time-varying effects</label>
+    <label class="quiz-option"><input type="radio" name="q3-2" value="b"> Non-proportional hazards</label>
+    <label class="quiz-option"><input type="radio" name="q3-2" value="c"> Clustering of observations within groups</label>
+    <label class="quiz-option"><input type="radio" name="q3-2" value="d"> Missing data</label>
+    <div class="quiz-explanation">Shared frailties represent the common unmeasured covariates within a group (e.g., patients at the same hospital), analogous to random effects in mixed models.</div>
+  </div>
+
+  <div class="quiz-result" id="quizResult-3"></div>
+  <div class="quiz-retry" id="quizRetry-3"><button class="btn btn-outline" onclick="retryQuiz(3)">Retry Quiz</button></div>
+  <button class="btn btn-primary" onclick="checkQuiz(3)" style="margin-top:12px;">Check Answers</button>
+</div>
+
+<div class="reflection-box">
+  <h3>Reflection</h3>
+  <p>When would you prefer a parametric survival model over a Cox model? What are the trade-offs between flexibility and efficiency?</p>
+  <textarea id="reflection-4" placeholder="Type your reflection here..."></textarea>
+  <button class="btn-save" onclick="checkReflection(4)">Save Reflection</button>
+  <div class="reflection-status" id="reflectionStatus-4">Reflection saved!</div>
+</div>
+
+<div class="section-nav">
+  <button class="btn btn-outline" onclick="goToModule(2)">&larr; Section 3</button>
+  <div>
+    <button class="btn btn-primary disabled" id="nextBtn-3" onclick="goToModule(4)">Final Assessment &rarr;</button>
+    <div class="req-note" id="reqNote-3"><span class="req-pending">*</span> Complete the quiz and reflection to continue.</div>
+  </div>
+</div>
+
+</div>
+</div>
+
+<!-- ============ FINAL ASSESSMENT ============ -->
+<div class="module-page" id="page-4">
+<div class="module-header">
+  <div class="module-tag">Final Assessment</div>
+  <h1>Lesson 7 &mdash; Comprehensive Assessment</h1>
+  <div class="time">&#9201; Estimated time: 25 minutes</div>
+</div>
+<div class="module-body">
+
+<p>This final assessment covers all material from this lesson. You must answer all 15 questions correctly (100%) and complete the final reflection to finish the lesson.</p>
+
+<div class="reflection-box">
+  <h3>Final Reflection</h3>
+  <p>This chapter covered a wide range of survival analysis methods. If you were planning a study with time-to-event outcomes, what factors would guide your choice between non-parametric, semi-parametric (Cox), and parametric approaches?</p>
+  <textarea id="reflection-final" placeholder="Type your final reflection here..."></textarea>
+  <button class="btn-save" onclick="checkReflection('final')">Save Reflection</button>
+  <div class="reflection-status" id="reflectionStatus-final">Reflection saved!</div>
+</div>
+
+<div class="quiz-section" id="quiz-4">
+  <h3>Final Assessment (15 Questions)</h3>
+
+  <div class="quiz-question" data-correct="b">
+    <p>1. Survival data is also known as:</p>
+    <label class="quiz-option"><input type="radio" name="qf-0" value="a"> Cross-sectional data</label>
+    <label class="quiz-option"><input type="radio" name="qf-0" value="b"> Time-to-event data</label>
+    <label class="quiz-option"><input type="radio" name="qf-0" value="c"> Prevalence data</label>
+    <label class="quiz-option"><input type="radio" name="qf-0" value="d"> Ecological data</label>
+    <div class="quiz-explanation">Survival analysis examines the time until an event of interest occurs, hence it is also known as time-to-event analysis.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>2. Right censoring occurs when:</p>
+    <label class="quiz-option"><input type="radio" name="qf-1" value="a"> The event happens before the study</label>
+    <label class="quiz-option"><input type="radio" name="qf-1" value="b"> The study ends or the subject is lost before the event</label>
+    <label class="quiz-option"><input type="radio" name="qf-1" value="c"> The event time is known precisely</label>
+    <label class="quiz-option"><input type="radio" name="qf-1" value="d"> Multiple events occur</label>
+    <div class="quiz-explanation">Right censoring is when follow-up ends before the event is observed. We know the subject survived at least until the censoring time.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>3. In an actuarial life table, the adjusted number at risk (r<sub>j</sub>) accounts for:</p>
+    <label class="quiz-option"><input type="radio" name="qf-2" value="a"> Only deaths</label>
+    <label class="quiz-option"><input type="radio" name="qf-2" value="b"> Withdrawals by subtracting half from the starting number</label>
+    <label class="quiz-option"><input type="radio" name="qf-2" value="c"> Only new entries</label>
+    <label class="quiz-option"><input type="radio" name="qf-2" value="d"> The total population</label>
+    <div class="quiz-explanation">r<sub>j</sub> = l<sub>j</sub> &minus; w<sub>j</sub>/2, assuming withdrawals occur on average at the interval midpoint.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>4. The Kaplan-Meier survivor function is:</p>
+    <label class="quiz-option"><input type="radio" name="qf-3" value="a"> Continuously decreasing</label>
+    <label class="quiz-option"><input type="radio" name="qf-3" value="b"> A step function that drops at each event time</label>
+    <label class="quiz-option"><input type="radio" name="qf-3" value="c"> Always linear</label>
+    <label class="quiz-option"><input type="radio" name="qf-3" value="d"> Defined only for uncensored observations</label>
+    <div class="quiz-explanation">The K-M estimator is piecewise constant &mdash; it only changes value at observed failure times, creating a step function.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="c">
+    <p>5. The cumulative hazard H(t) is related to the survivor function by:</p>
+    <label class="quiz-option"><input type="radio" name="qf-4" value="a"> H(t) = S(t)</label>
+    <label class="quiz-option"><input type="radio" name="qf-4" value="b"> H(t) = 1 &minus; S(t)</label>
+    <label class="quiz-option"><input type="radio" name="qf-4" value="c"> H(t) = &minus;ln S(t)</label>
+    <label class="quiz-option"><input type="radio" name="qf-4" value="d"> H(t) = S(t)&sup2;</label>
+    <div class="quiz-explanation">H(<em>t</em>) = &minus;ln S(<em>t</em>), and equivalently S(<em>t</em>) = e<sup>&minus;H(<em>t</em>)</sup>.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>6. The log-rank test is equivalent to:</p>
+    <label class="quiz-option"><input type="radio" name="qf-5" value="a"> A paired t-test</label>
+    <label class="quiz-option"><input type="radio" name="qf-5" value="b"> A stratified Mantel-Haenszel test</label>
+    <label class="quiz-option"><input type="radio" name="qf-5" value="c"> An ANOVA</label>
+    <label class="quiz-option"><input type="radio" name="qf-5" value="d"> A Fisher&rsquo;s exact test</label>
+    <div class="quiz-explanation">The log-rank test compares observed and expected events at each failure time, which is equivalent to a Mantel-Haenszel procedure.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>7. In the Cox model h(t) = h<sub>0</sub>(t)e<sup>&beta;X</sup>, the baseline hazard h<sub>0</sub>(t):</p>
+    <label class="quiz-option"><input type="radio" name="qf-6" value="a"> Must be specified parametrically</label>
+    <label class="quiz-option"><input type="radio" name="qf-6" value="b"> Is left unspecified</label>
+    <label class="quiz-option"><input type="radio" name="qf-6" value="c"> Is always constant</label>
+    <label class="quiz-option"><input type="radio" name="qf-6" value="d"> Equals 1</label>
+    <div class="quiz-explanation">The Cox model is semi-parametric &mdash; no assumption is made about the shape of h<sub>0</sub>(<em>t</em>).</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>8. A hazard ratio of 1.5 for a predictor means:</p>
+    <label class="quiz-option"><input type="radio" name="qf-7" value="a"> Survival time increases by 50%</label>
+    <label class="quiz-option"><input type="radio" name="qf-7" value="b"> The hazard of the event is 50% higher</label>
+    <label class="quiz-option"><input type="radio" name="qf-7" value="c"> The risk difference is 1.5</label>
+    <label class="quiz-option"><input type="radio" name="qf-7" value="d"> The baseline hazard is 1.5</label>
+    <div class="quiz-explanation">HR = 1.5 means the rate of the event is 1.5 times higher (50% increase) for a one-unit increase in the predictor.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>9. The proportional hazards assumption can be tested using:</p>
+    <label class="quiz-option"><input type="radio" name="qf-8" value="a"> Pearson residuals</label>
+    <label class="quiz-option"><input type="radio" name="qf-8" value="b"> Schoenfeld residuals</label>
+    <label class="quiz-option"><input type="radio" name="qf-8" value="c"> Cook&rsquo;s distance</label>
+    <label class="quiz-option"><input type="radio" name="qf-8" value="d"> Variance inflation factors</label>
+    <div class="quiz-explanation">Schoenfeld residuals plotted against time (or their statistical test for non-zero slope) assess whether the PH assumption holds.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>10. A log cumulative hazard plot (ln H(t) vs ln t) is used to assess:</p>
+    <label class="quiz-option"><input type="radio" name="qf-9" value="a"> Normality of residuals</label>
+    <label class="quiz-option"><input type="radio" name="qf-9" value="b"> Whether the Weibull distribution is appropriate</label>
+    <label class="quiz-option"><input type="radio" name="qf-9" value="c"> Overdispersion</label>
+    <label class="quiz-option"><input type="radio" name="qf-9" value="d"> Collinearity</label>
+    <div class="quiz-explanation">If the data follow a Weibull distribution, the plot of ln H(<em>t</em>) vs ln <em>t</em> should be approximately linear with intercept ln &lambda; and slope <em>p</em>.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="c">
+    <p>11. In the Weibull model, if the shape parameter p = 0.5, the hazard:</p>
+    <label class="quiz-option"><input type="radio" name="qf-10" value="a"> Is constant</label>
+    <label class="quiz-option"><input type="radio" name="qf-10" value="b"> Increases over time</label>
+    <label class="quiz-option"><input type="radio" name="qf-10" value="c"> Decreases over time</label>
+    <label class="quiz-option"><input type="radio" name="qf-10" value="d"> Is U-shaped</label>
+    <div class="quiz-explanation">When <em>p</em> &lt; 1, the Weibull hazard h(<em>t</em>) = &lambda;<em>p</em><em>t</em><sup><em>p</em>&minus;1</sup> is monotonically decreasing.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>12. The accelerated failure time model expresses the effect of predictors on:</p>
+    <label class="quiz-option"><input type="radio" name="qf-11" value="a"> The hazard function</label>
+    <label class="quiz-option"><input type="radio" name="qf-11" value="b"> The log of survival time</label>
+    <label class="quiz-option"><input type="radio" name="qf-11" value="c"> The baseline hazard</label>
+    <label class="quiz-option"><input type="radio" name="qf-11" value="d"> The cumulative hazard</label>
+    <div class="quiz-explanation">AFT models are ln <em>t</em> = &beta;<em>X</em> + ln &tau;, modeling the effect on the natural log of survival time directly.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>13. Harrell&rsquo;s C concordance statistic for a Cox model:</p>
+    <label class="quiz-option"><input type="radio" name="qf-12" value="a"> Tests normality</label>
+    <label class="quiz-option"><input type="radio" name="qf-12" value="b"> Measures the proportion of pairs correctly ordered by predicted risk</label>
+    <label class="quiz-option"><input type="radio" name="qf-12" value="c"> Tests proportional hazards</label>
+    <label class="quiz-option"><input type="radio" name="qf-12" value="d"> Measures overdispersion</label>
+    <div class="quiz-explanation">Harrell&rsquo;s C ranges from 0.5 (no discrimination) to 1.0 (perfect discrimination) &mdash; it measures how well the model ranks survival times.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>14. Individual frailty models are analogous to:</p>
+    <label class="quiz-option"><input type="radio" name="qf-13" value="a"> Fixed effects models</label>
+    <label class="quiz-option"><input type="radio" name="qf-13" value="b"> Models accounting for overdispersion in count data</label>
+    <label class="quiz-option"><input type="radio" name="qf-13" value="c"> Linear regression</label>
+    <label class="quiz-option"><input type="radio" name="qf-13" value="d"> Stratified analysis</label>
+    <div class="quiz-explanation">Just as the negative binomial handles extra-Poisson variation, individual frailty models handle extra variation in survival times beyond what measured covariates explain.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>15. In recurrence data analysis, the Anderson-Gill model assumes:</p>
+    <label class="quiz-option"><input type="radio" name="qf-14" value="a"> Events are dependent</label>
+    <label class="quiz-option"><input type="radio" name="qf-14" value="b"> The risk of recurrence is independent of previous events</label>
+    <label class="quiz-option"><input type="radio" name="qf-14" value="c"> Only first events matter</label>
+    <label class="quiz-option"><input type="radio" name="qf-14" value="d"> Time resets after each event</label>
+    <div class="quiz-explanation">The Anderson-Gill model is a generalised proportional hazards model that assumes events are independent &mdash; each subject remains at risk after each event.</div>
+  </div>
+
+  <div class="quiz-result" id="quizResult-4"></div>
+  <div class="quiz-retry" id="quizRetry-4"><button class="btn btn-outline" onclick="retryQuiz(4)">Retry Quiz</button></div>
+  <button class="btn btn-accent" onclick="checkFinalAssessment()" style="margin-top:12px;">Submit Final Assessment</button>
+</div>
+
+<div class="completion-banner" id="completionBanner">
+  <h2>Lesson 7 Complete!</h2>
+  <p>Congratulations! You have successfully completed the Modelling Survival Data module. Your responses have been downloaded automatically.</p>
+</div>
+
+<div class="section-nav">
+  <button class="btn btn-outline" onclick="goToModule(3)">&larr; Section 4</button>
+  <div></div>
+</div>
+
+</div>
+</div>
+
+</div><!-- /main -->
+
+<!-- Card Modal -->
+<div class="card-modal-overlay" id="cardModalOverlay" onclick="closeCardModal(event)">
+  <div class="card-modal">
+    <button class="card-modal-close" onclick="document.getElementById('cardModalOverlay').classList.remove('show')">&times;</button>
+    <h3 id="cardModalTitle"></h3>
+    <div id="cardModalBody"></div>
+  </div>
+</div>
+
+<script>
+var modules = [
+  { id: -1, short: 'Welcome', title: 'Introduction' },
+  { id: 0, short: 'Section 1', title: 'Introduction & Non-Parametric Analyses' },
+  { id: 1, short: 'Section 2', title: 'Survivor, Failure & Hazard Functions' },
+  { id: 2, short: 'Section 3', title: 'Cox Proportional Hazards Model' },
+  { id: 3, short: 'Section 4', title: 'Parametric Models, AFT & Frailty' },
+  { id: 4, short: 'Section 5', title: 'Final Assessment' }
+];
+var currentModule = -1;
+var completed = new Set();
+var quizPassed = {};
+var reflectionDone = {};
+var modulesWithReflection = { 1: true, 2: true, 3: true, 4: true };
+
+function buildNav() {
+  var nav = document.getElementById('sidebarNav');
+  nav.innerHTML = '';
+  modules.forEach(function(m) {
+    var div = document.createElement('div');
+    div.className = 'nav-item';
+    var key = m.id === -1 ? 'welcome' : m.id;
+    if (completed.has(key)) div.classList.add('completed');
+    if (m.id === currentModule) div.classList.add('active');
+    div.innerHTML = '<div class="dot"></div><span>' + m.short + ': ' + m.title + '</span>';
+    div.onclick = function() { goToModule(m.id); closeSidebarMobile(); };
+    nav.appendChild(div);
+  });
+}
+
+function goToModule(id) {
+  currentModule = id;
+  document.querySelectorAll('.module-page').forEach(function(p) { p.classList.remove('active'); });
+  var pageId = id === -1 ? 'page-welcome' : 'page-' + id;
+  var page = document.getElementById(pageId);
+  if (page) page.classList.add('active');
+  if (id === -1) completed.add('welcome');
+  buildNav();
+  updateProgress();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function updateProgress() {
+  var total = modules.length;
+  var done = completed.size;
+  var pct = Math.round((done / total) * 100);
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressText').textContent = pct + '% complete';
+}
+
+function checkReflection(idx) {
+  var ta = document.getElementById('reflection-' + idx);
+  if (ta && ta.value.trim().length > 0) {
+    reflectionDone[idx === 'final' ? 4 : idx] = true;
+    var status = document.getElementById('reflectionStatus-' + idx);
+    if (status) status.classList.add('show');
+    if (idx !== 'final') updateNextButton(idx);
+  }
+}
+
+function updateNextButton(moduleIdx) {
+  var btn = document.getElementById('nextBtn-' + moduleIdx);
+  var note = document.getElementById('reqNote-' + moduleIdx);
+  if (!btn) return;
+  var quizOk = quizPassed[moduleIdx];
+  var refIdx = moduleIdx + 1;
+  var needsRef = modulesWithReflection[refIdx];
+  var refOk = !needsRef || reflectionDone[refIdx];
+  if (quizOk && refOk) {
+    btn.classList.remove('disabled');
+    completed.add(moduleIdx);
+    buildNav();
+    updateProgress();
+    if (note) note.innerHTML = '<span class="req-check">&#10003;</span> Section complete! You may continue.';
+  }
+}
+
+function checkQuiz(moduleIdx) {
+  var quiz = document.getElementById('quiz-' + moduleIdx);
+  var questions = quiz.querySelectorAll('.quiz-question');
+  var correct = 0;
+  var total = questions.length;
+  var allAnswered = true;
+  questions.forEach(function(q, i) {
+    var correctVal = q.dataset.correct;
+    var selected = quiz.querySelector('input[name="q' + moduleIdx + '-' + i + '"]:checked');
+    q.querySelectorAll('.quiz-option').forEach(function(opt) { opt.classList.remove('correct', 'incorrect'); });
+    if (!selected) { allAnswered = false; return; }
+    q.querySelectorAll('.quiz-option').forEach(function(opt) {
+      var inp = opt.querySelector('input');
+      if (inp.value === correctVal) opt.classList.add('correct');
+      else if (inp === selected && inp.value !== correctVal) opt.classList.add('incorrect');
+    });
+    q.querySelector('.quiz-explanation').classList.add('show');
+    if (selected.value === correctVal) correct++;
+  });
+  if (!allAnswered) { alert('Please answer all questions before checking.'); return; }
+  var result = document.getElementById('quizResult-' + moduleIdx);
+  var retryDiv = document.getElementById('quizRetry-' + moduleIdx);
+  result.style.display = 'block';
+  if (correct === total) {
+    result.className = 'quiz-result pass';
+    result.textContent = 'All correct! Great job.';
+    quizPassed[moduleIdx] = true;
+    if (retryDiv) retryDiv.classList.remove('show');
+    quiz.querySelectorAll('input[type="radio"]').forEach(function(r) { r.disabled = true; });
+    updateNextButton(moduleIdx);
+  } else {
+    result.className = 'quiz-result fail';
+    result.textContent = 'You got ' + correct + ' out of ' + total + ' correct. You need 100% to continue. Review the feedback and try again.';
+    quizPassed[moduleIdx] = false;
+    if (retryDiv) retryDiv.classList.add('show');
+  }
+}
+
+function retryQuiz(moduleIdx) {
+  var quiz = document.getElementById('quiz-' + moduleIdx);
+  quiz.querySelectorAll('.quiz-option').forEach(function(opt) { opt.classList.remove('correct', 'incorrect'); });
+  quiz.querySelectorAll('.quiz-explanation').forEach(function(exp) { exp.classList.remove('show'); });
+  quiz.querySelectorAll('input[type="radio"]').forEach(function(r) { r.checked = false; r.disabled = false; });
+  var result = document.getElementById('quizResult-' + moduleIdx);
+  result.style.display = 'none';
+  var retryDiv = document.getElementById('quizRetry-' + moduleIdx);
+  if (retryDiv) retryDiv.classList.remove('show');
+  quiz.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function checkFinalAssessment() {
+  if (!reflectionDone[4]) {
+    alert('Please complete the final reflection before submitting the assessment.');
+    return;
+  }
+  var quiz = document.getElementById('quiz-4');
+  var questions = quiz.querySelectorAll('.quiz-question');
+  var correct = 0;
+  var total = questions.length;
+  var allAnswered = true;
+  questions.forEach(function(q, i) {
+    var correctVal = q.dataset.correct;
+    var selected = quiz.querySelector('input[name="qf-' + i + '"]:checked');
+    q.querySelectorAll('.quiz-option').forEach(function(opt) { opt.classList.remove('correct', 'incorrect'); });
+    if (!selected) { allAnswered = false; return; }
+    q.querySelectorAll('.quiz-option').forEach(function(opt) {
+      var inp = opt.querySelector('input');
+      if (inp.value === correctVal) opt.classList.add('correct');
+      else if (inp === selected && inp.value !== correctVal) opt.classList.add('incorrect');
+    });
+    q.querySelector('.quiz-explanation').classList.add('show');
+    if (selected.value === correctVal) correct++;
+  });
+  if (!allAnswered) { alert('Please answer all 15 questions before submitting.'); return; }
+  var pct = Math.round((correct / total) * 100);
+  var passed = correct === total;
+  var result = document.getElementById('quizResult-4');
+  var retryDiv = document.getElementById('quizRetry-4');
+  result.style.display = 'block';
+  if (passed) {
+    result.className = 'quiz-result pass';
+    result.innerHTML = 'Congratulations! You scored ' + correct + '/' + total + ' (100%). You have completed Lesson 7!';
+    completed.add(4);
+    updateProgress();
+    buildNav();
+    if (retryDiv) retryDiv.classList.remove('show');
+    quiz.querySelectorAll('input[type="radio"]').forEach(function(r) { r.disabled = true; });
+    document.getElementById('completionBanner').style.display = 'block';
+    document.getElementById('completionBanner').scrollIntoView({ behavior: 'smooth' });
+    downloadResponses();
+  } else {
+    result.className = 'quiz-result fail';
+    result.innerHTML = 'You scored ' + correct + '/' + total + ' (' + pct + '%). You need 100% to complete the lesson. Review the feedback and try again.';
+    if (retryDiv) retryDiv.classList.add('show');
+  }
+}
+
+function toggleAccordion(header) {
+  var item = header.parentElement;
+  var wasOpen = item.classList.contains('open');
+  item.classList.toggle('open');
+  var body = item.querySelector('.accordion-body');
+  if (wasOpen) { body.style.maxHeight = null; }
+  else { body.style.maxHeight = body.scrollHeight + 'px'; }
+}
+
+function switchTab(e, panelId) {
+  var tabRow = e.target.closest('.tab-row');
+  var tabs = tabRow.parentElement;
+  tabs.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+  tabs.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
+  e.target.classList.add('active');
+  document.getElementById(panelId).classList.add('active');
+}
+
+function openCardModal(title, body) {
+  document.getElementById('cardModalTitle').textContent = title;
+  document.getElementById('cardModalBody').innerHTML = body;
+  document.getElementById('cardModalOverlay').classList.add('show');
+}
+
+function closeCardModal(e) {
+  if (!e || e.target === document.getElementById('cardModalOverlay')) {
+    document.getElementById('cardModalOverlay').classList.remove('show');
+  }
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.querySelector('.sidebar-overlay').classList.toggle('show');
+}
+
+function closeSidebarMobile() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.querySelector('.sidebar-overlay').classList.remove('show');
+}
+
+buildNav();
+updateProgress();
+
+function downloadResponses() {
+  var lines = [];
+  lines.push('Exploratory Data Analysis For Epidemiology, Lesson 7');
+  lines.push('Modelling Survival Data');
+  lines.push('');
+  lines.push('Name: ');
+  lines.push('Date: ' + new Date().toLocaleDateString());
+  lines.push('='.repeat(60));
+  lines.push('');
+
+  lines.push('REFLECTIONS');
+  lines.push('-'.repeat(40));
+  for (var r = 1; r <= 4; r++) {
+    var ta = document.getElementById('reflection-' + r);
+    if (ta) {
+      var box = ta.closest('.reflection-box');
+      var prompt = box ? box.querySelector('p') : null;
+      lines.push('');
+      lines.push('Section ' + r + ' Reflection:');
+      if (prompt) lines.push('Q: ' + prompt.textContent.trim());
+      lines.push('A: ' + (ta.value.trim() || '[No response]'));
+    }
+  }
+  var taFinal = document.getElementById('reflection-final');
+  if (taFinal) {
+    var box = taFinal.closest('.reflection-box');
+    var prompt = box ? box.querySelector('p') : null;
+    lines.push('');
+    lines.push('Final Reflection:');
+    if (prompt) lines.push('Q: ' + prompt.textContent.trim());
+    lines.push('A: ' + (taFinal.value.trim() || '[No response]'));
+  }
+  lines.push('');
+  lines.push('='.repeat(60));
+  lines.push('');
+
+  lines.push('SECTION QUIZ RESPONSES');
+  lines.push('-'.repeat(40));
+  for (var s = 0; s <= 3; s++) {
+    var quiz = document.getElementById('quiz-' + s);
+    if (!quiz) continue;
+    lines.push('');
+    lines.push('Section ' + (s + 1) + ' Quiz:');
+    var questions = quiz.querySelectorAll('.quiz-question');
+    questions.forEach(function(q, i) {
+      var qText = q.querySelector('p');
+      var selected = q.querySelector('input[type="radio"]:checked');
+      var selLabel = selected ? selected.closest('.quiz-option') || selected.parentElement : null;
+      lines.push('  Q' + (i + 1) + ': ' + (qText ? qText.textContent.trim() : ''));
+      lines.push('  Selected: ' + (selLabel ? selLabel.textContent.trim() : '[No answer]'));
+      var isCorrect = selected && q.querySelector('.quiz-option.correct input') === selected;
+      lines.push('  Result: ' + (selected ? (isCorrect ? 'Correct' : 'Incorrect') : 'Unanswered'));
+    });
+  }
+  lines.push('');
+  lines.push('='.repeat(60));
+  lines.push('');
+
+  lines.push('FINAL ASSESSMENT RESPONSES');
+  lines.push('-'.repeat(40));
+  var finalQuiz = document.getElementById('quiz-4');
+  if (finalQuiz) {
+    var questions = finalQuiz.querySelectorAll('.quiz-question');
+    questions.forEach(function(q, i) {
+      var qText = q.querySelector('p');
+      var selected = q.querySelector('input[type="radio"]:checked');
+      var selLabel = selected ? selected.closest('.quiz-option') || selected.parentElement : null;
+      lines.push('  Q' + (i + 1) + ': ' + (qText ? qText.textContent.trim() : ''));
+      lines.push('  Selected: ' + (selLabel ? selLabel.textContent.trim() : '[No answer]'));
+      var correctOpt = q.querySelector('.quiz-option.correct');
+      var isCorrect = selected && correctOpt && correctOpt.querySelector('input') === selected;
+      lines.push('  Result: ' + (selected ? (isCorrect ? 'Correct' : 'Incorrect') : 'Unanswered'));
+    });
+  }
+
+  var blob = new Blob([lines.join('\n')], { type: 'text/plain' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'HSCI410_Lesson7_Survival_Data_Responses.txt';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+</script>
+</body>
+</html>

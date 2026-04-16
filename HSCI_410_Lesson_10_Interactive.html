@@ -1,0 +1,1343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 10: Mixed Models for Discrete Data &mdash; HSCI 410</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+
+:root {
+  --teal: #0B7B6B;
+  --dark-teal: #065C50;
+  --light-teal: #6BB5A6;
+  --very-light-teal: #E6F3F0;
+  --dark: #042A25;
+  --text: #2D3436;
+  --text-light: #555;
+  --bg: #FFFFFF;
+  --white: #fff;
+  --accent: #CC0033;
+  --accent-dark: #A3002A;
+  --accent-light: #FDEAEF;
+  --amber: #CC0033;
+  --light-amber: #FDEAEF;
+  --green: #0B7B6B;
+  --light-green: #D1F0EA;
+  --blue: #0B7B6B;
+  --light-blue: #E6F3F0;
+  --rose: #CC0033;
+  --light-rose: #FDEAEF;
+  --purple: #065C50;
+  --light-purple: #E6F3F0;
+  --grey: #E8ECEE;
+  --radius: 12px;
+  --shadow: 0 2px 12px rgba(0,0,0,0.08);
+  --shadow-lg: 0 8px 30px rgba(0,0,0,0.12);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { font-family: 'Open Sans', 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; }
+.sidebar {
+  position: fixed; top: 0; left: 0; width: 280px; height: 100vh;
+  background: linear-gradient(180deg, rgba(6,92,80,0.92) 0%, rgba(4,42,37,0.95) 100%), url('bg_texture.jpg') center/cover no-repeat;
+  color: #fff; z-index: 100; display: flex; flex-direction: column;
+  transition: transform 0.3s ease; overflow: hidden;
+}
+.sidebar-header { padding: 24px 20px 16px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+.sidebar-header h2 { font-size: 16px; font-weight: 600; line-height: 1.4; opacity: 0.95; color: #fff; }
+.sidebar-header p { font-size: 11px; opacity: 0.6; margin-top: 4px; }
+.sidebar-nav { flex: 1; overflow-y: auto; padding: 12px 0; }
+.sidebar-nav::-webkit-scrollbar { width: 4px; }
+.sidebar-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 2px; }
+.nav-item {
+  display: flex; align-items: center; gap: 12px; padding: 10px 20px;
+  cursor: pointer; transition: all 0.2s; font-size: 13.5px; position: relative;
+  color: rgba(255,255,255,0.7);
+}
+.nav-item:hover:not(.locked) { background: rgba(255,255,255,0.08); color: #fff; }
+.nav-item.active { background: rgba(255,255,255,0.12); color: #fff; font-weight: 600; }
+.nav-item.active::before {
+  content: ''; position: absolute; left: 0; top: 6px; bottom: 6px; width: 3px;
+  background: var(--accent); border-radius: 0 2px 2px 0;
+}
+.nav-item .dot {
+  width: 22px; height: 22px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.3);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  font-size: 11px; transition: all 0.3s;
+}
+.nav-item.completed .dot { background: var(--green); border-color: var(--green); }
+.nav-item.completed .dot::after { content: '\2713'; color: #fff; font-weight: 700; }
+.nav-item.active .dot { border-color: var(--accent); background: rgba(204,0,51,0.2); }
+.sidebar-footer { padding: 16px 20px; border-top: 1px solid rgba(255,255,255,0.1); }
+.progress-bar-bg { height: 6px; background: rgba(255,255,255,0.15); border-radius: 3px; overflow: hidden; }
+.progress-bar-fill { height: 100%; background: var(--green); border-radius: 3px; transition: width 0.5s ease; }
+.progress-text { font-size: 11px; opacity: 0.6; margin-top: 6px; }
+.main { margin-left: 280px; min-height: 100vh; }
+.module-page { display: none; animation: fadeIn 0.4s ease; }
+.module-page.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.module-header {
+  background: linear-gradient(135deg, rgba(6,92,80,0.88) 0%, rgba(11,123,107,0.85) 100%), url('bg_texture.jpg') center/cover no-repeat;
+  color: #fff; padding: 60px 48px 48px; position: relative; overflow: hidden;
+}
+.module-header::after {
+  content: ''; position: absolute; right: -60px; top: -60px; width: 300px; height: 300px;
+  background: radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 70%); border-radius: 50%;
+}
+.module-tag { display: inline-block; background: var(--accent); padding: 4px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 12px; }
+.module-header h1 { font-size: 32px; font-weight: 700; line-height: 1.3; max-width: 700px; color: #fff; }
+.module-header .time { font-size: 14px; opacity: 0.7; margin-top: 8px; }
+.module-body { max-width: 800px; margin: 0 auto; padding: 40px 48px 80px; }
+h2 { font-size: 22px; color: var(--dark-teal); margin: 36px 0 16px; font-weight: 700; }
+h3 { font-size: 18px; color: var(--teal); margin: 24px 0 12px; font-weight: 600; }
+p { margin-bottom: 16px; }
+ul, ol { margin: 0 0 16px 24px; }
+li { margin-bottom: 8px; }
+.info-box { border-radius: var(--radius); padding: 24px; margin: 24px 0; border-left: 4px solid var(--teal); }
+.info-box.teal { background: var(--very-light-teal); border-color: var(--teal); }
+.info-box.rose { background: var(--light-rose); border-color: var(--accent); }
+.info-box.amber { background: #FFF8E1; border-color: #FFA000; }
+.info-box .box-title { font-weight: 700; margin-bottom: 6px; color: inherit; }
+.flip-card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin: 24px 0; }
+.flip-card {
+  background: var(--white); border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 24px; text-align: center; cursor: pointer; transition: all 0.3s;
+  border: 2px solid var(--grey); position: relative; min-height: 120px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.flip-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); border-color: var(--teal); }
+.flip-card .card-icon { font-size: 28px; margin-bottom: 8px; }
+.flip-card .card-label { font-weight: 600; font-size: 14px; color: var(--dark-teal); }
+.flip-card .card-hint { font-size: 11px; color: var(--text-light); margin-top: 6px; }
+.accordion { margin: 20px 0; }
+.accordion-item { border: 1px solid var(--grey); border-radius: var(--radius); margin-bottom: 8px; overflow: hidden; }
+.accordion-header {
+  padding: 16px 20px; background: var(--white); cursor: pointer; font-weight: 600;
+  display: flex; justify-content: space-between; align-items: center; font-size: 15px;
+  transition: background 0.2s;
+}
+.accordion-header:hover { background: var(--very-light-teal); }
+.accordion-header::after { content: '+'; font-size: 20px; font-weight: 300; color: var(--teal); transition: transform 0.3s; }
+.accordion-item.open .accordion-header::after { content: '\2212'; }
+.accordion-body { max-height: 0; overflow: hidden; transition: max-height 0.4s ease; }
+.accordion-body-inner { padding: 16px 20px 20px; border-top: 1px solid var(--grey); line-height: 1.7; }
+.tabs { margin: 24px 0; }
+.tab-row { display: flex; border-bottom: 2px solid var(--grey); margin-bottom: 0; overflow-x: auto; }
+.tab-btn {
+  padding: 10px 20px; border: none; background: none; cursor: pointer;
+  font-weight: 600; font-size: 14px; color: var(--text-light); border-bottom: 2px solid transparent;
+  margin-bottom: -2px; transition: all 0.2s; white-space: nowrap;
+}
+.tab-btn.active { color: var(--teal); border-bottom-color: var(--teal); }
+.tab-panel { display: none; padding: 20px 0; }
+.tab-panel.active { display: block; }
+.data-table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; }
+.data-table th { background: var(--dark-teal); color: #fff; padding: 12px 16px; text-align: left; font-weight: 600; }
+.data-table td { padding: 10px 16px; border-bottom: 1px solid var(--grey); }
+.data-table tr:nth-child(even) td { background: #f8fafa; }
+.data-table tr:hover td { background: var(--very-light-teal); }
+.formula-box {
+  background: #f8fafc; border: 2px solid var(--grey); border-radius: var(--radius);
+  padding: 20px 24px; margin: 16px 0; text-align: center; font-size: 16px;
+  font-family: 'Georgia', serif;
+}
+.formula-box .formula-label { font-size: 12px; color: var(--text-light); margin-bottom: 6px; font-family: 'Open Sans', sans-serif; }
+.scenario-card {
+  background: linear-gradient(135deg, #f0faf8 0%, #e6f3f0 100%);
+  border-radius: var(--radius); padding: 24px; margin: 20px 0;
+  border: 1px solid rgba(11,123,107,0.15);
+}
+.scenario-card .scenario-title { font-weight: 700; color: var(--dark-teal); margin-bottom: 8px; }
+.quiz-section { background: #f8fafa; border-radius: var(--radius); padding: 32px; margin: 40px 0; border: 2px solid var(--grey); }
+.quiz-section h3 { margin-top: 0; }
+.quiz-question { margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid var(--grey); }
+.quiz-question:last-of-type { border-bottom: none; margin-bottom: 16px; padding-bottom: 0; }
+.quiz-question p { font-weight: 600; margin-bottom: 12px; }
+.quiz-option { display: block; padding: 10px 16px; margin: 6px 0; border-radius: 8px; cursor: pointer; transition: all 0.2s; border: 1px solid var(--grey); }
+.quiz-option:hover { background: var(--very-light-teal); }
+.quiz-option input { margin-right: 10px; }
+.quiz-option.correct { background: var(--light-green); border-color: var(--green); }
+.quiz-option.incorrect { background: var(--light-rose); border-color: var(--accent); }
+.quiz-explanation { display: none; margin-top: 8px; padding: 10px 14px; background: var(--very-light-teal); border-radius: 8px; font-size: 13.5px; }
+.quiz-explanation.show { display: block; }
+.quiz-result { padding: 16px 20px; border-radius: 8px; font-weight: 600; margin-top: 16px; display: none; }
+.quiz-result.pass { background: var(--light-green); color: var(--dark-teal); }
+.quiz-result.fail { background: var(--light-rose); color: var(--accent-dark); }
+.quiz-retry { display: none; margin-top: 12px; }
+.quiz-retry.show { display: block; }
+.btn {
+  display: inline-block; padding: 12px 28px; border-radius: 8px; font-weight: 600;
+  font-size: 15px; border: none; cursor: pointer; transition: all 0.2s;
+}
+.btn-primary { background: var(--teal); color: #fff; }
+.btn-primary:hover { background: var(--dark-teal); }
+.btn-accent { background: var(--accent); color: #fff; }
+.btn-accent:hover { background: var(--accent-dark); }
+.btn-outline { background: transparent; border: 2px solid var(--teal); color: var(--teal); }
+.btn-outline:hover { background: var(--teal); color: #fff; }
+.btn.disabled { opacity: 0.5; pointer-events: none; }
+.reflection-box {
+  background: linear-gradient(135deg, #fdf6ff 0%, #f5f0ff 100%);
+  border: 2px solid #d4bfff; border-radius: var(--radius); padding: 24px; margin: 24px 0;
+}
+.reflection-box h3 { color: #6B21A8; margin-top: 0; }
+.reflection-box textarea {
+  width: 100%; min-height: 100px; border: 1px solid #d4bfff; border-radius: 8px;
+  padding: 12px; font-family: inherit; font-size: 14px; resize: vertical; margin: 8px 0;
+}
+.reflection-box .btn-save { background: #7C3AED; color: #fff; border: none; padding: 8px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; }
+.reflection-box .btn-save:hover { background: #6B21A8; }
+.reflection-status { font-size: 13px; margin-top: 6px; color: #6B21A8; display: none; }
+.reflection-status.show { display: block; }
+.section-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 48px; padding-top: 24px; border-top: 2px solid var(--grey); }
+.req-note { font-size: 13px; margin-top: 12px; }
+.req-check { color: var(--green); }
+.req-pending { color: var(--accent); }
+.completion-banner {
+  display: none; background: linear-gradient(135deg, var(--teal) 0%, var(--dark-teal) 100%);
+  color: #fff; padding: 48px; border-radius: var(--radius); text-align: center; margin: 40px 0;
+}
+.completion-banner h2 { color: #fff; margin: 0 0 12px; font-size: 28px; }
+.sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 99; }
+.card-modal-overlay {
+  display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.6); z-index: 1000; align-items: center; justify-content: center; padding: 20px;
+}
+.card-modal-overlay.show { display: flex; }
+.card-modal {
+  background: #fff; border-radius: var(--radius); max-width: 600px; width: 100%;
+  max-height: 80vh; overflow-y: auto; padding: 32px; position: relative;
+  box-shadow: var(--shadow-lg);
+}
+.card-modal h3 { color: var(--dark-teal); margin: 0 0 16px; padding-right: 30px; }
+.card-modal-close {
+  position: absolute; top: 16px; right: 16px; background: none; border: none;
+  font-size: 24px; cursor: pointer; color: var(--text-light); width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center; border-radius: 50%;
+}
+.card-modal-close:hover { background: var(--grey); }
+.welcome-hero {
+  min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, rgba(6,92,80,0.88) 0%, rgba(4,42,37,0.92) 100%), url('bg_texture.jpg') center/cover no-repeat;
+  color: #fff; text-align: center; padding: 48px 24px; position: relative; overflow: hidden;
+}
+.welcome-hero::before {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(circle at 30% 70%, rgba(11,123,107,0.25) 0%, transparent 50%),
+              radial-gradient(circle at 70% 30%, rgba(107,181,166,0.12) 0%, transparent 40%);
+}
+.welcome-hero > * { position: relative; z-index: 1; }
+.welcome-hero h1 { font-size: 48px; font-weight: 800; margin-bottom: 12px; line-height: 1.2; }
+.welcome-hero .subtitle { font-size: 20px; opacity: 0.8; margin-bottom: 32px; }
+.welcome-hero .start-btn {
+  background: var(--accent); color: #fff; padding: 16px 40px; border-radius: 50px;
+  font-size: 17px; font-weight: 700; border: none; cursor: pointer;
+  transition: all 0.3s; box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+.welcome-hero .start-btn:hover { background: var(--accent-dark); transform: translateY(-2px) scale(1.02); box-shadow: 0 8px 30px rgba(0,0,0,0.3); }
+.welcome-details { max-width: 560px; margin-top: 40px; text-align: left; background: rgba(255,255,255,0.08); border-radius: 16px; padding: 28px; backdrop-filter: blur(10px); }
+.welcome-details h3 { font-size: 16px; margin-bottom: 12px; opacity: 0.9; color: #fff; }
+.welcome-details ul { list-style: none; margin: 0; padding: 0; }
+.welcome-details li { padding: 4px 0; font-size: 14px; opacity: 0.8; }
+.welcome-details li::before { content: '\2726 '; color: #fff; opacity: 0.6; }
+.mobile-header {
+  display: none; position: fixed; top: 0; left: 0; right: 0; height: 56px;
+  background: var(--dark); color: #fff; z-index: 101;
+  padding: 0 16px; align-items: center; gap: 12px;
+}
+.mobile-header button { background: none; border: none; color: #fff; font-size: 24px; cursor: pointer; padding: 4px; }
+.mobile-header h3 { font-size: 14px; font-weight: 600; color: #fff; }
+@media (max-width: 768px) {
+  .sidebar { transform: translateX(-100%); width: 280px; }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar-overlay.show { display: block; }
+  .mobile-header { display: flex; }
+  .main { margin-left: 0; padding-top: 56px; }
+  .module-header { padding: 32px 20px 28px; }
+  .module-header h1 { font-size: 24px; }
+  .module-body { padding: 24px 20px 60px; }
+  .flip-card-grid { grid-template-columns: 1fr; }
+}
+
+</style>
+</head>
+<body>
+<div class="mobile-header">
+  <button onclick="toggleSidebar()">&#9776;</button>
+  <h3>HSCI 410 &mdash; Lesson 10</h3>
+</div>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <img src="sfu_logo_white.webp" alt="SFU &mdash; Simon Fraser University" style="width:100%;max-width:180px;margin-bottom:12px;">
+    <h2>Exploratory Data Analysis For Epidemiology</h2>
+    <p>Kiffer G. Card, PhD</p>
+  </div>
+  <div class="sidebar-nav" id="sidebarNav"></div>
+  <div class="sidebar-footer">
+    <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressFill" style="width:0%"></div></div>
+    <div class="progress-text" id="progressText">0% complete</div>
+  </div>
+</div>
+
+<div class="main" id="mainContent">
+
+<!-- ============ WELCOME ============ -->
+<div class="module-page active" id="page-welcome">
+<div class="welcome-hero">
+  <h1>Mixed Models for Discrete Data</h1>
+  <p class="subtitle">Exploratory Data Analysis For Epidemiology</p>
+  <p style="font-size:15px;opacity:0.7;margin-bottom:32px;">Kiffer G. Card, PhD, Faculty of Health Sciences, Simon Fraser University</p>
+  <button class="start-btn" onclick="goToModule(0)">Begin Lesson &rarr;</button>
+  <div class="welcome-details">
+    <h3>Learning objectives for this lesson:</h3>
+    <ul>
+      <li>Understand the generalised linear mixed model (GLMM) framework for discrete outcomes</li>
+      <li>Write and interpret logistic regression models with random effects</li>
+      <li>Distinguish between subject-specific (SS) and population-averaged (PA) interpretations</li>
+      <li>Calculate the median odds ratio (MOR) and latent variable ICC for binary outcomes</li>
+      <li>Apply mixed models to count data using Poisson regression with random effects</li>
+      <li>Understand estimation challenges in GLMMs including ML, quasi-likelihood, and Laplace approximation</li>
+      <li>Extend mixed models to ordinal, multinomial, and other discrete outcome types</li>
+      <li>Evaluate when different estimation methods are appropriate and their trade-offs</li>
+    </ul>
+  </div>
+  <p style="font-size:12px;opacity:0.5;margin-top:32px;max-width:560px;text-align:center;line-height:1.5;">This course was developed by Kiffer G. Card, PhD, as a companion to Dohoo, I. R., Martin, S. W., &amp; Stryhn, H. (2012). <em>Methods in Epidemiologic Research.</em> VER Inc.</p>
+</div>
+</div>
+
+<!-- ============ SECTION 1: Introduction & Logistic Regression with Random Effects ============ -->
+<div class="module-page" id="page-0">
+<div class="module-header">
+  <div class="module-tag">Section 1</div>
+  <h1>Introduction &amp; Logistic Regression with Random Effects</h1>
+  <div class="time">&#9201; Estimated time: 20 minutes</div>
+</div>
+<div class="module-body">
+
+<h2>The Generalised Linear Mixed Model (GLMM)</h2>
+<p>Generalised linear mixed models (GLMMs) extend generalised linear models (GLMs) by adding <strong>random effects</strong> to the linear predictor. Just as linear mixed models allowed us to handle clustered continuous data, GLMMs handle clustered <strong>discrete</strong> data&mdash;binary, count, ordinal, and multinomial outcomes&mdash;while accounting for the correlation within clusters.</p>
+
+<div class="info-box teal">
+  <div class="box-title">Key Concept</div>
+  <p>The core idea of a GLMM is straightforward: take the linear predictor from a GLM and add random effects. For a logistic regression with a random intercept, the model becomes: logit(p<sub>ij</sub>) = &beta;<sub>0</sub> + &beta;<sub>1</sub>X<sub>1ij</sub> + u<sub>group(i)</sub>, where u<sub>group(i)</sub> ~ N(0, &sigma;&sup2;<sub>g</sub>). The random effect u captures between-cluster variation in the log-odds of the outcome.</p>
+</div>
+
+<h2>Subject-Specific vs. Population-Averaged Interpretation</h2>
+<p>A critical distinction in GLMMs for discrete data is between <strong>subject-specific (SS)</strong> and <strong>population-averaged (PA)</strong> interpretations of the model parameters. This distinction does not arise in linear mixed models but is fundamental for logistic and other non-linear models.</p>
+
+<div class="flip-card-grid">
+  <div class="flip-card" onclick="openCardModal('Subject-Specific (SS) Interpretation', 'Subject-specific (or &lt;strong&gt;conditional&lt;/strong&gt;) parameters describe the effect of a predictor &lt;em&gt;within a specific cluster&lt;/em&gt;, conditional on the random effect. For example, the SS odds ratio tells you how the odds change for a one-unit increase in X within a given cluster. SS estimates from a GLMM are always &lt;strong&gt;larger in magnitude&lt;/strong&gt; than PA estimates for logistic models due to the non-collapsibility of the odds ratio.')">
+    <div class="card-icon">&#128100;</div>
+    <div class="card-label">Subject-Specific (SS)</div>
+    <div class="card-hint">Click to learn more</div>
+  </div>
+  <div class="flip-card" onclick="openCardModal('Population-Averaged (PA) Interpretation', 'Population-averaged (or &lt;strong&gt;marginal&lt;/strong&gt;) parameters describe the effect of a predictor &lt;em&gt;averaged over all clusters&lt;/em&gt; in the population. The PA odds ratio tells you how the average odds in the population change for a one-unit increase in X, integrating over the distribution of random effects. PA estimates are obtained from GEE or by converting SS estimates using an approximation formula.')">
+    <div class="card-icon">&#128101;</div>
+    <div class="card-label">Population-Averaged (PA)</div>
+    <div class="card-hint">Click to learn more</div>
+  </div>
+</div>
+
+<p>Because of the non-collapsibility of the odds ratio, SS coefficients are always <strong>larger in magnitude</strong> than PA coefficients. The approximate conversion formula is:</p>
+
+<div class="formula-box">
+  <div class="formula-label">SS-to-PA Conversion for Logistic Models (Eq 22.2)</div>
+  &beta;<sup>PA</sup> &asymp; &beta;<sup>SS</sup> / &radic;(1 + 0.346 &times; &sigma;&sup2;<sub>g</sub>)
+</div>
+
+<div class="scenario-card">
+  <div class="scenario-title">Comparing SS and PA Interpretations</div>
+  <p>Consider a study of antibiotic resistance in cattle herds. A logistic GLMM with a random intercept for herd yields &beta;<sup>SS</sup> = 0.85 for a treatment variable, with &sigma;&sup2;<sub>g</sub> = 1.2. The SS odds ratio is exp(0.85) = 2.34&mdash;within any given herd, treatment doubles the odds of resistance.</p>
+  <p>Converting to PA: &beta;<sup>PA</sup> &asymp; 0.85 / &radic;(1 + 0.346 &times; 1.2) = 0.85 / 1.19 = 0.71. The PA odds ratio is exp(0.71) = 2.03&mdash;across the population of herds, the average effect is smaller. The SS estimate is larger because it conditions on a specific cluster.</p>
+</div>
+
+<h2>Measures of Cluster Heterogeneity</h2>
+
+<div class="tabs">
+  <div class="tab-row">
+    <button class="tab-btn active" onclick="switchTab(event,'tab-mor')">Median Odds Ratio</button>
+    <button class="tab-btn" onclick="switchTab(event,'tab-icc')">Latent Variable ICC</button>
+    <button class="tab-btn" onclick="switchTab(event,'tab-latent')">Latent Variable Approach</button>
+  </div>
+  <div class="tab-panel active" id="tab-mor">
+    <h3>Median Odds Ratio (MOR)</h3>
+    <p>The <strong>Median Odds Ratio</strong> quantifies between-cluster heterogeneity on the odds ratio scale. If you randomly select two clusters and compare a person from the higher-risk cluster to a person from the lower-risk cluster (with the same covariates), the MOR is the median of that odds ratio distribution.</p>
+    <div class="formula-box">
+      <div class="formula-label">Median Odds Ratio (Eq 22.5)</div>
+      MOR = exp(&radic;(2&sigma;&sup2;<sub>g</sub>) &times; 0.6745)
+    </div>
+    <p>An MOR of 1 means no between-cluster variation. Larger values indicate greater heterogeneity. The MOR allows direct comparison of the importance of cluster-level variation relative to fixed-effect odds ratios.</p>
+  </div>
+  <div class="tab-panel" id="tab-icc">
+    <h3>ICC for Binary Data</h3>
+    <p>For binary outcomes, the <strong>latent variable ICC</strong> uses the fact that the individual-level variance on the logistic scale is &pi;&sup2;/3 &asymp; 3.29:</p>
+    <div class="formula-box">
+      <div class="formula-label">Latent Variable ICC for Logistic Models</div>
+      &rho; = &sigma;&sup2;<sub>g</sub> / (&sigma;&sup2;<sub>g</sub> + &pi;&sup2;/3)
+    </div>
+    <p>This provides an estimate of the proportion of total variance (on the latent scale) attributable to between-cluster differences.</p>
+  </div>
+  <div class="tab-panel" id="tab-latent">
+    <h3>The Latent Variable Approach</h3>
+    <p>The binary outcome can be thought of as the result of thresholding a continuous <strong>latent variable</strong>. If the latent variable exceeds a threshold, the outcome is 1; otherwise, it is 0. In the logistic model, the individual-level error follows a standard logistic distribution with variance &pi;&sup2;/3. This framework provides the basis for both the ICC calculation and the SS-to-PA conversion.</p>
+  </div>
+</div>
+
+<!-- Section 1 Quiz -->
+<div class="quiz-section" id="quiz-0">
+  <h3>Section 1 Knowledge Check</h3>
+  <div class="quiz-question" data-correct="b">
+    <p>1. In a logistic GLMM, subject-specific (SS) coefficients are:</p>
+    <label class="quiz-option"><input type="radio" name="q0-0" value="a"> Smaller than population-averaged (PA) coefficients</label>
+    <label class="quiz-option"><input type="radio" name="q0-0" value="b"> Larger in magnitude than PA coefficients</label>
+    <label class="quiz-option"><input type="radio" name="q0-0" value="c"> Always identical to PA coefficients</label>
+    <label class="quiz-option"><input type="radio" name="q0-0" value="d"> Not interpretable</label>
+    <div class="quiz-explanation">Due to the non-collapsibility of the odds ratio, SS (conditional) coefficients are always larger in magnitude than PA (marginal) coefficients. The SS interpretation is conditional on the random effect being at its mean value.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>2. The Median Odds Ratio (MOR) measures:</p>
+    <label class="quiz-option"><input type="radio" name="q0-1" value="a"> The average treatment effect</label>
+    <label class="quiz-option"><input type="radio" name="q0-1" value="b"> The heterogeneity between clusters expressed as an odds ratio</label>
+    <label class="quiz-option"><input type="radio" name="q0-1" value="c"> The within-cluster variance</label>
+    <label class="quiz-option"><input type="radio" name="q0-1" value="d"> The correlation between outcomes</label>
+    <div class="quiz-explanation">The MOR quantifies how much the odds of the outcome vary between two randomly chosen clusters. An MOR of 1 indicates no between-cluster variation; larger values indicate greater heterogeneity.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>3. The ICC for binary outcomes using the latent variable approach uses:</p>
+    <label class="quiz-option"><input type="radio" name="q0-2" value="a"> &sigma;&sup2;<sub>g</sub> / (&sigma;&sup2;<sub>g</sub> + &sigma;&sup2;)</label>
+    <label class="quiz-option"><input type="radio" name="q0-2" value="b"> &sigma;&sup2;<sub>g</sub> / (&sigma;&sup2;<sub>g</sub> + &pi;&sup2;/3)</label>
+    <label class="quiz-option"><input type="radio" name="q0-2" value="c"> &sigma;&sup2;<sub>g</sub> / &sigma;&sup2;</label>
+    <label class="quiz-option"><input type="radio" name="q0-2" value="d"> &pi;&sup2;/3 / &sigma;&sup2;<sub>g</sub></label>
+    <div class="quiz-explanation">For logistic models, the latent variable approach assumes the individual-level variance on the logit scale is &pi;&sup2;/3, so ICC = &sigma;&sup2;<sub>g</sub> / (&sigma;&sup2;<sub>g</sub> + &pi;&sup2;/3).</div>
+  </div>
+
+  <div class="quiz-result" id="quizResult-0"></div>
+  <div class="quiz-retry" id="quizRetry-0"><button class="btn btn-outline" onclick="retryQuiz(0)">Retry Quiz</button></div>
+  <button class="btn btn-primary" onclick="checkQuiz(0)" style="margin-top:12px;">Check Answers</button>
+</div>
+
+<div class="reflection-box">
+  <h3>Reflection</h3>
+  <p>Why does the distinction between subject-specific and population-averaged estimates matter in practice? Think of a scenario where you would prefer one interpretation over the other.</p>
+  <textarea id="reflection-1" placeholder="Type your reflection here..."></textarea>
+  <button class="btn-save" onclick="checkReflection(1)">Save Reflection</button>
+  <div class="reflection-status" id="reflectionStatus-1">Reflection saved!</div>
+</div>
+
+<div class="section-nav">
+  <button class="btn btn-outline" onclick="goToModule(-1)">&larr; Welcome</button>
+  <div>
+    <button class="btn btn-primary disabled" id="nextBtn-0" onclick="goToModule(1)">Next Section &rarr;</button>
+    <div class="req-note" id="reqNote-0"><span class="req-pending">*</span> Complete the quiz and reflection to continue.</div>
+  </div>
+</div>
+
+</div>
+</div>
+
+<!-- ============ SECTION 2: GLMMs for Count, Binary & Categorical Data ============ -->
+<div class="module-page" id="page-1">
+<div class="module-header">
+  <div class="module-tag">Section 2</div>
+  <h1>GLMMs for Count, Binary &amp; Categorical Data</h1>
+  <div class="time">&#9201; Estimated time: 20 minutes</div>
+</div>
+<div class="module-body">
+
+<h2>Poisson Regression with Random Effects</h2>
+<p>For count outcomes, Poisson regression with random effects models the log of the expected count as a function of predictors plus random effects:</p>
+
+<div class="formula-box">
+  <div class="formula-label">Poisson GLMM with Random Intercept</div>
+  log(&mu;<sub>ij</sub>) = &beta;<sub>0</sub> + &beta;<sub>1</sub>X<sub>1ij</sub> + u<sub>group(i)</sub>
+</div>
+
+<p>Because the random effects enter on the <strong>log scale</strong>, they translate to <strong>multiplicative effects</strong> on the rate scale: &mu; = exp(X&beta;) &times; exp(u). The group-level multipliers exp(u) follow a <strong>log-normal</strong> distribution when u is normally distributed.</p>
+
+<div class="tabs">
+  <div class="tab-row">
+    <button class="tab-btn active" onclick="switchTab(event,'tab-poisson-normal')">Poisson + Normal RE</button>
+    <button class="tab-btn" onclick="switchTab(event,'tab-poisson-gamma')">Poisson + Gamma RE</button>
+    <button class="tab-btn" onclick="switchTab(event,'tab-negbin')">Negative Binomial</button>
+  </div>
+  <div class="tab-panel active" id="tab-poisson-normal">
+    <h3>Poisson with Normal Random Effects</h3>
+    <p>The standard GLMM approach uses normally distributed random effects on the log scale. The group-level effects &nu;<sub>group</sub> = exp(u<sub>group</sub>) are then <strong>log-normally</strong> distributed. This is the most common parameterisation in software.</p>
+    <p>This approach is flexible and can accommodate multiple levels of random effects, random slopes, and complex covariance structures&mdash;just like the linear mixed model framework.</p>
+  </div>
+  <div class="tab-panel" id="tab-poisson-gamma">
+    <h3>Poisson with Log-Gamma Random Effects</h3>
+    <p>An alternative parameterisation uses <strong>gamma-distributed</strong> random effects on the rate scale (equivalently, log-gamma on the log scale). When u follows a log-gamma distribution, the marginal distribution of counts has a convenient closed form.</p>
+    <p>This connection leads directly to the negative binomial distribution: a Poisson model with gamma-distributed rates yields negative binomial counts.</p>
+  </div>
+  <div class="tab-panel" id="tab-negbin">
+    <h3>Negative Binomial as a Random Effects Model</h3>
+    <p>The <strong>negative binomial</strong> distribution can be interpreted as a <strong>Poisson-gamma mixture</strong>: counts follow a Poisson distribution, but the rate varies across units according to a gamma distribution. This naturally accounts for <strong>overdispersion</strong> (variance &gt; mean).</p>
+    <p>The negative binomial can be extended with additional random effects at higher levels, combining the overdispersion correction with explicit hierarchical structure.</p>
+  </div>
+</div>
+
+<div class="data-table" style="overflow-x:auto;">
+<table class="data-table">
+  <thead>
+    <tr><th>Model</th><th>Random Effect Distribution</th><th>Marginal Distribution</th><th>Key Feature</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Poisson + Normal RE</td><td>Normal on log scale</td><td>No closed form</td><td>Standard GLMM; flexible</td></tr>
+    <tr><td>Poisson + Gamma RE</td><td>Gamma on rate scale</td><td>Negative binomial</td><td>Closed-form marginal</td></tr>
+    <tr><td>Negative Binomial</td><td>Implicit gamma</td><td>Negative binomial</td><td>Handles overdispersion</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2>GLMMs for Other Discrete Outcomes</h2>
+
+<div class="accordion">
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">Binary data: alternative link functions</div>
+    <div class="accordion-body"><div class="accordion-body-inner">
+      <p>While the logit link is most common for binary data, <strong>probit</strong> and <strong>complementary log-log</strong> links can also be used in GLMMs. For probit models, the SS-to-PA conversion uses a constant of <strong>1</strong> instead of 0.346: &beta;<sup>PA</sup> &asymp; &beta;<sup>SS</sup> / &radic;(1 + &sigma;&sup2;<sub>g</sub>). This is because the probit model uses the normal distribution, whose variance is 1.</p>
+    </div></div>
+  </div>
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">Ordinal data: proportional odds with random effects</div>
+    <div class="accordion-body"><div class="accordion-body-inner">
+      <p>The <strong>proportional odds model</strong> for ordinal outcomes can be extended by adding random effects to the latent variable underlying the ordinal categories. The subject-specific interpretation and the latent variable ICC methods from logistic regression apply similarly. Random effects capture cluster-level variation in the propensity to be in higher or lower categories.</p>
+    </div></div>
+  </div>
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">Multinomial data: random effects models</div>
+    <div class="accordion-body"><div class="accordion-body-inner">
+      <p>Random effects multinomial logistic models are <strong>less common and harder to estimate</strong>. The computational burden increases because each category (beyond the reference) has its own set of parameters, and the random effects may need to be correlated across categories. Specialised software and careful model specification are required.</p>
+    </div></div>
+  </div>
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">Zero-inflated models with random effects</div>
+    <div class="accordion-body"><div class="accordion-body-inner">
+      <p><strong>Zero-inflated</strong> models combine a point mass at zero with a count distribution. Random effects can be added to the <strong>count part</strong>, the <strong>zero-inflation part</strong>, or <strong>both</strong>. This flexibility allows the model to capture clustering in both the probability of being a &ldquo;structural zero&rdquo; and in the count process among non-zeros.</p>
+    </div></div>
+  </div>
+</div>
+
+<div class="info-box teal">
+  <div class="box-title">Choosing Between Models for Count Data</div>
+  <p>When faced with overdispersed count data, consider: (1) Is the overdispersion due to unmeasured heterogeneity between known clusters? Use a <strong>Poisson GLMM</strong>. (2) Is the overdispersion due to general extra-Poisson variation without a clear clustering structure? A <strong>negative binomial</strong> may suffice. (3) Are there excess zeros beyond what either model predicts? Consider a <strong>zero-inflated</strong> model. Often, comparing model fit statistics (AIC, BIC) across competing models is the practical approach.</p>
+</div>
+
+<!-- Section 2 Quiz -->
+<div class="quiz-section" id="quiz-1">
+  <h3>Section 2 Knowledge Check</h3>
+  <div class="quiz-question" data-correct="b">
+    <p>1. In a Poisson GLMM with normal random effects on the log scale, the group-level effects on the rate scale are:</p>
+    <label class="quiz-option"><input type="radio" name="q1-0" value="a"> Additive</label>
+    <label class="quiz-option"><input type="radio" name="q1-0" value="b"> Multiplicative (log-normal distributed)</label>
+    <label class="quiz-option"><input type="radio" name="q1-0" value="c"> Constant</label>
+    <label class="quiz-option"><input type="radio" name="q1-0" value="d"> Always equal to 1</label>
+    <div class="quiz-explanation">Since random effects enter on the log scale and the link function is log, exponentiating gives multiplicative random effects: &mu; = exp(X&beta; + u) = exp(X&beta;) &times; exp(u), where exp(u) follows a log-normal distribution.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>2. The negative binomial distribution can be viewed as:</p>
+    <label class="quiz-option"><input type="radio" name="q1-1" value="a"> A special case of the normal distribution</label>
+    <label class="quiz-option"><input type="radio" name="q1-1" value="b"> A Poisson-gamma mixture that accounts for overdispersion</label>
+    <label class="quiz-option"><input type="radio" name="q1-1" value="c"> A model without random effects</label>
+    <label class="quiz-option"><input type="radio" name="q1-1" value="d"> Only for binary data</label>
+    <div class="quiz-explanation">The negative binomial arises when the Poisson rate parameter itself has a gamma distribution across observations. This Poisson-gamma mixture produces overdispersion (variance &gt; mean) commonly seen in count data.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="a">
+    <p>3. Random effects can be added to proportional odds models for ordinal data by:</p>
+    <label class="quiz-option"><input type="radio" name="q1-2" value="a"> Adding random effects to the latent unobserved variables</label>
+    <label class="quiz-option"><input type="radio" name="q1-2" value="b"> Only using fixed effects</label>
+    <label class="quiz-option"><input type="radio" name="q1-2" value="c"> Converting ordinal data to binary</label>
+    <label class="quiz-option"><input type="radio" name="q1-2" value="d"> Removing the proportional odds assumption</label>
+    <div class="quiz-explanation">The proportional odds model is extended by adding random effects to the latent variables underlying the ordinal categories. The subject-specific interpretation and latent variable ICC methods from logistic regression apply similarly.</div>
+  </div>
+
+  <div class="quiz-result" id="quizResult-1"></div>
+  <div class="quiz-retry" id="quizRetry-1"><button class="btn btn-outline" onclick="retryQuiz(1)">Retry Quiz</button></div>
+  <button class="btn btn-primary" onclick="checkQuiz(1)" style="margin-top:12px;">Check Answers</button>
+</div>
+
+<div class="reflection-box">
+  <h3>Reflection</h3>
+  <p>A researcher finds that a Poisson model for disease counts across 50 communities has significant overdispersion. What are the relative advantages of addressing this with random effects versus using a negative binomial model?</p>
+  <textarea id="reflection-2" placeholder="Type your reflection here..."></textarea>
+  <button class="btn-save" onclick="checkReflection(2)">Save Reflection</button>
+  <div class="reflection-status" id="reflectionStatus-2">Reflection saved!</div>
+</div>
+
+<div class="section-nav">
+  <button class="btn btn-outline" onclick="goToModule(0)">&larr; Section 1</button>
+  <div>
+    <button class="btn btn-primary disabled" id="nextBtn-1" onclick="goToModule(2)">Next Section &rarr;</button>
+    <div class="req-note" id="reqNote-1"><span class="req-pending">*</span> Complete the quiz and reflection to continue.</div>
+  </div>
+</div>
+
+</div>
+</div>
+
+<!-- ============ SECTION 3: Estimation Methods for GLMMs ============ -->
+<div class="module-page" id="page-2">
+<div class="module-header">
+  <div class="module-tag">Section 3</div>
+  <h1>Estimation Methods for GLMMs</h1>
+  <div class="time">&#9201; Estimated time: 20 minutes</div>
+</div>
+<div class="module-body">
+
+<h2>The Estimation Challenge</h2>
+<p>Unlike linear mixed models, the likelihood in a GLMM cannot be computed in closed form. The likelihood involves an <strong>integral over the random effects distribution</strong> that generally has no analytic solution. This is the fundamental computational challenge of GLMMs, and different estimation methods represent different strategies for handling this integral.</p>
+
+<div class="tabs">
+  <div class="tab-row">
+    <button class="tab-btn active" onclick="switchTab(event,'tab-ml')">Maximum Likelihood</button>
+    <button class="tab-btn" onclick="switchTab(event,'tab-ql')">Quasi-Likelihood</button>
+    <button class="tab-btn" onclick="switchTab(event,'tab-laplace')">Laplace Approximation</button>
+  </div>
+  <div class="tab-panel active" id="tab-ml">
+    <h3>Maximum Likelihood (ML) Estimation</h3>
+    <p>ML estimation is the <strong>gold standard</strong> for GLMMs. It uses <strong>Gauss-Hermite quadrature</strong> to numerically approximate the integral over the random effects. The integrand is evaluated at carefully chosen points (quadrature points), and a weighted sum provides the approximation.</p>
+    <p><strong>Adaptive quadrature</strong> improves accuracy by centring and scaling the quadrature points based on the mode and curvature of each cluster&rsquo;s contribution to the likelihood. The number of quadrature points controls accuracy: more points yield better approximations but require more computation. Default values are typically around 7.</p>
+    <p>ML estimation can be <strong>computationally intensive or unstable</strong>, especially with multiple random effects (where the dimensionality of integration grows) or with sparse data.</p>
+  </div>
+  <div class="tab-panel" id="tab-ql">
+    <h3>Quasi-Likelihood (QL) Estimation</h3>
+    <p>Quasi-likelihood methods avoid numerical integration by using <strong>Taylor expansions</strong> to linearise the model, then applying iterative weighted least squares. Key variants include:</p>
+    <ul>
+      <li><strong>First-order</strong> vs. <strong>second-order</strong> Taylor expansion: second-order is more accurate</li>
+      <li><strong>MQL (Marginal Quasi-Likelihood)</strong>: omits random effect predictions from the working variate; gives <strong>PA interpretation</strong></li>
+      <li><strong>PQL (Penalised Quasi-Likelihood)</strong>: includes random effect predictions; gives estimates closer to <strong>SS interpretation</strong></li>
+    </ul>
+    <p>PQL with second-order expansion is generally preferred among QL methods. However, simulation studies show that first-order MQL can be <strong>markedly biased</strong>, especially with large variance components or small cluster sizes.</p>
+  </div>
+  <div class="tab-panel" id="tab-laplace">
+    <h3>Laplace Approximation</h3>
+    <p>The Laplace approximation corresponds to <strong>adaptive quadrature with a single quadrature point</strong>&mdash;the lowest order of adaptive quadrature. It approximates the integral by a normal distribution centred at the mode of the integrand.</p>
+    <p>Laplace is <strong>intermediate</strong> in both accuracy and computational cost between full quadrature ML and quasi-likelihood. It is widely available in software (e.g., <code>glmer</code> in R uses Laplace by default) and provides a good starting point before increasing quadrature points.</p>
+  </div>
+</div>
+
+<div class="data-table" style="overflow-x:auto;">
+<table class="data-table">
+  <thead>
+    <tr><th>Method</th><th>Accuracy</th><th>Computation</th><th>Interpretation</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>ML (Adaptive Quadrature)</td><td>High (gold standard)</td><td>High; increases with random effects</td><td>SS</td></tr>
+    <tr><td>Laplace Approximation</td><td>Moderate (1 quad point)</td><td>Moderate</td><td>SS</td></tr>
+    <tr><td>PQL (2nd order)</td><td>Moderate</td><td>Low</td><td>Close to SS</td></tr>
+    <tr><td>MQL (2nd order)</td><td>Lower</td><td>Low</td><td>PA</td></tr>
+    <tr><td>MQL (1st order)</td><td>Lowest; may be biased</td><td>Lowest</td><td>PA</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="info-box amber">
+  <div class="box-title">Practical Recommendations</div>
+  <p><strong>Check stability:</strong> Vary the number of quadrature points and confirm that estimates do not change substantially. <strong>Compare methods:</strong> Run both ML and QL and check agreement. <strong>Use caution:</strong> With small clusters, binary outcomes, or large random effects variances, simpler QL methods may be markedly biased&mdash;prefer ML or at least second-order PQL. <strong>Start simple:</strong> Begin with Laplace and increase quadrature points if feasible.</p>
+</div>
+
+<div class="accordion">
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">How Gauss-Hermite quadrature works</div>
+    <div class="accordion-body"><div class="accordion-body-inner">
+      <p>Gauss-Hermite quadrature approximates integrals of the form &int; f(x) exp(-x&sup2;) dx by a weighted sum: &sum; w<sub>k</sub> f(x<sub>k</sub>), where x<sub>k</sub> are the quadrature points and w<sub>k</sub> are the corresponding weights. The points and weights are chosen to give exact results for polynomial integrands up to a certain degree. For GLMM likelihoods, more quadrature points provide better approximations to the non-polynomial integrand.</p>
+    </div></div>
+  </div>
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">Why adaptive quadrature is better</div>
+    <div class="accordion-body"><div class="accordion-body-inner">
+      <p>Non-adaptive quadrature uses fixed points centred at zero. Adaptive quadrature shifts and scales the points to match the mode and curvature of each cluster&rsquo;s integrand. This means fewer points are needed for the same accuracy, and the method is more robust when random effects are large or when clusters differ substantially.</p>
+    </div></div>
+  </div>
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">When QL methods fail</div>
+    <div class="accordion-body"><div class="accordion-body-inner">
+      <p>Quasi-likelihood methods can produce seriously biased estimates when: (1) random effects variance is large, (2) cluster sizes are small (especially with binary data), (3) prevalence is extreme (close to 0 or 1), or (4) the model has crossed random effects. In these situations, ML estimation with sufficient quadrature points is strongly preferred.</p>
+    </div></div>
+  </div>
+</div>
+
+<!-- Section 3 Quiz -->
+<div class="quiz-section" id="quiz-2">
+  <h3>Section 3 Knowledge Check</h3>
+  <div class="quiz-question" data-correct="b">
+    <p>1. Gauss-Hermite quadrature in GLMM estimation is used to:</p>
+    <label class="quiz-option"><input type="radio" name="q2-0" value="a"> Transform the outcome variable</label>
+    <label class="quiz-option"><input type="radio" name="q2-0" value="b"> Numerically approximate the integral over the random effects distribution</label>
+    <label class="quiz-option"><input type="radio" name="q2-0" value="c"> Test for significance</label>
+    <label class="quiz-option"><input type="radio" name="q2-0" value="d"> Estimate fixed effects only</label>
+    <div class="quiz-explanation">The likelihood in a GLMM involves integrating over the random effects distribution, which generally cannot be done analytically. Quadrature approximates this integral by a weighted sum evaluated at selected points.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>2. Quasi-likelihood estimation methods:</p>
+    <label class="quiz-option"><input type="radio" name="q2-1" value="a"> Always give identical results to ML</label>
+    <label class="quiz-option"><input type="radio" name="q2-1" value="b"> Are computationally simpler but may produce biased estimates, especially with large variance components</label>
+    <label class="quiz-option"><input type="radio" name="q2-1" value="c"> Do not require any distributional assumptions</label>
+    <label class="quiz-option"><input type="radio" name="q2-1" value="d"> Cannot handle binary data</label>
+    <div class="quiz-explanation">QL methods are faster than ML because they avoid numerical integration, but they rely on Taylor approximations that can introduce bias, particularly when random effects variances are large or cluster sizes are small.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>3. Increasing the number of quadrature points in ML estimation:</p>
+    <label class="quiz-option"><input type="radio" name="q2-2" value="a"> Always decreases accuracy</label>
+    <label class="quiz-option"><input type="radio" name="q2-2" value="b"> Improves accuracy but increases computational cost</label>
+    <label class="quiz-option"><input type="radio" name="q2-2" value="c"> Has no effect on results</label>
+    <label class="quiz-option"><input type="radio" name="q2-2" value="d"> Is only relevant for continuous outcomes</label>
+    <div class="quiz-explanation">More quadrature points provide a better approximation to the integral, improving accuracy. However, computation time increases, especially with multiple random effects where the dimensionality of integration grows.</div>
+  </div>
+
+  <div class="quiz-result" id="quizResult-2"></div>
+  <div class="quiz-retry" id="quizRetry-2"><button class="btn btn-outline" onclick="retryQuiz(2)">Retry Quiz</button></div>
+  <button class="btn btn-primary" onclick="checkQuiz(2)" style="margin-top:12px;">Check Answers</button>
+</div>
+
+<div class="reflection-box">
+  <h3>Reflection</h3>
+  <p>You are fitting a 3-level logistic GLMM and the ML estimates are unstable. What steps would you take to diagnose the problem and what alternative estimation approaches might you consider?</p>
+  <textarea id="reflection-3" placeholder="Type your reflection here..."></textarea>
+  <button class="btn-save" onclick="checkReflection(3)">Save Reflection</button>
+  <div class="reflection-status" id="reflectionStatus-3">Reflection saved!</div>
+</div>
+
+<div class="section-nav">
+  <button class="btn btn-outline" onclick="goToModule(1)">&larr; Section 2</button>
+  <div>
+    <button class="btn btn-primary disabled" id="nextBtn-2" onclick="goToModule(3)">Next Section &rarr;</button>
+    <div class="req-note" id="reqNote-2"><span class="req-pending">*</span> Complete the quiz and reflection to continue.</div>
+  </div>
+</div>
+
+</div>
+</div>
+
+<!-- ============ SECTION 4: Inference, Diagnostics & Other Random Effects Models ============ -->
+<div class="module-page" id="page-3">
+<div class="module-header">
+  <div class="module-tag">Section 4</div>
+  <h1>Inference, Diagnostics &amp; Other Random Effects Models</h1>
+  <div class="time">&#9201; Estimated time: 15 minutes</div>
+</div>
+<div class="module-body">
+
+<h2>Inference for Fixed and Random Effects</h2>
+<p>Testing and constructing confidence intervals in GLMMs involves the same general principles as in linear mixed models, but with additional complications related to the estimation method used.</p>
+
+<p>For <strong>fixed effects</strong>, Wald-type tests (based on the estimate divided by its SE) are most common. However, Wald statistics can be <strong>unreliable when parameters are near boundary values</strong>. Likelihood-based inference (likelihood ratio tests and profile likelihood confidence intervals) is preferred when feasible, but requires ML estimation&mdash;not quasi-likelihood.</p>
+
+<p>For <strong>random effect variances</strong>, the same boundary issues discussed for linear mixed models apply: variance parameters cannot be negative, so the usual chi-square distribution for LR tests may not be appropriate near zero.</p>
+
+<div class="info-box rose">
+  <div class="box-title">Caution with Wald Tests Near Boundaries</div>
+  <p>Wald statistics assume the sampling distribution of the parameter estimate is approximately normal. This assumption breaks down when parameters are near boundary values (e.g., variance components near zero, or probabilities near 0 or 1). In such cases, confidence intervals based on Wald statistics can include impossible values, and p-values may be misleading. Likelihood-based methods are more reliable.</p>
+</div>
+
+<h2>Alternative Random Effects Models</h2>
+
+<div class="flip-card-grid">
+  <div class="flip-card" onclick="openCardModal('GLMM (Standard)', 'The standard &lt;strong&gt;GLMM&lt;/strong&gt; uses normally distributed random effects and numerical integration (or approximations) for estimation. It is the most flexible approach, accommodating multiple levels, random slopes, and various outcome types. However, it is computationally the most demanding and may face convergence issues with complex models.')">
+    <div class="card-icon">&#128202;</div>
+    <div class="card-label">GLMM (Standard)</div>
+    <div class="card-hint">Click to learn more</div>
+  </div>
+  <div class="flip-card" onclick="openCardModal('Beta-Binomial Model', 'The &lt;strong&gt;beta-binomial&lt;/strong&gt; model is an alternative for grouped binary data. It is parameterised by a mean &mu; and an ICC &rho;, with alpha parameters: &alpha;&lt;sub&gt;1&lt;/sub&gt; = &mu;(1-&rho;)/&rho; and &alpha;&lt;sub&gt;2&lt;/sub&gt; = (1-&mu;)(1-&rho;)/&rho;. Its main advantage is a &lt;strong&gt;closed-form likelihood&lt;/strong&gt;, making estimation simple. However, it is limited to lowest-level predictors and does not extend easily to multiple hierarchical levels.')">
+    <div class="card-icon">&#128200;</div>
+    <div class="card-label">Beta-Binomial</div>
+    <div class="card-hint">Click to learn more</div>
+  </div>
+  <div class="flip-card" onclick="openCardModal('Negative Binomial as RE Model', 'The &lt;strong&gt;negative binomial&lt;/strong&gt; can be viewed as a Poisson model with implicit gamma random effects, capturing overdispersion as inter-subject variability. It can be extended with additional random effects at higher levels. Its closed-form likelihood makes it computationally attractive for simple overdispersion, though it lacks the flexibility of a full GLMM for complex hierarchical structures.')">
+    <div class="card-icon">&#128201;</div>
+    <div class="card-label">Negative Binomial</div>
+    <div class="card-hint">Click to learn more</div>
+  </div>
+</div>
+
+<div class="data-table" style="overflow-x:auto;">
+<table class="data-table">
+  <thead>
+    <tr><th>Approach</th><th>Likelihood</th><th>Multi-Level</th><th>Individual Predictors</th><th>Computational Cost</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>GLMM (normal RE)</td><td>Requires integration</td><td>Yes</td><td>Yes</td><td>High</td></tr>
+    <tr><td>Beta-binomial</td><td>Closed form</td><td>No</td><td>Limited</td><td>Low</td></tr>
+    <tr><td>Negative binomial</td><td>Closed form</td><td>With extensions</td><td>Yes</td><td>Low to moderate</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2>Practical Guidance</h2>
+
+<div class="accordion">
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">When to use the beta-binomial</div>
+    <div class="accordion-body"><div class="accordion-body-inner">
+      <p>The beta-binomial model is most appropriate when you have <strong>grouped binary data</strong> (e.g., proportion of animals testing positive in each herd) with only group-level predictors. Its closed-form likelihood makes it computationally simple, and it directly estimates the ICC. However, it cannot accommodate individual-level predictors or multiple hierarchical levels.</p>
+    </div></div>
+  </div>
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">Simulation evidence on estimation methods</div>
+    <div class="accordion-body"><div class="accordion-body-inner">
+      <p>Simulation studies consistently show that <strong>first-order MQL can be markedly biased</strong>, underestimating both fixed effects and variance components. Second-order PQL performs better but can still be biased with small cluster sizes or large variances. <strong>ML with adaptive quadrature</strong> is generally the most accurate, though computational constraints may require starting with Laplace approximation.</p>
+    </div></div>
+  </div>
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">Choosing the right estimation method</div>
+    <div class="accordion-body"><div class="accordion-body-inner">
+      <p><strong>Start with Laplace</strong> (the default in many packages). If feasible, increase to adaptive quadrature with 7+ points and check that estimates are stable. If ML is computationally prohibitive (e.g., many random effects), use <strong>second-order PQL</strong> and compare results with Laplace. Always report which estimation method was used and, ideally, show sensitivity to the choice.</p>
+    </div></div>
+  </div>
+</div>
+
+<!-- Section 4 Quiz -->
+<div class="quiz-section" id="quiz-3">
+  <h3>Section 4 Knowledge Check</h3>
+  <div class="quiz-question" data-correct="b">
+    <p>1. Wald-type statistics for GLMM parameters:</p>
+    <label class="quiz-option"><input type="radio" name="q3-0" value="a"> Are always exact</label>
+    <label class="quiz-option"><input type="radio" name="q3-0" value="b"> Can be unreliable when parameters are near boundary values</label>
+    <label class="quiz-option"><input type="radio" name="q3-0" value="c"> Are only valid for random effects</label>
+    <label class="quiz-option"><input type="radio" name="q3-0" value="d"> Do not require standard errors</label>
+    <div class="quiz-explanation">Wald statistics assume the sampling distribution is approximately normal, which breaks down when parameters are near boundaries (e.g., variance parameters near zero), making likelihood-based inference preferable when available.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>2. The beta-binomial model:</p>
+    <label class="quiz-option"><input type="radio" name="q3-1" value="a"> Requires numerical integration like a GLMM</label>
+    <label class="quiz-option"><input type="radio" name="q3-1" value="b"> Has a closed-form likelihood function, making it computationally simpler</label>
+    <label class="quiz-option"><input type="radio" name="q3-1" value="c"> Can easily handle multiple hierarchical levels</label>
+    <label class="quiz-option"><input type="radio" name="q3-1" value="d"> Has subject-specific interpretation only</label>
+    <div class="quiz-explanation">The beta-binomial model&rsquo;s main advantage is its closed-form likelihood, which avoids the computational challenges of GLMMs. However, it is limited to grouped/replicated binary data at the lowest level.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>3. First-order quasi-likelihood estimates in GLMMs:</p>
+    <label class="quiz-option"><input type="radio" name="q3-2" value="a"> Are always unbiased</label>
+    <label class="quiz-option"><input type="radio" name="q3-2" value="b"> Can be markedly biased, especially with large variance components</label>
+    <label class="quiz-option"><input type="radio" name="q3-2" value="c"> Are identical to ML estimates</label>
+    <label class="quiz-option"><input type="radio" name="q3-2" value="d"> Are the recommended default</label>
+    <div class="quiz-explanation">Simulation studies have shown that first-order QL (especially MQL) can produce substantially biased estimates. Second-order PQL and ML estimation are preferred for more accurate results.</div>
+  </div>
+
+  <div class="quiz-result" id="quizResult-3"></div>
+  <div class="quiz-retry" id="quizRetry-3"><button class="btn btn-outline" onclick="retryQuiz(3)">Retry Quiz</button></div>
+  <button class="btn btn-primary" onclick="checkQuiz(3)" style="margin-top:12px;">Check Answers</button>
+</div>
+
+<div class="reflection-box">
+  <h3>Reflection</h3>
+  <p>Compare the GLMM approach to the beta-binomial approach for modeling clustered binary data. In what situations would each be preferred?</p>
+  <textarea id="reflection-4" placeholder="Type your reflection here..."></textarea>
+  <button class="btn-save" onclick="checkReflection(4)">Save Reflection</button>
+  <div class="reflection-status" id="reflectionStatus-4">Reflection saved!</div>
+</div>
+
+<div class="section-nav">
+  <button class="btn btn-outline" onclick="goToModule(2)">&larr; Section 3</button>
+  <div>
+    <button class="btn btn-primary disabled" id="nextBtn-3" onclick="goToModule(4)">Final Assessment &rarr;</button>
+    <div class="req-note" id="reqNote-3"><span class="req-pending">*</span> Complete the quiz and reflection to continue.</div>
+  </div>
+</div>
+
+</div>
+</div>
+
+<!-- ============ FINAL ASSESSMENT ============ -->
+<div class="module-page" id="page-4">
+<div class="module-header">
+  <div class="module-tag">Final Assessment</div>
+  <h1>Lesson 10 &mdash; Comprehensive Assessment</h1>
+  <div class="time">&#9201; Estimated time: 25 minutes</div>
+</div>
+<div class="module-body">
+
+<p>This final assessment covers all material from this lesson. You must answer all 15 questions correctly (100%) and complete the final reflection to finish the lesson.</p>
+
+<div class="reflection-box">
+  <h3>Final Reflection</h3>
+  <p>Reflecting on this lesson, what do you see as the biggest challenges in fitting GLMMs for discrete data compared to linear mixed models for continuous data? How do the estimation challenges affect your confidence in the results?</p>
+  <textarea id="reflection-final" placeholder="Type your final reflection here..."></textarea>
+  <button class="btn-save" onclick="checkReflection('final')">Save Reflection</button>
+  <div class="reflection-status" id="reflectionStatus-final">Reflection saved!</div>
+</div>
+
+<div class="quiz-section" id="quiz-4">
+  <h3>Final Assessment (15 Questions)</h3>
+
+  <div class="quiz-question" data-correct="b">
+    <p>1. A GLMM extends a GLM by:</p>
+    <label class="quiz-option"><input type="radio" name="qf-0" value="a"> Removing the link function</label>
+    <label class="quiz-option"><input type="radio" name="qf-0" value="b"> Adding random effects to the linear predictor</label>
+    <label class="quiz-option"><input type="radio" name="qf-0" value="c"> Using only continuous outcomes</label>
+    <label class="quiz-option"><input type="radio" name="qf-0" value="d"> Eliminating the error term</label>
+    <div class="quiz-explanation">GLMMs add random effects (e.g., random intercepts, random slopes) to the linear predictor of a GLM, allowing for correlation within clusters.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>2. In a logistic GLMM, subject-specific (SS) odds ratios are:</p>
+    <label class="quiz-option"><input type="radio" name="qf-1" value="a"> Equal to population-averaged (PA) odds ratios</label>
+    <label class="quiz-option"><input type="radio" name="qf-1" value="b"> Always larger in magnitude than PA odds ratios</label>
+    <label class="quiz-option"><input type="radio" name="qf-1" value="c"> Always smaller than PA odds ratios</label>
+    <label class="quiz-option"><input type="radio" name="qf-1" value="d"> Unrelated to PA odds ratios</label>
+    <div class="quiz-explanation">Due to non-collapsibility of the odds ratio, conditioning on the random effects (SS interpretation) yields larger coefficient magnitudes compared to marginalizing over them (PA interpretation).</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>3. The conversion formula &beta;<sup>PA</sup> &asymp; &beta;<sup>SS</sup> / &radic;(1 + 0.346&sigma;&sup2;<sub>g</sub>) applies to:</p>
+    <label class="quiz-option"><input type="radio" name="qf-2" value="a"> Linear models</label>
+    <label class="quiz-option"><input type="radio" name="qf-2" value="b"> Logistic regression models</label>
+    <label class="quiz-option"><input type="radio" name="qf-2" value="c"> Poisson models</label>
+    <label class="quiz-option"><input type="radio" name="qf-2" value="d"> All models</label>
+    <div class="quiz-explanation">This specific formula (with constant 0.346) applies to logistic models. For probit models, the constant changes to 1. The formula converts between SS and PA coefficient estimates.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>4. The Median Odds Ratio (MOR) equals 1 when:</p>
+    <label class="quiz-option"><input type="radio" name="qf-3" value="a"> There is maximum between-cluster variation</label>
+    <label class="quiz-option"><input type="radio" name="qf-3" value="b"> There is no between-cluster variation (&sigma;&sup2;<sub>g</sub> = 0)</label>
+    <label class="quiz-option"><input type="radio" name="qf-3" value="c"> All clusters have different odds</label>
+    <label class="quiz-option"><input type="radio" name="qf-3" value="d"> The model has no predictors</label>
+    <div class="quiz-explanation">MOR = exp(&radic;(2&sigma;&sup2;<sub>g</sub>) &times; 0.6745). When &sigma;&sup2;<sub>g</sub> = 0, MOR = exp(0) = 1, indicating no heterogeneity between clusters in the odds of the outcome.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>5. The latent variable ICC for binary data uses &pi;&sup2;/3 because:</p>
+    <label class="quiz-option"><input type="radio" name="qf-4" value="a"> It is an arbitrary choice</label>
+    <label class="quiz-option"><input type="radio" name="qf-4" value="b"> It is the variance of the standard logistic distribution, which underlies the logit link</label>
+    <label class="quiz-option"><input type="radio" name="qf-4" value="c"> It equals the variance of the normal distribution</label>
+    <label class="quiz-option"><input type="radio" name="qf-4" value="d"> It is the mean of the logistic distribution</label>
+    <div class="quiz-explanation">In the latent variable interpretation, the individual-level error follows a logistic distribution with variance &pi;&sup2;/3 &asymp; 3.29. This serves as the &ldquo;within-cluster&rdquo; variance on the latent scale.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>6. In a Poisson GLMM, random effects on the log scale translate to:</p>
+    <label class="quiz-option"><input type="radio" name="qf-5" value="a"> Additive effects on the count scale</label>
+    <label class="quiz-option"><input type="radio" name="qf-5" value="b"> Multiplicative effects on the rate scale</label>
+    <label class="quiz-option"><input type="radio" name="qf-5" value="c"> No change on any scale</label>
+    <label class="quiz-option"><input type="radio" name="qf-5" value="d"> Subtractive effects</label>
+    <div class="quiz-explanation">Because exp(a + b) = exp(a) &times; exp(b), random effects that are additive on the log scale become multiplicative on the original rate scale.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>7. The connection between Poisson random effects and the negative binomial is:</p>
+    <label class="quiz-option"><input type="radio" name="qf-6" value="a"> They are unrelated</label>
+    <label class="quiz-option"><input type="radio" name="qf-6" value="b"> A Poisson model with gamma-distributed random effects yields a negative binomial</label>
+    <label class="quiz-option"><input type="radio" name="qf-6" value="c"> Negative binomial is a special case of Poisson</label>
+    <label class="quiz-option"><input type="radio" name="qf-6" value="d"> They can never give similar results</label>
+    <div class="quiz-explanation">When the Poisson rate parameter follows a gamma distribution across units, the marginal distribution of counts is negative binomial. This is the Poisson-gamma mixture interpretation.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>8. Gauss-Hermite quadrature:</p>
+    <label class="quiz-option"><input type="radio" name="qf-7" value="a"> Provides exact solutions</label>
+    <label class="quiz-option"><input type="radio" name="qf-7" value="b"> Approximates integrals using weighted sums at selected points</label>
+    <label class="quiz-option"><input type="radio" name="qf-7" value="c"> Can only be used with 1 quadrature point</label>
+    <label class="quiz-option"><input type="radio" name="qf-7" value="d"> Is the simplest estimation method</label>
+    <div class="quiz-explanation">Quadrature approximates the integral over random effects by evaluating the integrand at carefully chosen points and taking a weighted sum. More points give better approximations but at higher computational cost.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>9. Adaptive quadrature differs from non-adaptive by:</p>
+    <label class="quiz-option"><input type="radio" name="qf-8" value="a"> Using fewer quadrature points</label>
+    <label class="quiz-option"><input type="radio" name="qf-8" value="b"> Adapting the quadrature points to the shape of the integrand for each cluster</label>
+    <label class="quiz-option"><input type="radio" name="qf-8" value="c"> Not using quadrature at all</label>
+    <label class="quiz-option"><input type="radio" name="qf-8" value="d"> Being computationally simpler</label>
+    <div class="quiz-explanation">Adaptive quadrature centers and scales the quadrature points based on the mode and curvature of each cluster&rsquo;s contribution to the likelihood, improving accuracy, especially when random effects are large.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>10. MQL quasi-likelihood gives estimates with:</p>
+    <label class="quiz-option"><input type="radio" name="qf-9" value="a"> Subject-specific interpretation</label>
+    <label class="quiz-option"><input type="radio" name="qf-9" value="b"> Population-averaged interpretation</label>
+    <label class="quiz-option"><input type="radio" name="qf-9" value="c"> No interpretable meaning</label>
+    <label class="quiz-option"><input type="radio" name="qf-9" value="d"> Always the same as ML</label>
+    <div class="quiz-explanation">MQL (Marginal Quasi-Likelihood) omits the random effects predictions from the adjusted variate, yielding parameter estimates that have a PA interpretation, unlike PQL which is closer to SS.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>11. First-order quasi-likelihood compared to second-order:</p>
+    <label class="quiz-option"><input type="radio" name="qf-10" value="a"> Is more accurate</label>
+    <label class="quiz-option"><input type="radio" name="qf-10" value="b"> Is less accurate and may produce more biased estimates</label>
+    <label class="quiz-option"><input type="radio" name="qf-10" value="c"> Is computationally more intensive</label>
+    <label class="quiz-option"><input type="radio" name="qf-10" value="d"> Always gives identical results</label>
+    <div class="quiz-explanation">First-order QL uses a cruder Taylor approximation, leading to more bias than second-order methods. Second-order PQL is generally recommended when QL methods are used.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>12. The Laplace approximation in GLMM estimation:</p>
+    <label class="quiz-option"><input type="radio" name="qf-11" value="a"> Uses many quadrature points</label>
+    <label class="quiz-option"><input type="radio" name="qf-11" value="b"> Corresponds to using a single quadrature point (lowest order adaptive quadrature)</label>
+    <label class="quiz-option"><input type="radio" name="qf-11" value="c"> Is identical to ML</label>
+    <label class="quiz-option"><input type="radio" name="qf-11" value="d"> Cannot handle binary data</label>
+    <div class="quiz-explanation">The Laplace approximation is equivalent to adaptive quadrature with a single point. It is intermediate in accuracy and computation between full quadrature ML and quasi-likelihood.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>13. The beta-binomial model&rsquo;s main limitation is:</p>
+    <label class="quiz-option"><input type="radio" name="qf-12" value="a"> It requires numerical integration</label>
+    <label class="quiz-option"><input type="radio" name="qf-12" value="b"> It does not naturally accommodate predictors at the lowest (individual) level and doesn&rsquo;t extend easily to multiple hierarchical levels</label>
+    <label class="quiz-option"><input type="radio" name="qf-12" value="c"> It has no closed-form likelihood</label>
+    <label class="quiz-option"><input type="radio" name="qf-12" value="d"> It cannot estimate the ICC</label>
+    <div class="quiz-explanation">While computationally attractive, the beta-binomial model is essentially for grouped binary data and doesn&rsquo;t naturally include individual-level predictors or extend to multi-level hierarchies.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>14. When ML estimation for a GLMM is computationally unstable, one should:</p>
+    <label class="quiz-option"><input type="radio" name="qf-13" value="a"> Accept the results as they are</label>
+    <label class="quiz-option"><input type="radio" name="qf-13" value="b"> Try different starting values, vary quadrature points, and compare with quasi-likelihood results</label>
+    <label class="quiz-option"><input type="radio" name="qf-13" value="c"> Always switch to a linear model</label>
+    <label class="quiz-option"><input type="radio" name="qf-13" value="d"> Remove all random effects</label>
+    <div class="quiz-explanation">Instability in ML estimation should be investigated by checking sensitivity to starting values and quadrature settings, and comparing results with alternative estimation methods to assess robustness.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>15. For a probit GLMM, the SS-to-PA conversion formula uses the constant:</p>
+    <label class="quiz-option"><input type="radio" name="qf-14" value="a"> 0.346</label>
+    <label class="quiz-option"><input type="radio" name="qf-14" value="b"> 1</label>
+    <label class="quiz-option"><input type="radio" name="qf-14" value="c"> &pi;&sup2;/3</label>
+    <label class="quiz-option"><input type="radio" name="qf-14" value="d"> 0.6745</label>
+    <div class="quiz-explanation">For probit regression, &beta;<sup>PA</sup> &asymp; &beta;<sup>SS</sup> / &radic;(1 + &sigma;&sup2;<sub>g</sub>), where the constant is 1 (instead of 0.346 for logistic regression). This is because the probit model uses the normal distribution whose variance is 1.</div>
+  </div>
+
+  <div class="quiz-result" id="quizResult-4"></div>
+  <div class="quiz-retry" id="quizRetry-4"><button class="btn btn-outline" onclick="retryQuiz(4)">Retry Quiz</button></div>
+  <button class="btn btn-accent" onclick="checkFinalAssessment()" style="margin-top:12px;">Submit Final Assessment</button>
+</div>
+
+<div class="completion-banner" id="completionBanner">
+  <h2>Lesson 10 Complete!</h2>
+  <p>Congratulations! You have successfully completed the Mixed Models for Discrete Data module. Your responses have been downloaded automatically.</p>
+</div>
+
+<div class="section-nav">
+  <button class="btn btn-outline" onclick="goToModule(3)">&larr; Section 4</button>
+  <div></div>
+</div>
+
+</div>
+</div>
+
+</div><!-- /main -->
+
+<!-- Card Modal -->
+<div class="card-modal-overlay" id="cardModalOverlay" onclick="closeCardModal(event)">
+  <div class="card-modal">
+    <button class="card-modal-close" onclick="document.getElementById('cardModalOverlay').classList.remove('show')">&times;</button>
+    <h3 id="cardModalTitle"></h3>
+    <div id="cardModalBody"></div>
+  </div>
+</div>
+
+<script>
+var modules = [
+  { id: -1, short: 'Welcome', title: 'Introduction' },
+  { id: 0, short: 'Section 1', title: 'Introduction & Logistic Regression with Random Effects' },
+  { id: 1, short: 'Section 2', title: 'GLMMs for Count, Binary & Categorical Data' },
+  { id: 2, short: 'Section 3', title: 'Estimation Methods for GLMMs' },
+  { id: 3, short: 'Section 4', title: 'Inference, Diagnostics & Other Models' },
+  { id: 4, short: 'Section 5', title: 'Final Assessment' }
+];
+var currentModule = -1;
+var completed = new Set();
+var quizPassed = {};
+var reflectionDone = {};
+var modulesWithReflection = { 1: true, 2: true, 3: true, 4: true };
+
+function buildNav() {
+  var nav = document.getElementById('sidebarNav');
+  nav.innerHTML = '';
+  modules.forEach(function(m) {
+    var div = document.createElement('div');
+    div.className = 'nav-item';
+    var key = m.id === -1 ? 'welcome' : m.id;
+    if (completed.has(key)) div.classList.add('completed');
+    if (m.id === currentModule) div.classList.add('active');
+    div.innerHTML = '<div class="dot"></div><span>' + m.short + ': ' + m.title + '</span>';
+    div.onclick = function() { goToModule(m.id); closeSidebarMobile(); };
+    nav.appendChild(div);
+  });
+}
+
+function goToModule(id) {
+  currentModule = id;
+  document.querySelectorAll('.module-page').forEach(function(p) { p.classList.remove('active'); });
+  var pageId = id === -1 ? 'page-welcome' : 'page-' + id;
+  var page = document.getElementById(pageId);
+  if (page) page.classList.add('active');
+  if (id === -1) completed.add('welcome');
+  buildNav();
+  updateProgress();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function updateProgress() {
+  var total = modules.length;
+  var done = completed.size;
+  var pct = Math.round((done / total) * 100);
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressText').textContent = pct + '% complete';
+}
+
+function checkReflection(idx) {
+  var ta = document.getElementById('reflection-' + idx);
+  if (ta && ta.value.trim().length > 0) {
+    reflectionDone[idx === 'final' ? 4 : idx] = true;
+    var status = document.getElementById('reflectionStatus-' + idx);
+    if (status) status.classList.add('show');
+    if (idx !== 'final') updateNextButton(idx);
+  }
+}
+
+function updateNextButton(moduleIdx) {
+  var btn = document.getElementById('nextBtn-' + moduleIdx);
+  var note = document.getElementById('reqNote-' + moduleIdx);
+  if (!btn) return;
+  var quizOk = quizPassed[moduleIdx];
+  var refIdx = moduleIdx + 1;
+  var needsRef = modulesWithReflection[refIdx];
+  var refOk = !needsRef || reflectionDone[refIdx];
+  if (quizOk && refOk) {
+    btn.classList.remove('disabled');
+    completed.add(moduleIdx);
+    buildNav();
+    updateProgress();
+    if (note) note.innerHTML = '<span class="req-check">&#10003;</span> Section complete! You may continue.';
+  }
+}
+
+function checkQuiz(moduleIdx) {
+  var quiz = document.getElementById('quiz-' + moduleIdx);
+  var questions = quiz.querySelectorAll('.quiz-question');
+  var correct = 0;
+  var total = questions.length;
+  var allAnswered = true;
+  questions.forEach(function(q, i) {
+    var correctVal = q.dataset.correct;
+    var selected = quiz.querySelector('input[name="q' + moduleIdx + '-' + i + '"]:checked');
+    q.querySelectorAll('.quiz-option').forEach(function(opt) { opt.classList.remove('correct', 'incorrect'); });
+    if (!selected) { allAnswered = false; return; }
+    q.querySelectorAll('.quiz-option').forEach(function(opt) {
+      var inp = opt.querySelector('input');
+      if (inp.value === correctVal) opt.classList.add('correct');
+      else if (inp === selected && inp.value !== correctVal) opt.classList.add('incorrect');
+    });
+    q.querySelector('.quiz-explanation').classList.add('show');
+    if (selected.value === correctVal) correct++;
+  });
+  if (!allAnswered) { alert('Please answer all questions before checking.'); return; }
+  var result = document.getElementById('quizResult-' + moduleIdx);
+  var retryDiv = document.getElementById('quizRetry-' + moduleIdx);
+  result.style.display = 'block';
+  if (correct === total) {
+    result.className = 'quiz-result pass';
+    result.textContent = 'All correct! Great job.';
+    quizPassed[moduleIdx] = true;
+    if (retryDiv) retryDiv.classList.remove('show');
+    quiz.querySelectorAll('input[type="radio"]').forEach(function(r) { r.disabled = true; });
+    updateNextButton(moduleIdx);
+  } else {
+    result.className = 'quiz-result fail';
+    result.textContent = 'You got ' + correct + ' out of ' + total + ' correct. You need 100% to continue. Review the feedback and try again.';
+    quizPassed[moduleIdx] = false;
+    if (retryDiv) retryDiv.classList.add('show');
+  }
+}
+
+function retryQuiz(moduleIdx) {
+  var quiz = document.getElementById('quiz-' + moduleIdx);
+  quiz.querySelectorAll('.quiz-option').forEach(function(opt) { opt.classList.remove('correct', 'incorrect'); });
+  quiz.querySelectorAll('.quiz-explanation').forEach(function(exp) { exp.classList.remove('show'); });
+  quiz.querySelectorAll('input[type="radio"]').forEach(function(r) { r.checked = false; r.disabled = false; });
+  var result = document.getElementById('quizResult-' + moduleIdx);
+  result.style.display = 'none';
+  var retryDiv = document.getElementById('quizRetry-' + moduleIdx);
+  if (retryDiv) retryDiv.classList.remove('show');
+  quiz.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function checkFinalAssessment() {
+  if (!reflectionDone[4]) {
+    alert('Please complete the final reflection before submitting the assessment.');
+    return;
+  }
+  var quiz = document.getElementById('quiz-4');
+  var questions = quiz.querySelectorAll('.quiz-question');
+  var correct = 0;
+  var total = questions.length;
+  var allAnswered = true;
+  questions.forEach(function(q, i) {
+    var correctVal = q.dataset.correct;
+    var selected = quiz.querySelector('input[name="qf-' + i + '"]:checked');
+    q.querySelectorAll('.quiz-option').forEach(function(opt) { opt.classList.remove('correct', 'incorrect'); });
+    if (!selected) { allAnswered = false; return; }
+    q.querySelectorAll('.quiz-option').forEach(function(opt) {
+      var inp = opt.querySelector('input');
+      if (inp.value === correctVal) opt.classList.add('correct');
+      else if (inp === selected && inp.value !== correctVal) opt.classList.add('incorrect');
+    });
+    q.querySelector('.quiz-explanation').classList.add('show');
+    if (selected.value === correctVal) correct++;
+  });
+  if (!allAnswered) { alert('Please answer all 15 questions before submitting.'); return; }
+  var pct = Math.round((correct / total) * 100);
+  var passed = correct === total;
+  var result = document.getElementById('quizResult-4');
+  var retryDiv = document.getElementById('quizRetry-4');
+  result.style.display = 'block';
+  if (passed) {
+    result.className = 'quiz-result pass';
+    result.innerHTML = 'Congratulations! You scored ' + correct + '/' + total + ' (100%). You have completed Lesson 10!';
+    completed.add(4);
+    updateProgress();
+    buildNav();
+    if (retryDiv) retryDiv.classList.remove('show');
+    quiz.querySelectorAll('input[type="radio"]').forEach(function(r) { r.disabled = true; });
+    document.getElementById('completionBanner').style.display = 'block';
+    document.getElementById('completionBanner').scrollIntoView({ behavior: 'smooth' });
+    downloadResponses();
+  } else {
+    result.className = 'quiz-result fail';
+    result.innerHTML = 'You scored ' + correct + '/' + total + ' (' + pct + '%). You need 100% to complete the lesson. Review the feedback and try again.';
+    if (retryDiv) retryDiv.classList.add('show');
+  }
+}
+
+function toggleAccordion(header) {
+  var item = header.parentElement;
+  var wasOpen = item.classList.contains('open');
+  item.classList.toggle('open');
+  var body = item.querySelector('.accordion-body');
+  if (wasOpen) { body.style.maxHeight = null; }
+  else { body.style.maxHeight = body.scrollHeight + 'px'; }
+}
+
+function switchTab(e, panelId) {
+  var tabRow = e.target.closest('.tab-row');
+  var tabs = tabRow.parentElement;
+  tabs.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+  tabs.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
+  e.target.classList.add('active');
+  document.getElementById(panelId).classList.add('active');
+}
+
+function openCardModal(title, body) {
+  document.getElementById('cardModalTitle').textContent = title;
+  document.getElementById('cardModalBody').innerHTML = body;
+  document.getElementById('cardModalOverlay').classList.add('show');
+}
+
+function closeCardModal(e) {
+  if (!e || e.target === document.getElementById('cardModalOverlay')) {
+    document.getElementById('cardModalOverlay').classList.remove('show');
+  }
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.querySelector('.sidebar-overlay').classList.toggle('show');
+}
+
+function closeSidebarMobile() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.querySelector('.sidebar-overlay').classList.remove('show');
+}
+
+buildNav();
+updateProgress();
+
+function downloadResponses() {
+  var lines = [];
+  lines.push('Exploratory Data Analysis For Epidemiology, Lesson 10');
+  lines.push('Mixed Models for Discrete Data');
+  lines.push('');
+  lines.push('Name: ');
+  lines.push('Date: ' + new Date().toLocaleDateString());
+  lines.push('='.repeat(60));
+  lines.push('');
+
+  lines.push('REFLECTIONS');
+  lines.push('-'.repeat(40));
+  for (var r = 1; r <= 4; r++) {
+    var ta = document.getElementById('reflection-' + r);
+    if (ta) {
+      var box = ta.closest('.reflection-box');
+      var prompt = box ? box.querySelector('p') : null;
+      lines.push('');
+      lines.push('Section ' + r + ' Reflection:');
+      if (prompt) lines.push('Q: ' + prompt.textContent.trim());
+      lines.push('A: ' + (ta.value.trim() || '[No response]'));
+    }
+  }
+  var taFinal = document.getElementById('reflection-final');
+  if (taFinal) {
+    var box = taFinal.closest('.reflection-box');
+    var prompt = box ? box.querySelector('p') : null;
+    lines.push('');
+    lines.push('Final Reflection:');
+    if (prompt) lines.push('Q: ' + prompt.textContent.trim());
+    lines.push('A: ' + (taFinal.value.trim() || '[No response]'));
+  }
+  lines.push('');
+  lines.push('='.repeat(60));
+  lines.push('');
+
+  lines.push('SECTION QUIZ RESPONSES');
+  lines.push('-'.repeat(40));
+  for (var s = 0; s <= 3; s++) {
+    var quiz = document.getElementById('quiz-' + s);
+    if (!quiz) continue;
+    lines.push('');
+    lines.push('Section ' + (s + 1) + ' Quiz:');
+    var questions = quiz.querySelectorAll('.quiz-question');
+    questions.forEach(function(q, i) {
+      var qText = q.querySelector('p');
+      var selected = q.querySelector('input[type="radio"]:checked');
+      var selLabel = selected ? selected.closest('.quiz-option') || selected.parentElement : null;
+      lines.push('  Q' + (i + 1) + ': ' + (qText ? qText.textContent.trim() : ''));
+      lines.push('  Selected: ' + (selLabel ? selLabel.textContent.trim() : '[No answer]'));
+      var isCorrect = selected && q.querySelector('.quiz-option.correct input') === selected;
+      lines.push('  Result: ' + (selected ? (isCorrect ? 'Correct' : 'Incorrect') : 'Unanswered'));
+    });
+  }
+  lines.push('');
+  lines.push('='.repeat(60));
+  lines.push('');
+
+  lines.push('FINAL ASSESSMENT RESPONSES');
+  lines.push('-'.repeat(40));
+  var finalQuiz = document.getElementById('quiz-4');
+  if (finalQuiz) {
+    var questions = finalQuiz.querySelectorAll('.quiz-question');
+    questions.forEach(function(q, i) {
+      var qText = q.querySelector('p');
+      var selected = q.querySelector('input[type="radio"]:checked');
+      var selLabel = selected ? selected.closest('.quiz-option') || selected.parentElement : null;
+      lines.push('  Q' + (i + 1) + ': ' + (qText ? qText.textContent.trim() : ''));
+      lines.push('  Selected: ' + (selLabel ? selLabel.textContent.trim() : '[No answer]'));
+      var correctOpt = q.querySelector('.quiz-option.correct');
+      var isCorrect = selected && correctOpt && correctOpt.querySelector('input') === selected;
+      lines.push('  Result: ' + (selected ? (isCorrect ? 'Correct' : 'Incorrect') : 'Unanswered'));
+    });
+  }
+
+  var blob = new Blob([lines.join('\n')], { type: 'text/plain' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'HSCI410_Lesson10_Mixed_Models_Discrete_Responses.txt';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+</script>
+</body>
+</html>

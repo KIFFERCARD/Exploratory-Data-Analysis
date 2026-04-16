@@ -1,0 +1,1357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 6: Modelling Count and Rate Data &mdash; HSCI 410</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+
+:root {
+  --teal: #0B7B6B;
+  --dark-teal: #065C50;
+  --light-teal: #6BB5A6;
+  --very-light-teal: #E6F3F0;
+  --dark: #042A25;
+  --text: #2D3436;
+  --text-light: #555;
+  --bg: #FFFFFF;
+  --white: #fff;
+  --accent: #CC0033;
+  --accent-dark: #A3002A;
+  --accent-light: #FDEAEF;
+  --amber: #CC0033;
+  --light-amber: #FDEAEF;
+  --green: #0B7B6B;
+  --light-green: #D1F0EA;
+  --blue: #0B7B6B;
+  --light-blue: #E6F3F0;
+  --rose: #CC0033;
+  --light-rose: #FDEAEF;
+  --purple: #065C50;
+  --light-purple: #E6F3F0;
+  --grey: #E8ECEE;
+  --radius: 12px;
+  --shadow: 0 2px 12px rgba(0,0,0,0.08);
+  --shadow-lg: 0 8px 30px rgba(0,0,0,0.12);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { font-family: 'Open Sans', 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; }
+.sidebar {
+  position: fixed; top: 0; left: 0; width: 280px; height: 100vh;
+  background: linear-gradient(180deg, rgba(6,92,80,0.92) 0%, rgba(4,42,37,0.95) 100%), url('bg_texture.jpg') center/cover no-repeat;
+  color: #fff; z-index: 100; display: flex; flex-direction: column;
+  transition: transform 0.3s ease; overflow: hidden;
+}
+.sidebar-header { padding: 24px 20px 16px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+.sidebar-header h2 { font-size: 16px; font-weight: 600; line-height: 1.4; opacity: 0.95; color: #fff; }
+.sidebar-header p { font-size: 11px; opacity: 0.6; margin-top: 4px; }
+.sidebar-nav { flex: 1; overflow-y: auto; padding: 12px 0; }
+.sidebar-nav::-webkit-scrollbar { width: 4px; }
+.sidebar-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 2px; }
+.nav-item {
+  display: flex; align-items: center; gap: 12px; padding: 10px 20px;
+  cursor: pointer; transition: all 0.2s; font-size: 13.5px; position: relative;
+  color: rgba(255,255,255,0.7);
+}
+.nav-item:hover:not(.locked) { background: rgba(255,255,255,0.08); color: #fff; }
+.nav-item.active { background: rgba(255,255,255,0.12); color: #fff; font-weight: 600; }
+.nav-item.active::before {
+  content: ''; position: absolute; left: 0; top: 6px; bottom: 6px; width: 3px;
+  background: var(--accent); border-radius: 0 2px 2px 0;
+}
+.nav-item .dot {
+  width: 22px; height: 22px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.3);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  font-size: 11px; transition: all 0.3s;
+}
+.nav-item.completed .dot { background: var(--green); border-color: var(--green); }
+.nav-item.completed .dot::after { content: '\2713'; color: #fff; font-weight: 700; }
+.nav-item.active .dot { border-color: var(--accent); background: rgba(204,0,51,0.2); }
+.sidebar-footer { padding: 16px 20px; border-top: 1px solid rgba(255,255,255,0.1); }
+.progress-bar-bg { height: 6px; background: rgba(255,255,255,0.15); border-radius: 3px; overflow: hidden; }
+.progress-bar-fill { height: 100%; background: var(--green); border-radius: 3px; transition: width 0.5s ease; }
+.progress-text { font-size: 11px; opacity: 0.6; margin-top: 6px; }
+.main { margin-left: 280px; min-height: 100vh; }
+.module-page { display: none; animation: fadeIn 0.4s ease; }
+.module-page.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.module-header {
+  background: linear-gradient(135deg, rgba(6,92,80,0.88) 0%, rgba(11,123,107,0.85) 100%), url('bg_texture.jpg') center/cover no-repeat;
+  color: #fff; padding: 60px 48px 48px; position: relative; overflow: hidden;
+}
+.module-header::after {
+  content: ''; position: absolute; right: -60px; top: -60px; width: 300px; height: 300px;
+  background: radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 70%); border-radius: 50%;
+}
+.module-tag { display: inline-block; background: var(--accent); padding: 4px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 12px; }
+.module-header h1 { font-size: 32px; font-weight: 700; line-height: 1.3; max-width: 700px; color: #fff; }
+.module-header .time { font-size: 14px; opacity: 0.7; margin-top: 8px; }
+.module-body { max-width: 800px; margin: 0 auto; padding: 40px 48px 80px; }
+h2 { font-size: 22px; color: var(--dark-teal); margin: 36px 0 16px; font-weight: 700; }
+h3 { font-size: 18px; color: var(--teal); margin: 24px 0 12px; font-weight: 600; }
+p { margin-bottom: 16px; }
+ul, ol { margin: 0 0 16px 24px; }
+li { margin-bottom: 8px; }
+.info-box { border-radius: var(--radius); padding: 24px; margin: 24px 0; border-left: 4px solid var(--teal); }
+.info-box.teal { background: var(--very-light-teal); border-color: var(--teal); }
+.info-box.rose { background: var(--light-rose); border-color: var(--accent); }
+.info-box.amber { background: #FFF8E1; border-color: #FFA000; }
+.info-box .box-title { font-weight: 700; margin-bottom: 6px; color: inherit; }
+.flip-card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin: 24px 0; }
+.flip-card {
+  background: var(--white); border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 24px; text-align: center; cursor: pointer; transition: all 0.3s;
+  border: 2px solid var(--grey); position: relative; min-height: 120px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.flip-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); border-color: var(--teal); }
+.flip-card .card-icon { font-size: 28px; margin-bottom: 8px; }
+.flip-card .card-label { font-weight: 600; font-size: 14px; color: var(--dark-teal); }
+.flip-card .card-hint { font-size: 11px; color: var(--text-light); margin-top: 6px; }
+.accordion { margin: 20px 0; }
+.accordion-item { border: 1px solid var(--grey); border-radius: var(--radius); margin-bottom: 8px; overflow: hidden; }
+.accordion-header {
+  padding: 16px 20px; background: var(--white); cursor: pointer; font-weight: 600;
+  display: flex; justify-content: space-between; align-items: center; font-size: 15px;
+  transition: background 0.2s;
+}
+.accordion-header:hover { background: var(--very-light-teal); }
+.accordion-header::after { content: '+'; font-size: 20px; font-weight: 300; color: var(--teal); transition: transform 0.3s; }
+.accordion-item.open .accordion-header::after { content: '\2212'; }
+.accordion-body { max-height: 0; overflow: hidden; transition: max-height 0.4s ease; }
+.accordion-body-inner { padding: 16px 20px 20px; border-top: 1px solid var(--grey); line-height: 1.7; }
+.tabs { margin: 24px 0; }
+.tab-row { display: flex; border-bottom: 2px solid var(--grey); margin-bottom: 0; overflow-x: auto; }
+.tab-btn {
+  padding: 10px 20px; border: none; background: none; cursor: pointer;
+  font-weight: 600; font-size: 14px; color: var(--text-light); border-bottom: 2px solid transparent;
+  margin-bottom: -2px; transition: all 0.2s; white-space: nowrap;
+}
+.tab-btn.active { color: var(--teal); border-bottom-color: var(--teal); }
+.tab-panel { display: none; padding: 20px 0; }
+.tab-panel.active { display: block; }
+.data-table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; }
+.data-table th { background: var(--dark-teal); color: #fff; padding: 12px 16px; text-align: left; font-weight: 600; }
+.data-table td { padding: 10px 16px; border-bottom: 1px solid var(--grey); }
+.data-table tr:nth-child(even) td { background: #f8fafa; }
+.data-table tr:hover td { background: var(--very-light-teal); }
+.formula-box {
+  background: #f8fafc; border: 2px solid var(--grey); border-radius: var(--radius);
+  padding: 20px 24px; margin: 16px 0; text-align: center; font-size: 16px;
+  font-family: 'Georgia', serif;
+}
+.formula-box .formula-label { font-size: 12px; color: var(--text-light); margin-bottom: 6px; font-family: 'Open Sans', sans-serif; }
+.scenario-card {
+  background: linear-gradient(135deg, #f0faf8 0%, #e6f3f0 100%);
+  border-radius: var(--radius); padding: 24px; margin: 20px 0;
+  border: 1px solid rgba(11,123,107,0.15);
+}
+.scenario-card .scenario-title { font-weight: 700; color: var(--dark-teal); margin-bottom: 8px; }
+.quiz-section { background: #f8fafa; border-radius: var(--radius); padding: 32px; margin: 40px 0; border: 2px solid var(--grey); }
+.quiz-section h3 { margin-top: 0; }
+.quiz-question { margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid var(--grey); }
+.quiz-question:last-of-type { border-bottom: none; margin-bottom: 16px; padding-bottom: 0; }
+.quiz-question p { font-weight: 600; margin-bottom: 12px; }
+.quiz-option { display: block; padding: 10px 16px; margin: 6px 0; border-radius: 8px; cursor: pointer; transition: all 0.2s; border: 1px solid var(--grey); }
+.quiz-option:hover { background: var(--very-light-teal); }
+.quiz-option input { margin-right: 10px; }
+.quiz-option.correct { background: var(--light-green); border-color: var(--green); }
+.quiz-option.incorrect { background: var(--light-rose); border-color: var(--accent); }
+.quiz-explanation { display: none; margin-top: 8px; padding: 10px 14px; background: var(--very-light-teal); border-radius: 8px; font-size: 13.5px; }
+.quiz-explanation.show { display: block; }
+.quiz-result { padding: 16px 20px; border-radius: 8px; font-weight: 600; margin-top: 16px; display: none; }
+.quiz-result.pass { background: var(--light-green); color: var(--dark-teal); }
+.quiz-result.fail { background: var(--light-rose); color: var(--accent-dark); }
+.quiz-retry { display: none; margin-top: 12px; }
+.quiz-retry.show { display: block; }
+.btn {
+  display: inline-block; padding: 12px 28px; border-radius: 8px; font-weight: 600;
+  font-size: 15px; border: none; cursor: pointer; transition: all 0.2s;
+}
+.btn-primary { background: var(--teal); color: #fff; }
+.btn-primary:hover { background: var(--dark-teal); }
+.btn-accent { background: var(--accent); color: #fff; }
+.btn-accent:hover { background: var(--accent-dark); }
+.btn-outline { background: transparent; border: 2px solid var(--teal); color: var(--teal); }
+.btn-outline:hover { background: var(--teal); color: #fff; }
+.btn.disabled { opacity: 0.5; pointer-events: none; }
+.reflection-box {
+  background: linear-gradient(135deg, #fdf6ff 0%, #f5f0ff 100%);
+  border: 2px solid #d4bfff; border-radius: var(--radius); padding: 24px; margin: 24px 0;
+}
+.reflection-box h3 { color: #6B21A8; margin-top: 0; }
+.reflection-box textarea {
+  width: 100%; min-height: 100px; border: 1px solid #d4bfff; border-radius: 8px;
+  padding: 12px; font-family: inherit; font-size: 14px; resize: vertical; margin: 8px 0;
+}
+.reflection-box .btn-save { background: #7C3AED; color: #fff; border: none; padding: 8px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; }
+.reflection-box .btn-save:hover { background: #6B21A8; }
+.reflection-status { font-size: 13px; margin-top: 6px; color: #6B21A8; display: none; }
+.reflection-status.show { display: block; }
+.section-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 48px; padding-top: 24px; border-top: 2px solid var(--grey); }
+.req-note { font-size: 13px; margin-top: 12px; }
+.req-check { color: var(--green); }
+.req-pending { color: var(--accent); }
+.completion-banner {
+  display: none; background: linear-gradient(135deg, var(--teal) 0%, var(--dark-teal) 100%);
+  color: #fff; padding: 48px; border-radius: var(--radius); text-align: center; margin: 40px 0;
+}
+.completion-banner h2 { color: #fff; margin: 0 0 12px; font-size: 28px; }
+.sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 99; }
+.card-modal-overlay {
+  display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.6); z-index: 1000; align-items: center; justify-content: center; padding: 20px;
+}
+.card-modal-overlay.show { display: flex; }
+.card-modal {
+  background: #fff; border-radius: var(--radius); max-width: 600px; width: 100%;
+  max-height: 80vh; overflow-y: auto; padding: 32px; position: relative;
+  box-shadow: var(--shadow-lg);
+}
+.card-modal h3 { color: var(--dark-teal); margin: 0 0 16px; padding-right: 30px; }
+.card-modal-close {
+  position: absolute; top: 16px; right: 16px; background: none; border: none;
+  font-size: 24px; cursor: pointer; color: var(--text-light); width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center; border-radius: 50%;
+}
+.card-modal-close:hover { background: var(--grey); }
+.welcome-hero {
+  min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, rgba(6,92,80,0.88) 0%, rgba(4,42,37,0.92) 100%), url('bg_texture.jpg') center/cover no-repeat;
+  color: #fff; text-align: center; padding: 48px 24px; position: relative; overflow: hidden;
+}
+.welcome-hero::before {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(circle at 30% 70%, rgba(11,123,107,0.25) 0%, transparent 50%),
+              radial-gradient(circle at 70% 30%, rgba(107,181,166,0.12) 0%, transparent 40%);
+}
+.welcome-hero > * { position: relative; z-index: 1; }
+.welcome-hero h1 { font-size: 48px; font-weight: 800; margin-bottom: 12px; line-height: 1.2; }
+.welcome-hero .subtitle { font-size: 20px; opacity: 0.8; margin-bottom: 32px; }
+.welcome-hero .start-btn {
+  background: var(--accent); color: #fff; padding: 16px 40px; border-radius: 50px;
+  font-size: 17px; font-weight: 700; border: none; cursor: pointer;
+  transition: all 0.3s; box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+.welcome-hero .start-btn:hover { background: var(--accent-dark); transform: translateY(-2px) scale(1.02); box-shadow: 0 8px 30px rgba(0,0,0,0.3); }
+.welcome-details { max-width: 560px; margin-top: 40px; text-align: left; background: rgba(255,255,255,0.08); border-radius: 16px; padding: 28px; backdrop-filter: blur(10px); }
+.welcome-details h3 { font-size: 16px; margin-bottom: 12px; opacity: 0.9; color: #fff; }
+.welcome-details ul { list-style: none; margin: 0; padding: 0; }
+.welcome-details li { padding: 4px 0; font-size: 14px; opacity: 0.8; }
+.welcome-details li::before { content: '\2726 '; color: #fff; opacity: 0.6; }
+.mobile-header {
+  display: none; position: fixed; top: 0; left: 0; right: 0; height: 56px;
+  background: var(--dark); color: #fff; z-index: 101;
+  padding: 0 16px; align-items: center; gap: 12px;
+}
+.mobile-header button { background: none; border: none; color: #fff; font-size: 24px; cursor: pointer; padding: 4px; }
+.mobile-header h3 { font-size: 14px; font-weight: 600; color: #fff; }
+@media (max-width: 768px) {
+  .sidebar { transform: translateX(-100%); width: 280px; }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar-overlay.show { display: block; }
+  .mobile-header { display: flex; }
+  .main { margin-left: 0; padding-top: 56px; }
+  .module-header { padding: 32px 20px 28px; }
+  .module-header h1 { font-size: 24px; }
+  .module-body { padding: 24px 20px 60px; }
+  .flip-card-grid { grid-template-columns: 1fr; }
+}
+
+</style>
+</head>
+<body>
+<div class="mobile-header">
+  <button onclick="toggleSidebar()">&#9776;</button>
+  <h3>HSCI 410 &mdash; Lesson 6</h3>
+</div>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <img src="sfu_logo_white.webp" alt="SFU &mdash; Simon Fraser University" style="width:100%;max-width:180px;margin-bottom:12px;">
+    <h2>Exploratory Data Analysis For Epidemiology</h2>
+    <p>Kiffer G. Card, PhD</p>
+  </div>
+  <div class="sidebar-nav" id="sidebarNav"></div>
+  <div class="sidebar-footer">
+    <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressFill" style="width:0%"></div></div>
+    <div class="progress-text" id="progressText">0% complete</div>
+  </div>
+</div>
+
+<div class="main" id="mainContent">
+
+<!-- ============ WELCOME ============ -->
+<div class="module-page active" id="page-welcome">
+<div class="welcome-hero">
+  <h1>Modelling Count and Rate Data</h1>
+  <p class="subtitle">Exploratory Data Analysis For Epidemiology</p>
+  <p style="font-size:15px;opacity:0.7;margin-bottom:32px;">Kiffer G. Card, PhD, Faculty of Health Sciences, Simon Fraser University</p>
+  <button class="start-btn" onclick="goToModule(0)">Begin Lesson &rarr;</button>
+  <div class="welcome-details">
+    <h3>Learning objectives for this lesson:</h3>
+    <ul>
+      <li>Distinguish among simple counts, rates with person-time denominators, population rates, and area-based counts</li>
+      <li>Describe the Poisson distribution and its mean=variance property</li>
+      <li>Specify and interpret a Poisson regression model including the offset term</li>
+      <li>Interpret incidence rate ratios (IR) from exponentiated Poisson coefficients</li>
+      <li>Evaluate Poisson models using Pearson, deviance, and Anscombe residuals</li>
+      <li>Distinguish apparent from real overdispersion and apply appropriate corrections</li>
+      <li>Compare negative binomial regression models (NB-1, NB-2) to Poisson regression</li>
+      <li>Apply zero-inflated, hurdle, and zero-truncated models to handle excess zeros</li>
+    </ul>
+  </div>
+  <p style="font-size:12px;opacity:0.5;margin-top:32px;max-width:560px;text-align:center;line-height:1.5;">This course was developed by Kiffer G. Card, PhD, as a companion to Dohoo, I. R., Martin, S. W., &amp; Stryhn, H. (2012). <em>Methods in Epidemiologic Research.</em> VER Inc.</p>
+</div>
+</div>
+
+<!-- ============ SECTION 1: Introduction & The Poisson Distribution ============ -->
+<div class="module-page" id="page-0">
+<div class="module-header">
+  <div class="module-tag">Section 1</div>
+  <h1>Introduction &amp; The Poisson Distribution</h1>
+  <div class="time">&#9201; Estimated time: 15 minutes</div>
+</div>
+<div class="module-body">
+
+<h2>Why Model Count and Rate Data?</h2>
+<p>Many outcomes in epidemiology are measured as <strong>counts</strong>&mdash;the number of disease cases in a region, the number of doctor visits per year, or the number of parasites on a host animal. These outcomes differ fundamentally from continuous outcomes (modelled with linear regression) and binary outcomes (modelled with logistic regression). Count data require their own family of statistical models because they are discrete, non-negative, and often right-skewed.</p>
+
+<p>Chapter 18 introduces the statistical tools for modelling count and rate data, beginning with the <strong>Poisson distribution</strong> and <strong>Poisson regression</strong>, and extending to negative binomial and zero-adjusted models for situations where the basic Poisson assumptions are violated.</p>
+
+<h2>Types of Count and Rate Data</h2>
+<p>Before selecting an analytical approach, it is essential to understand which type of count or rate data you are working with. There are four main types encountered in epidemiological research:</p>
+
+<div class="flip-card-grid">
+  <div class="flip-card" onclick="openCardModal('Simple Counts', 'Simple counts represent the raw number of events observed in a defined group or area&mdash;for example, the number of animals diagnosed with a disease in a herd, or the number of adverse drug reactions in a clinical trial. No denominator is used; the outcome is simply &lt;strong&gt;how many events occurred&lt;/strong&gt;. Simple counts are appropriate when the population at risk is roughly the same across groups being compared.')">
+    <div class="card-icon">&#128290;</div>
+    <div class="card-label">Simple Counts</div>
+    <div class="card-hint">Click to learn more</div>
+  </div>
+  <div class="flip-card" onclick="openCardModal('Rates with Person-Time Denominators', 'Rates use &lt;strong&gt;accumulated person-time at risk&lt;/strong&gt; as the denominator. For example, if 50 new cases of tuberculosis occur over 10,000 person-years of follow-up, the incidence rate is 50/10,000 = 0.005 per person-year. Person-time denominators are critical when subjects have &lt;strong&gt;varying amounts of follow-up&lt;/strong&gt;&mdash;some leave the study early, some enter late. This is the most common type of rate data in cohort studies.')">
+    <div class="card-icon">&#9201;</div>
+    <div class="card-label">Rates (Person-Time)</div>
+    <div class="card-hint">Click to learn more</div>
+  </div>
+  <div class="flip-card" onclick="openCardModal('Population Rates', 'Population rates express the number of events relative to the total population size rather than person-time. Examples include &lt;strong&gt;mortality rates&lt;/strong&gt; (deaths per 100,000 population) or &lt;strong&gt;birth rates&lt;/strong&gt; (births per 1,000 population). The denominator is typically an estimate of the mid-year population. Population rates are used when individual-level follow-up data are not available, such as in vital statistics or registry-based studies.')">
+    <div class="card-icon">&#127758;</div>
+    <div class="card-label">Population Rates</div>
+    <div class="card-hint">Click to learn more</div>
+  </div>
+  <div class="flip-card" onclick="openCardModal('Area-Based Counts', 'Area-based counts are aggregated event counts for geographic units such as counties, provinces, or census tracts. For example, the number of &lt;strong&gt;lung cancer cases per county&lt;/strong&gt; or the number of &lt;strong&gt;traffic accidents per neighbourhood&lt;/strong&gt;. These data are common in spatial epidemiology and ecological studies. The population size of each area may vary substantially, requiring careful modelling (often with offsets or standardisation).')">
+    <div class="card-icon">&#128506;</div>
+    <div class="card-label">Area-Based Counts</div>
+    <div class="card-hint">Click to learn more</div>
+  </div>
+</div>
+
+<h2>The Poisson Distribution</h2>
+<p>The <strong>Poisson distribution</strong> is the foundational probability distribution for modelling count data. It describes the probability of observing a given number of events in a fixed interval of time or space, assuming events occur independently at a constant average rate.</p>
+
+<div class="formula-box">
+  <div class="formula-label">Poisson Probability Function (Eq 18.1)</div>
+  p(Y = y) = &mu;<sup>y</sup> &times; e<sup>&minus;&mu;</sup> / y!
+</div>
+
+<p>In this formula, <em>Y</em> is the count of events, <em>&mu;</em> (mu) is both the mean and the expected number of events, and <em>e</em> is the base of the natural logarithm (&approx; 2.718). The factorial in the denominator (y!) ensures the probabilities are correctly normalised. The Poisson distribution is defined for non-negative integers: y = 0, 1, 2, 3, &hellip;</p>
+
+<div class="info-box teal">
+  <div class="box-title">Key Property: Mean = Variance</div>
+  <p>The most important property of the Poisson distribution is that the <strong>mean equals the variance</strong>: E(Y) = Var(Y) = &mu;. This single-parameter property means that as the expected count increases, so does the variability. This assumption is central to Poisson regression&mdash;and when it is violated (variance &gt; mean), we have <strong>overdispersion</strong>, which requires alternative approaches covered in later sections.</p>
+</div>
+
+<p>The Poisson distribution is particularly useful for modelling <strong>rare events in large populations</strong>. When the probability of an event is small and the number of trials (or opportunities) is large, the Poisson distribution provides an excellent approximation. Examples include the number of rare disease cases in a large population, or the number of equipment failures over an extended operating period.</p>
+
+<div class="accordion">
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">When is the Poisson distribution appropriate?</div>
+    <div class="accordion-body"><div class="accordion-body-inner">
+      <p>The Poisson distribution is appropriate when: (1) events are <strong>independent</strong> of one another; (2) the rate at which events occur is <strong>constant</strong> over the observation period; (3) two events cannot occur at exactly the same instant; and (4) the probability of an event in a short interval is proportional to the length of the interval. In practice, these assumptions are often approximately met in epidemiological settings.</p>
+    </div></div>
+  </div>
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">Shape of the Poisson distribution</div>
+    <div class="accordion-body"><div class="accordion-body-inner">
+      <p>When &mu; is small (e.g., &mu; &lt; 3), the distribution is noticeably right-skewed&mdash;most observations cluster near zero with a long right tail. As &mu; increases, the distribution becomes more symmetric and begins to resemble a normal distribution. By the time &mu; &ge; 20, a normal approximation with mean &mu; and variance &mu; is often adequate.</p>
+    </div></div>
+  </div>
+</div>
+
+<!-- Section 1 Quiz -->
+<div class="quiz-section" id="quiz-0">
+  <h3>Section 1 Knowledge Check</h3>
+  <div class="quiz-question" data-correct="b">
+    <p>1. Which type of count data uses person-time in the denominator?</p>
+    <label class="quiz-option"><input type="radio" name="q0-0" value="a"> Simple counts</label>
+    <label class="quiz-option"><input type="radio" name="q0-0" value="b"> Rates</label>
+    <label class="quiz-option"><input type="radio" name="q0-0" value="c"> Population rates</label>
+    <label class="quiz-option"><input type="radio" name="q0-0" value="d"> Area-based counts</label>
+    <div class="quiz-explanation">Rates use accumulated person-time at risk as the denominator. This is essential when subjects have varying amounts of follow-up time in a study.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="c">
+    <p>2. What is the key property of the Poisson distribution?</p>
+    <label class="quiz-option"><input type="radio" name="q0-1" value="a"> Mean &gt; variance</label>
+    <label class="quiz-option"><input type="radio" name="q0-1" value="b"> Mean &lt; variance</label>
+    <label class="quiz-option"><input type="radio" name="q0-1" value="c"> Mean = variance</label>
+    <label class="quiz-option"><input type="radio" name="q0-1" value="d"> Variance = 0</label>
+    <div class="quiz-explanation">The Poisson distribution has the property that E(Y) = Var(Y) = &mu;. This single-parameter property is central to Poisson-based models.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="c">
+    <p>3. The Poisson distribution is most appropriate for modelling:</p>
+    <label class="quiz-option"><input type="radio" name="q0-2" value="a"> Continuous outcomes</label>
+    <label class="quiz-option"><input type="radio" name="q0-2" value="b"> Binary outcomes</label>
+    <label class="quiz-option"><input type="radio" name="q0-2" value="c"> Count data where events are relatively rare</label>
+    <label class="quiz-option"><input type="radio" name="q0-2" value="d"> Ordinal outcomes</label>
+    <div class="quiz-explanation">The Poisson distribution models counts, particularly when events are rare relative to the population at risk. It is defined for non-negative integers and is well-suited for rare event data.</div>
+  </div>
+
+  <div class="quiz-result" id="quizResult-0"></div>
+  <div class="quiz-retry" id="quizRetry-0"><button class="btn btn-outline" onclick="retryQuiz(0)">Retry Quiz</button></div>
+  <button class="btn btn-primary" onclick="checkQuiz(0)" style="margin-top:12px;">Check Answers</button>
+</div>
+
+<div class="reflection-box">
+  <h3>Reflection</h3>
+  <p>How might the type of count data (simple counts vs. rates) influence your choice of analytical approach in an epidemiological study you're familiar with?</p>
+  <textarea id="reflection-1" placeholder="Type your reflection here..."></textarea>
+  <button class="btn-save" onclick="checkReflection(1)">Save Reflection</button>
+  <div class="reflection-status" id="reflectionStatus-1">Reflection saved!</div>
+</div>
+
+<div class="section-nav">
+  <button class="btn btn-outline" onclick="goToModule(-1)">&larr; Welcome</button>
+  <div>
+    <button class="btn btn-primary disabled" id="nextBtn-0" onclick="goToModule(1)">Next Section &rarr;</button>
+    <div class="req-note" id="reqNote-0"><span class="req-pending">*</span> Complete the quiz and reflection to continue.</div>
+  </div>
+</div>
+
+</div>
+</div>
+
+<!-- ============ SECTION 2: Poisson Regression Model & Interpretation ============ -->
+<div class="module-page" id="page-1">
+<div class="module-header">
+  <div class="module-tag">Section 2</div>
+  <h1>Poisson Regression Model &amp; Interpretation</h1>
+  <div class="time">&#9201; Estimated time: 20 minutes</div>
+</div>
+<div class="module-body">
+
+<h2>The Expected Count</h2>
+<p>The starting point for Poisson regression is the relationship between the expected number of events and the underlying rate. If an individual (or group) is observed for <em>n</em> units of person-time and the event rate is <em>&lambda;</em> (lambda), the expected count is:</p>
+
+<div class="formula-box">
+  <div class="formula-label">Expected Count (Eq 18.2)</div>
+  E(Y) = n&lambda;
+</div>
+
+<p>Here, <em>n</em> represents the person-time at risk (e.g., person-years of follow-up) and <em>&lambda;</em> is the incidence rate. The expected count is simply the product of the time at risk and the rate at which events occur. Different subjects may contribute different amounts of person-time, which must be accounted for in the model.</p>
+
+<h2>The Log-Linear Model</h2>
+<p>Poisson regression uses a <strong>log link function</strong> to relate the expected count to a linear combination of predictors. Taking the natural logarithm of both sides of the expected count equation and incorporating predictors gives us the Poisson regression model:</p>
+
+<div class="formula-box">
+  <div class="formula-label">Poisson Regression Model (Eq 18.3)</div>
+  ln(E(Y)) = ln(n) + &beta;<sub>0</sub> + &beta;<sub>1</sub>X<sub>1</sub> + &beta;<sub>2</sub>X<sub>2</sub> + &hellip;
+</div>
+
+<p>The term <strong>ln(n)</strong> is the <strong>offset</strong>&mdash;a fixed term in the model that is not estimated but rather included to account for the fact that different observations may have different amounts of exposure (person-time). The &beta; coefficients describe how the log of the expected count (or rate) changes with the predictors.</p>
+
+<h2>The Offset Term</h2>
+<p>The offset is one of the most important concepts in Poisson regression. It transforms the model from one that predicts <strong>counts</strong> to one that effectively predicts <strong>rates</strong>.</p>
+
+<div class="tabs">
+  <div class="tab-row">
+    <button class="tab-btn active" onclick="switchTab(event,'tab-counts')">Modelling Counts</button>
+    <button class="tab-btn" onclick="switchTab(event,'tab-rates')">Modelling Rates</button>
+  </div>
+  <div class="tab-panel active" id="tab-counts">
+    <h3>Modelling Counts (Without Offset)</h3>
+    <p>When no offset is included, the model predicts the <strong>expected count</strong> directly:</p>
+    <p style="text-align:center;font-family:Georgia,serif;font-size:16px;">ln(E(Y)) = &beta;<sub>0</sub> + &beta;<sub>1</sub>X<sub>1</sub> + &hellip;</p>
+    <p>This is appropriate when all observations have the <strong>same amount of exposure</strong> or follow-up time. For instance, if all herds are observed for exactly one year, the count of disease cases directly reflects the rate. In practice, this situation is relatively uncommon&mdash;most epidemiological studies have subjects with varying follow-up times.</p>
+  </div>
+  <div class="tab-panel" id="tab-rates">
+    <h3>Modelling Rates (With Offset)</h3>
+    <p>When the offset ln(n) is included, the model effectively predicts the <strong>rate</strong> rather than the raw count:</p>
+    <p style="text-align:center;font-family:Georgia,serif;font-size:16px;">ln(E(Y)) = ln(n) + &beta;<sub>0</sub> + &beta;<sub>1</sub>X<sub>1</sub> + &hellip;</p>
+    <p>This is equivalent to modelling ln(E(Y)/n) = &beta;<sub>0</sub> + &beta;<sub>1</sub>X<sub>1</sub> + &hellip;, where E(Y)/n is the expected rate. The offset accounts for the fact that subjects with longer follow-up times are expected to accumulate more events simply by virtue of being observed longer. <strong>This is the standard approach</strong> when follow-up times vary across subjects.</p>
+  </div>
+</div>
+
+<h2>Interpreting Poisson Regression Coefficients</h2>
+<p>In Poisson regression, the exponentiated coefficient e<sup>&beta;</sup> is interpreted as an <strong>incidence rate ratio (IRR)</strong>. This is analogous to the odds ratio in logistic regression but applies to rates rather than odds.</p>
+
+<div class="info-box teal">
+  <div class="box-title">Incidence Rate Ratio (IRR)</div>
+  <p>For a one-unit increase in the predictor X<sub>1</sub>, the incidence rate is multiplied by e<sup>&beta;<sub>1</sub></sup>. If &beta;<sub>1</sub> = 0.30, then IRR = e<sup>0.30</sup> = 1.35, meaning the rate increases by 35% for each one-unit increase in X<sub>1</sub>. An IRR &gt; 1 indicates an increased rate; an IRR &lt; 1 indicates a decreased rate; and an IRR = 1 indicates no association.</p>
+</div>
+
+<div class="scenario-card">
+  <div class="scenario-title">Epidemiological Example: Mastitis in Dairy Herds</div>
+  <p>Suppose we model the number of mastitis cases per herd over one year, with herd size as a predictor and cow-years at risk as the offset. The Poisson regression yields &beta;<sub>herd size</sub> = 0.012.</p>
+  <p><strong>Interpretation:</strong> e<sup>0.012</sup> = 1.012, so for each additional cow in the herd, the incidence rate of mastitis increases by 1.2%. A herd with 100 more cows would have an expected rate ratio of e<sup>0.012&times;100</sup> = e<sup>1.2</sup> = 3.32 compared to the baseline&mdash;a 3.32-fold higher mastitis rate.</p>
+</div>
+
+<h3>Poisson Regression for Relative Risk Estimation</h3>
+<p>An important application of Poisson regression is estimating <strong>relative risks (RR)</strong> directly from binary outcome data. When the outcome is rare, the Poisson model can provide estimates of the RR that are more interpretable than the odds ratios from logistic regression. This approach typically uses robust (sandwich) standard errors to account for the fact that binary data do not truly follow a Poisson distribution.</p>
+
+<!-- Section 2 Quiz -->
+<div class="quiz-section" id="quiz-1">
+  <h3>Section 2 Knowledge Check</h3>
+  <div class="quiz-question" data-correct="b">
+    <p>1. What is the purpose of the offset term in Poisson regression?</p>
+    <label class="quiz-option"><input type="radio" name="q1-0" value="a"> To control for confounding</label>
+    <label class="quiz-option"><input type="radio" name="q1-0" value="b"> To account for varying exposure time</label>
+    <label class="quiz-option"><input type="radio" name="q1-0" value="c"> To normalize the outcome</label>
+    <label class="quiz-option"><input type="radio" name="q1-0" value="d"> To handle overdispersion</label>
+    <div class="quiz-explanation">The offset (log of person-time) accounts for the fact that subjects may have different amounts of follow-up or exposure time. It transforms the model from predicting counts to effectively predicting rates.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="c">
+    <p>2. The exponentiated Poisson regression coefficient (e<sup>&beta;</sup>) is interpreted as:</p>
+    <label class="quiz-option"><input type="radio" name="q1-1" value="a"> An odds ratio</label>
+    <label class="quiz-option"><input type="radio" name="q1-1" value="b"> A risk difference</label>
+    <label class="quiz-option"><input type="radio" name="q1-1" value="c"> An incidence rate ratio</label>
+    <label class="quiz-option"><input type="radio" name="q1-1" value="d"> A hazard ratio</label>
+    <div class="quiz-explanation">e<sup>&beta;</sup> from Poisson regression represents the incidence rate ratio&mdash;the multiplicative change in the rate for a one-unit change in the predictor.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="c">
+    <p>3. Using Poisson regression to estimate relative risks from binary data is appropriate when:</p>
+    <label class="quiz-option"><input type="radio" name="q1-2" value="a"> The outcome is very common</label>
+    <label class="quiz-option"><input type="radio" name="q1-2" value="b"> You want to estimate odds ratios</label>
+    <label class="quiz-option"><input type="radio" name="q1-2" value="c"> The outcome is relatively rare</label>
+    <label class="quiz-option"><input type="radio" name="q1-2" value="d"> The data are normally distributed</label>
+    <div class="quiz-explanation">When the outcome is rare, the Poisson model can be used to estimate relative risks directly, which are more interpretable than odds ratios from logistic regression.</div>
+  </div>
+
+  <div class="quiz-result" id="quizResult-1"></div>
+  <div class="quiz-retry" id="quizRetry-1"><button class="btn btn-outline" onclick="retryQuiz(1)">Retry Quiz</button></div>
+  <button class="btn btn-primary" onclick="checkQuiz(1)" style="margin-top:12px;">Check Answers</button>
+</div>
+
+<div class="reflection-box">
+  <h3>Reflection</h3>
+  <p>Consider a study where participants have very different follow-up times. How would using an offset term change your interpretation compared to simply modelling raw counts?</p>
+  <textarea id="reflection-2" placeholder="Type your reflection here..."></textarea>
+  <button class="btn-save" onclick="checkReflection(2)">Save Reflection</button>
+  <div class="reflection-status" id="reflectionStatus-2">Reflection saved!</div>
+</div>
+
+<div class="section-nav">
+  <button class="btn btn-outline" onclick="goToModule(0)">&larr; Section 1</button>
+  <div>
+    <button class="btn btn-primary disabled" id="nextBtn-1" onclick="goToModule(2)">Next Section &rarr;</button>
+    <div class="req-note" id="reqNote-1"><span class="req-pending">*</span> Complete the quiz and reflection to continue.</div>
+  </div>
+</div>
+
+</div>
+</div>
+
+<!-- ============ SECTION 3: Evaluating Poisson Models & Overdispersion ============ -->
+<div class="module-page" id="page-2">
+<div class="module-header">
+  <div class="module-tag">Section 3</div>
+  <h1>Evaluating Poisson Models &amp; Overdispersion</h1>
+  <div class="time">&#9201; Estimated time: 20 minutes</div>
+</div>
+<div class="module-body">
+
+<h2>Residuals for Poisson Models</h2>
+<p>Just as in linear regression, residuals are the primary tool for evaluating how well a Poisson model fits the observed data. However, because the variance of a Poisson variable depends on its mean, raw residuals (observed &minus; expected) are not directly comparable across observations. Several types of standardised residuals have been developed:</p>
+
+<div class="accordion">
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">Pearson Residuals</div>
+    <div class="accordion-body"><div class="accordion-body-inner">
+      <p>Pearson residuals standardise the raw residual by dividing by the square root of the expected value:</p>
+      <div class="formula-box">
+        <div class="formula-label">Pearson Residual (Eq 18.6)</div>
+        r<sub>P</sub> = (y &minus; &mu;&#770;) / &radic;&mu;&#770;
+      </div>
+      <p>This accounts for the Poisson assumption that Var(Y) = &mu;. If the model fits well, Pearson residuals should have approximately mean 0 and variance 1. The sum of squared Pearson residuals follows an approximate &chi;&sup2; distribution and can be used as an overall goodness-of-fit test.</p>
+    </div></div>
+  </div>
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">Deviance Residuals</div>
+    <div class="accordion-body"><div class="accordion-body-inner">
+      <p>Deviance residuals are based on the contribution of each observation to the overall model deviance (the log-likelihood ratio comparing the fitted model to a saturated model). They are defined as:</p>
+      <p style="text-align:center;font-family:Georgia,serif;">d<sub>i</sub> = sign(y<sub>i</sub> &minus; &mu;&#770;<sub>i</sub>) &times; &radic;[2(y<sub>i</sub> ln(y<sub>i</sub>/&mu;&#770;<sub>i</sub>) &minus; (y<sub>i</sub> &minus; &mu;&#770;<sub>i</sub>))]</p>
+      <p>Deviance residuals tend to be more normally distributed than Pearson residuals, especially when some expected counts are small. This makes them preferable for normal probability plots and other diagnostic displays.</p>
+    </div></div>
+  </div>
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">Anscombe Residuals</div>
+    <div class="accordion-body"><div class="accordion-body-inner">
+      <p>Anscombe residuals use a transformation of the observed counts designed to make the residuals as close to normally distributed as possible. They apply a cube-root transformation to both the observed and expected values. Anscombe residuals are particularly useful when checking the normality assumption of residuals in Poisson models, and they complement Pearson and deviance residuals in a thorough model evaluation.</p>
+    </div></div>
+  </div>
+</div>
+
+<h2>Goodness of Fit</h2>
+<p>The overall fit of a Poisson model can be assessed using the sum of squared Pearson residuals, which approximately follows a <strong>&chi;&sup2; distribution</strong> with (n &minus; p) degrees of freedom, where n is the number of observations and p is the number of estimated parameters. A significant test statistic suggests the model does not fit the data adequately.</p>
+
+<p>An important diagnostic is the <strong>dispersion parameter</strong>, estimated as the sum of squared Pearson residuals divided by the residual degrees of freedom:</p>
+
+<div class="formula-box">
+  <div class="formula-label">Dispersion Parameter Estimate</div>
+  &phi;&#770; = &Sigma;r<sub>P</sub>&sup2; / (n &minus; p)
+</div>
+
+<p>Under the Poisson assumption (mean = variance), &phi; should equal 1. Values substantially greater than 1 indicate <strong>overdispersion</strong>; values less than 1 indicate <strong>underdispersion</strong>.</p>
+
+<h2>Understanding Overdispersion</h2>
+<p>Overdispersion&mdash;when the observed variance exceeds the Poisson-assumed variance&mdash;is one of the most common problems in count data modelling. It is critical to distinguish between two types:</p>
+
+<div class="info-box amber">
+  <div class="box-title">Warning: Interpreting Overdispersion</div>
+  <p>Before concluding that overdispersion is &ldquo;real,&rdquo; always investigate whether the model is correctly specified. Adding missing predictors, removing outliers, or modelling non-linear effects may resolve apparent overdispersion without needing to change the distributional assumptions. Applying overdispersion corrections to a misspecified model can mask important features of the data.</p>
+</div>
+
+<div class="tabs">
+  <div class="tab-row">
+    <button class="tab-btn active" onclick="switchTab(event,'tab-apparent')">Apparent Overdispersion</button>
+    <button class="tab-btn" onclick="switchTab(event,'tab-real')">Real Overdispersion</button>
+  </div>
+  <div class="tab-panel active" id="tab-apparent">
+    <h3>Apparent Overdispersion</h3>
+    <p>Apparent overdispersion arises from problems with the model rather than the data-generating process itself. Common causes include:</p>
+    <ul>
+      <li><strong>Outliers:</strong> A few extreme observations can inflate the dispersion statistic dramatically.</li>
+      <li><strong>Missing important predictors:</strong> If key covariates are omitted from the model, the unexplained variation appears as overdispersion.</li>
+      <li><strong>Wrong model form:</strong> Using a linear predictor when the true relationship is non-linear.</li>
+      <li><strong>Non-linear effects:</strong> Failing to include quadratic or other polynomial terms for predictors with curvilinear relationships.</li>
+    </ul>
+    <p>Apparent overdispersion can be resolved by <strong>correcting the model specification</strong>&mdash;removing outliers, adding missing predictors, or using the correct functional form.</p>
+  </div>
+  <div class="tab-panel" id="tab-real">
+    <h3>Real Overdispersion</h3>
+    <p>Real overdispersion reflects <strong>genuine extra-Poisson variation</strong> in the data that cannot be explained by observable covariates. This often arises from:</p>
+    <ul>
+      <li><strong>Unobserved heterogeneity:</strong> Subject-level variation in the underlying rate that is not captured by measured predictors.</li>
+      <li><strong>Clustering:</strong> Events within groups (e.g., animals within herds) are correlated, violating the independence assumption.</li>
+      <li><strong>Biological variability:</strong> Inherent variation in susceptibility or exposure that exceeds what the Poisson model allows.</li>
+    </ul>
+    <p>Real overdispersion requires <strong>statistical corrections</strong> such as scaling standard errors, using negative binomial regression, or employing random effects models.</p>
+  </div>
+</div>
+
+<h2>Approaches to Handling Overdispersion</h2>
+
+<div class="data-table" style="overflow-x:auto;">
+<table class="data-table">
+  <thead>
+    <tr><th>Approach</th><th>How It Works</th><th>When to Use</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>Scale SEs by &radic;&phi;</strong></td><td>Multiplies standard errors by the square root of the estimated dispersion parameter; coefficients unchanged</td><td>Mild to moderate overdispersion; quick fix when coefficient estimates are trusted</td></tr>
+    <tr><td><strong>Negative binomial regression</strong></td><td>Adds an extra parameter (&alpha;) to model the excess variance explicitly</td><td>Moderate to severe overdispersion; when a more principled model is desired</td></tr>
+    <tr><td><strong>Random effects / GLMM</strong></td><td>Includes subject- or group-level random intercepts to capture unobserved heterogeneity</td><td>Clustered data (e.g., animals within herds); hierarchical study designs</td></tr>
+    <tr><td><strong>GEE (robust SEs)</strong></td><td>Uses generalised estimating equations with an empirical (sandwich) variance estimator</td><td>Clustered data when marginal (population-averaged) estimates are of primary interest</td></tr>
+  </tbody>
+</table>
+</div>
+
+<!-- Section 3 Quiz -->
+<div class="quiz-section" id="quiz-2">
+  <h3>Section 3 Knowledge Check</h3>
+  <div class="quiz-question" data-correct="c">
+    <p>1. In a Poisson model, overdispersion is indicated when:</p>
+    <label class="quiz-option"><input type="radio" name="q2-0" value="a"> The dispersion parameter is less than 1</label>
+    <label class="quiz-option"><input type="radio" name="q2-0" value="b"> The dispersion parameter equals 1</label>
+    <label class="quiz-option"><input type="radio" name="q2-0" value="c"> The dispersion parameter is greater than 1</label>
+    <label class="quiz-option"><input type="radio" name="q2-0" value="d"> The mean equals the variance</label>
+    <div class="quiz-explanation">Overdispersion occurs when the observed variance exceeds the Poisson-assumed variance (mean), giving a dispersion parameter &phi; &gt; 1.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="c">
+    <p>2. Which of the following is NOT a cause of apparent overdispersion?</p>
+    <label class="quiz-option"><input type="radio" name="q2-1" value="a"> Outliers in the data</label>
+    <label class="quiz-option"><input type="radio" name="q2-1" value="b"> Missing important predictors</label>
+    <label class="quiz-option"><input type="radio" name="q2-1" value="c"> Inherent biological variation</label>
+    <label class="quiz-option"><input type="radio" name="q2-1" value="d"> Non-linear effects of predictors</label>
+    <div class="quiz-explanation">Inherent biological variation causes real (not apparent) overdispersion. Apparent overdispersion is caused by model misspecification issues such as outliers, missing predictors, or incorrect functional form.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="c">
+    <p>3. One approach to handling real overdispersion is:</p>
+    <label class="quiz-option"><input type="radio" name="q2-2" value="a"> Removing outliers</label>
+    <label class="quiz-option"><input type="radio" name="q2-2" value="b"> Adding missing predictors</label>
+    <label class="quiz-option"><input type="radio" name="q2-2" value="c"> Using negative binomial regression</label>
+    <label class="quiz-option"><input type="radio" name="q2-2" value="d"> Transforming the outcome to be continuous</label>
+    <div class="quiz-explanation">Negative binomial regression explicitly models the extra-Poisson variation by adding a parameter that allows the variance to exceed the mean. Removing outliers and adding predictors address apparent overdispersion instead.</div>
+  </div>
+
+  <div class="quiz-result" id="quizResult-2"></div>
+  <div class="quiz-retry" id="quizRetry-2"><button class="btn btn-outline" onclick="retryQuiz(2)">Retry Quiz</button></div>
+  <button class="btn btn-primary" onclick="checkQuiz(2)" style="margin-top:12px;">Check Answers</button>
+</div>
+
+<div class="reflection-box">
+  <h3>Reflection</h3>
+  <p>Why is it important to distinguish between apparent and real overdispersion before choosing a correction strategy? What could go wrong if you apply the wrong fix?</p>
+  <textarea id="reflection-3" placeholder="Type your reflection here..."></textarea>
+  <button class="btn-save" onclick="checkReflection(3)">Save Reflection</button>
+  <div class="reflection-status" id="reflectionStatus-3">Reflection saved!</div>
+</div>
+
+<div class="section-nav">
+  <button class="btn btn-outline" onclick="goToModule(1)">&larr; Section 2</button>
+  <div>
+    <button class="btn btn-primary disabled" id="nextBtn-2" onclick="goToModule(3)">Next Section &rarr;</button>
+    <div class="req-note" id="reqNote-2"><span class="req-pending">*</span> Complete the quiz and reflection to continue.</div>
+  </div>
+</div>
+
+</div>
+</div>
+
+<!-- ============ SECTION 4: Negative Binomial & Zero-Adjusted Models ============ -->
+<div class="module-page" id="page-3">
+<div class="module-header">
+  <div class="module-tag">Section 4</div>
+  <h1>Negative Binomial &amp; Zero-Adjusted Models</h1>
+  <div class="time">&#9201; Estimated time: 20 minutes</div>
+</div>
+<div class="module-body">
+
+<h2>The Negative Binomial Distribution</h2>
+<p>The <strong>negative binomial (NB) distribution</strong> extends the Poisson by adding an extra parameter <em>&alpha;</em> that captures the additional variation not accounted for by the Poisson assumption. Conceptually, the NB distribution arises when the Poisson rate itself varies randomly across individuals&mdash;each subject has their own &lambda;, drawn from a Gamma distribution.</p>
+
+<p>The NB distribution allows the variance to exceed the mean, making it the natural first choice when overdispersion is present. Two common parameterisations define how the variance relates to the mean:</p>
+
+<div class="tabs">
+  <div class="tab-row">
+    <button class="tab-btn active" onclick="switchTab(event,'tab-nb1')">NB-1 Model</button>
+    <button class="tab-btn" onclick="switchTab(event,'tab-nb2')">NB-2 Model</button>
+  </div>
+  <div class="tab-panel active" id="tab-nb1">
+    <h3>NB-1: Linear Variance</h3>
+    <div class="formula-box">
+      <div class="formula-label">NB-1 Variance Function (Eq 18.8)</div>
+      Var(Y) = &mu; + &alpha;&mu; = &mu;(1 + &alpha;)
+    </div>
+    <p>In the NB-1 parameterisation, the variance increases <strong>linearly</strong> with the mean. The overdispersion is proportional to the mean: doubling the expected count doubles the excess variance. The ratio Var(Y)/&mu; = (1 + &alpha;) is constant across all observations, making NB-1 similar to a quasi-Poisson model with a fixed dispersion parameter.</p>
+    <p>NB-1 is sometimes preferred when overdispersion is relatively constant across the range of predicted values. However, it is less commonly used in practice than NB-2.</p>
+  </div>
+  <div class="tab-panel" id="tab-nb2">
+    <h3>NB-2: Quadratic Variance</h3>
+    <div class="formula-box">
+      <div class="formula-label">NB-2 Variance Function (Eq 18.9)</div>
+      Var(Y) = &mu; + &alpha;&mu;&sup2;
+    </div>
+    <p>In the NB-2 parameterisation (the <strong>most commonly used</strong> form), the variance increases <strong>quadratically</strong> with the mean. Observations with higher expected counts have proportionally more overdispersion. This is often more realistic in biological settings where variability tends to grow faster than the average.</p>
+    <p>The NB-2 model is the default in most statistical software (e.g., Stata&rsquo;s <code>nbreg</code>, R&rsquo;s <code>glm.nb()</code>). When &alpha; = 0, the NB-2 model reduces to the Poisson model, making the Poisson a special (nested) case of NB-2.</p>
+  </div>
+</div>
+
+<h2>Negative Binomial Regression</h2>
+<p>The NB regression model uses the same <strong>log-linear form</strong> as Poisson regression&mdash;the only difference is in the assumed distribution of the outcome:</p>
+
+<div class="formula-box">
+  <div class="formula-label">NB Regression Model</div>
+  ln(E(Y)) = ln(n) + &beta;<sub>0</sub> + &beta;<sub>1</sub>X<sub>1</sub> + &beta;<sub>2</sub>X<sub>2</sub> + &hellip;
+</div>
+
+<p>Coefficients are interpreted identically to Poisson regression: e<sup>&beta;</sup> gives the incidence rate ratio. The key advantage is that the NB model produces <strong>correct standard errors</strong> even when overdispersion is present, because the extra variation is explicitly modelled through &alpha;.</p>
+
+<div class="info-box teal">
+  <div class="box-title">Testing Poisson vs. Negative Binomial</div>
+  <p>Since the Poisson model is nested within the NB model (when &alpha; = 0), a <strong>likelihood ratio test (LRT)</strong> can be used to determine whether the NB model provides a significantly better fit. A significant LRT indicates that overdispersion is present and the NB model is preferred. Note that this is a boundary test (testing &alpha; = 0 vs. &alpha; &gt; 0), so the p-value from the standard &chi;&sup2; reference distribution is conservative.</p>
+</div>
+
+<h2>Zero-Adjusted Models</h2>
+<p>Standard count models (Poisson and NB) may not adequately handle datasets with an unusual number of zeros. Three families of models have been developed to address different zero-related problems:</p>
+
+<div class="flip-card-grid">
+  <div class="flip-card" onclick="openCardModal('Zero-Inflated Models', '&lt;strong&gt;Zero-inflated models&lt;/strong&gt; are mixture models that combine two data-generating processes: (1) a &lt;strong&gt;logistic model&lt;/strong&gt; that determines whether an observation comes from an &ldquo;always zero&rdquo; group (structural zeros) or from the count process; and (2) a &lt;strong&gt;count model&lt;/strong&gt; (Poisson or NB) that generates both zeros and positive counts.&lt;br&gt;&lt;br&gt;For example, in a study of parasite counts on fish, some fish may be completely resistant (always zero), while susceptible fish have counts following a Poisson distribution (including some zeros). The &lt;strong&gt;Vuong test&lt;/strong&gt; can be used to compare a zero-inflated model against its standard counterpart.&lt;br&gt;&lt;br&gt;Both components can include different covariates, allowing you to model the factors that determine &ldquo;always zero&rdquo; status separately from the factors that influence the count among those at risk.')">
+    <div class="card-icon">&#128288;</div>
+    <div class="card-label">Zero-Inflated Models</div>
+    <div class="card-hint">Click to learn more</div>
+  </div>
+  <div class="flip-card" onclick="openCardModal('Hurdle Models', '&lt;strong&gt;Hurdle models&lt;/strong&gt; (also called two-part models) treat the data-generating process as having two distinct stages: (1) a &lt;strong&gt;binary model&lt;/strong&gt; (logistic regression) determines whether the count is zero or positive; (2) a &lt;strong&gt;truncated count model&lt;/strong&gt; (truncated Poisson or truncated NB) models the positive counts only.&lt;br&gt;&lt;br&gt;The critical difference from zero-inflated models is that in hurdle models, &lt;strong&gt;ALL zeros come from the binary component&lt;/strong&gt;. Once the &ldquo;hurdle&rdquo; is crossed (count &gt; 0), the count model generates only positive values. This makes hurdle models conceptually simpler and often easier to interpret.&lt;br&gt;&lt;br&gt;Hurdle models are useful when the decision to have &ldquo;any events&rdquo; versus &ldquo;no events&rdquo; is fundamentally different from the process generating the number of events.')">
+    <div class="card-icon">&#127939;</div>
+    <div class="card-label">Hurdle Models</div>
+    <div class="card-hint">Click to learn more</div>
+  </div>
+  <div class="flip-card" onclick="openCardModal('Zero-Truncated Models', '&lt;strong&gt;Zero-truncated models&lt;/strong&gt; are used when zeros &lt;strong&gt;cannot be observed&lt;/strong&gt; in the data by design. Examples include: hospital length of stay (minimum 1 day), number of items purchased by customers in a store (they must buy at least 1), or number of visits to a clinic among patients who were seen at least once.&lt;br&gt;&lt;br&gt;These models modify the Poisson or NB probability function by conditioning on Y &gt; 0, redistributing the probability mass that would have been assigned to zero across all positive counts. Failing to account for zero truncation leads to &lt;strong&gt;biased parameter estimates&lt;/strong&gt; because the model would try to predict zeros that can never occur.')">
+    <div class="card-icon">&#9940;</div>
+    <div class="card-label">Zero-Truncated Models</div>
+    <div class="card-hint">Click to learn more</div>
+  </div>
+</div>
+
+<h3>Choosing Among Zero-Adjusted Models</h3>
+<p>The choice depends on the <strong>data-generating process</strong>:</p>
+<ul>
+  <li>If some zeros are &ldquo;structural&rdquo; (from a fundamentally different process) and others arise from the count process, use a <strong>zero-inflated</strong> model.</li>
+  <li>If the zero/non-zero distinction is a separate decision from the magnitude of the count, use a <strong>hurdle</strong> model.</li>
+  <li>If zeros are impossible by design, use a <strong>zero-truncated</strong> model.</li>
+</ul>
+
+<div class="data-table" style="overflow-x:auto;">
+<table class="data-table">
+  <thead>
+    <tr><th>Model</th><th>Source of Zeros</th><th>Key Feature</th><th>Test / Comparison</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>Zero-Inflated</strong></td><td>Both components (structural + count)</td><td>Mixture of logistic + count model</td><td>Vuong test vs. standard model</td></tr>
+    <tr><td><strong>Hurdle</strong></td><td>Binary component only</td><td>Two-part: binary then truncated count</td><td>LRT or AIC/BIC comparison</td></tr>
+    <tr><td><strong>Zero-Truncated</strong></td><td>Zeros cannot occur</td><td>Conditional on Y &gt; 0</td><td>Applied when sampling excludes zeros</td></tr>
+  </tbody>
+</table>
+</div>
+
+<!-- Section 4 Quiz -->
+<div class="quiz-section" id="quiz-3">
+  <h3>Section 4 Knowledge Check</h3>
+  <div class="quiz-question" data-correct="b">
+    <p>1. The NB-2 model differs from the Poisson model by:</p>
+    <label class="quiz-option"><input type="radio" name="q3-0" value="a"> Having a different link function</label>
+    <label class="quiz-option"><input type="radio" name="q3-0" value="b"> Adding a quadratic variance term (Var = &mu; + &alpha;&mu;&sup2;)</label>
+    <label class="quiz-option"><input type="radio" name="q3-0" value="c"> Using a different offset</label>
+    <label class="quiz-option"><input type="radio" name="q3-0" value="d"> Requiring normally distributed residuals</label>
+    <div class="quiz-explanation">The NB-2 model adds an &alpha;&mu;&sup2; term to the variance, allowing the variance to increase quadratically with the mean&mdash;this is the most commonly used negative binomial model.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>2. Zero-inflated models are appropriate when:</p>
+    <label class="quiz-option"><input type="radio" name="q3-1" value="a"> All zeros are structural</label>
+    <label class="quiz-option"><input type="radio" name="q3-1" value="b"> There are excess zeros beyond what the count model predicts</label>
+    <label class="quiz-option"><input type="radio" name="q3-1" value="c"> There are no zeros in the data</label>
+    <label class="quiz-option"><input type="radio" name="q3-1" value="d"> The data follow a normal distribution</label>
+    <div class="quiz-explanation">Zero-inflated models handle situations where some zeros come from a separate process (structural zeros) in addition to zeros from the count process, resulting in more zeros than the standard count model predicts.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>3. The key difference between a hurdle model and a zero-inflated model is:</p>
+    <label class="quiz-option"><input type="radio" name="q3-2" value="a"> Hurdle models cannot handle overdispersion</label>
+    <label class="quiz-option"><input type="radio" name="q3-2" value="b"> In hurdle models, all zeros come from the binary component</label>
+    <label class="quiz-option"><input type="radio" name="q3-2" value="c"> Zero-inflated models cannot include covariates</label>
+    <label class="quiz-option"><input type="radio" name="q3-2" value="d"> Hurdle models require normally distributed data</label>
+    <div class="quiz-explanation">In a hurdle model, ALL zeros come from the binary (logistic) part; once the hurdle is crossed, only positive counts are modelled. In zero-inflated models, zeros can come from both components.</div>
+  </div>
+
+  <div class="quiz-result" id="quizResult-3"></div>
+  <div class="quiz-retry" id="quizRetry-3"><button class="btn btn-outline" onclick="retryQuiz(3)">Retry Quiz</button></div>
+  <button class="btn btn-primary" onclick="checkQuiz(3)" style="margin-top:12px;">Check Answers</button>
+</div>
+
+<div class="reflection-box">
+  <h3>Reflection</h3>
+  <p>When might you choose a hurdle model over a zero-inflated model in practice? Think of an epidemiological example where the distinction matters.</p>
+  <textarea id="reflection-4" placeholder="Type your reflection here..."></textarea>
+  <button class="btn-save" onclick="checkReflection(4)">Save Reflection</button>
+  <div class="reflection-status" id="reflectionStatus-4">Reflection saved!</div>
+</div>
+
+<div class="section-nav">
+  <button class="btn btn-outline" onclick="goToModule(2)">&larr; Section 3</button>
+  <div>
+    <button class="btn btn-primary disabled" id="nextBtn-3" onclick="goToModule(4)">Final Assessment &rarr;</button>
+    <div class="req-note" id="reqNote-3"><span class="req-pending">*</span> Complete the quiz and reflection to continue.</div>
+  </div>
+</div>
+
+</div>
+</div>
+
+<!-- ============ FINAL ASSESSMENT ============ -->
+<div class="module-page" id="page-4">
+<div class="module-header">
+  <div class="module-tag">Final Assessment</div>
+  <h1>Lesson 6 &mdash; Comprehensive Assessment</h1>
+  <div class="time">&#9201; Estimated time: 25 minutes</div>
+</div>
+<div class="module-body">
+
+<p>This final assessment covers all material from this lesson. You must answer all 15 questions correctly (100%) and complete the final reflection to finish the lesson.</p>
+
+<div class="reflection-box">
+  <h3>Final Reflection</h3>
+  <p>Reflecting on the full range of count and rate models covered in this lesson, how would you decide which model to use for a new dataset? What diagnostic steps would you follow?</p>
+  <textarea id="reflection-final" placeholder="Type your final reflection here..."></textarea>
+  <button class="btn-save" onclick="checkReflection('final')">Save Reflection</button>
+  <div class="reflection-status" id="reflectionStatus-final">Reflection saved!</div>
+</div>
+
+<div class="quiz-section" id="quiz-4">
+  <h3>Final Assessment (15 Questions)</h3>
+
+  <div class="quiz-question" data-correct="b">
+    <p>1. Which type of count data involves dividing event counts by accumulated person-time?</p>
+    <label class="quiz-option"><input type="radio" name="qf-0" value="a"> Simple counts</label>
+    <label class="quiz-option"><input type="radio" name="qf-0" value="b"> Incidence rates</label>
+    <label class="quiz-option"><input type="radio" name="qf-0" value="c"> Population proportions</label>
+    <label class="quiz-option"><input type="radio" name="qf-0" value="d"> Area-based counts</label>
+    <div class="quiz-explanation">Incidence rates use person-time at risk as the denominator, dividing the number of new events by the accumulated person-time of follow-up.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="c">
+    <p>2. The Poisson distribution assumes:</p>
+    <label class="quiz-option"><input type="radio" name="qf-1" value="a"> Variance &gt; mean</label>
+    <label class="quiz-option"><input type="radio" name="qf-1" value="b"> Variance &lt; mean</label>
+    <label class="quiz-option"><input type="radio" name="qf-1" value="c"> Variance = mean</label>
+    <label class="quiz-option"><input type="radio" name="qf-1" value="d"> Variance = mean&sup2;</label>
+    <div class="quiz-explanation">The fundamental property of the Poisson distribution is that E(Y) = Var(Y) = &mu;. This single-parameter property is what distinguishes it from the negative binomial.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>3. In Poisson regression, the offset term represents:</p>
+    <label class="quiz-option"><input type="radio" name="qf-2" value="a"> The regression coefficient</label>
+    <label class="quiz-option"><input type="radio" name="qf-2" value="b"> The log of the exposure time</label>
+    <label class="quiz-option"><input type="radio" name="qf-2" value="c"> The intercept</label>
+    <label class="quiz-option"><input type="radio" name="qf-2" value="d"> The overdispersion parameter</label>
+    <div class="quiz-explanation">The offset is ln(person-time) which accounts for different exposure times across observations, allowing the model to estimate rates rather than raw counts.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="c">
+    <p>4. The exponentiated coefficient from a Poisson regression (e<sup>&beta;</sup>) is interpreted as:</p>
+    <label class="quiz-option"><input type="radio" name="qf-3" value="a"> A risk difference</label>
+    <label class="quiz-option"><input type="radio" name="qf-3" value="b"> An odds ratio</label>
+    <label class="quiz-option"><input type="radio" name="qf-3" value="c"> An incidence rate ratio</label>
+    <label class="quiz-option"><input type="radio" name="qf-3" value="d"> A prevalence ratio</label>
+    <div class="quiz-explanation">e<sup>&beta;</sup> gives the incidence rate ratio&mdash;the multiplicative change in the event rate per unit change in the predictor.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>5. Pearson residuals for Poisson regression are calculated as:</p>
+    <label class="quiz-option"><input type="radio" name="qf-4" value="a"> Observed &minus; Expected</label>
+    <label class="quiz-option"><input type="radio" name="qf-4" value="b"> (Observed &minus; Expected) / &radic;Expected</label>
+    <label class="quiz-option"><input type="radio" name="qf-4" value="c"> (Observed &minus; Expected)&sup2;</label>
+    <label class="quiz-option"><input type="radio" name="qf-4" value="d"> ln(Observed / Expected)</label>
+    <div class="quiz-explanation">Pearson residuals standardize the difference between observed and expected by dividing by &radic;&mu;&#770;, which accounts for the Poisson variance assumption.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="c">
+    <p>6. A dispersion parameter of 3.5 in a Poisson model suggests:</p>
+    <label class="quiz-option"><input type="radio" name="qf-5" value="a"> Underdispersion</label>
+    <label class="quiz-option"><input type="radio" name="qf-5" value="b"> Perfect fit</label>
+    <label class="quiz-option"><input type="radio" name="qf-5" value="c"> Overdispersion</label>
+    <label class="quiz-option"><input type="radio" name="qf-5" value="d"> The model is appropriate</label>
+    <div class="quiz-explanation">A dispersion parameter substantially greater than 1 indicates overdispersion&mdash;the data have more variability than the Poisson model assumes. A value of 3.5 is well above the expected value of 1.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="c">
+    <p>7. Which is a cause of APPARENT (not real) overdispersion?</p>
+    <label class="quiz-option"><input type="radio" name="qf-6" value="a"> True extra-Poisson variation</label>
+    <label class="quiz-option"><input type="radio" name="qf-6" value="b"> Clustering in the data</label>
+    <label class="quiz-option"><input type="radio" name="qf-6" value="c"> Missing important predictors</label>
+    <label class="quiz-option"><input type="radio" name="qf-6" value="d"> Subject-level heterogeneity</label>
+    <div class="quiz-explanation">Missing important predictors is a model specification issue that creates apparent overdispersion, which can be resolved by correcting the model rather than changing distributional assumptions.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>8. Scaling standard errors by &radic;&phi; addresses overdispersion by:</p>
+    <label class="quiz-option"><input type="radio" name="qf-7" value="a"> Changing coefficient estimates</label>
+    <label class="quiz-option"><input type="radio" name="qf-7" value="b"> Widening confidence intervals</label>
+    <label class="quiz-option"><input type="radio" name="qf-7" value="c"> Removing outliers</label>
+    <label class="quiz-option"><input type="radio" name="qf-7" value="d"> Changing the link function</label>
+    <div class="quiz-explanation">Scaling SEs by &radic;&phi; makes confidence intervals wider and P-values more conservative, but does not change point estimates of the coefficients.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="c">
+    <p>9. The NB-2 model specifies the variance function as:</p>
+    <label class="quiz-option"><input type="radio" name="qf-8" value="a"> Var = &mu;</label>
+    <label class="quiz-option"><input type="radio" name="qf-8" value="b"> Var = &mu; + &alpha;&mu;</label>
+    <label class="quiz-option"><input type="radio" name="qf-8" value="c"> Var = &mu; + &alpha;&mu;&sup2;</label>
+    <label class="quiz-option"><input type="radio" name="qf-8" value="d"> Var = &mu;&sup2;</label>
+    <div class="quiz-explanation">The NB-2 model has variance &mu; + &alpha;&mu;&sup2;, which is quadratic in the mean and is the most commonly used form of negative binomial regression.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>10. To test whether negative binomial regression provides a better fit than Poisson, you use:</p>
+    <label class="quiz-option"><input type="radio" name="qf-9" value="a"> A Wald test</label>
+    <label class="quiz-option"><input type="radio" name="qf-9" value="b"> A likelihood ratio test for &alpha; = 0</label>
+    <label class="quiz-option"><input type="radio" name="qf-9" value="c"> A Vuong test</label>
+    <label class="quiz-option"><input type="radio" name="qf-9" value="d"> A chi-squared goodness-of-fit test</label>
+    <div class="quiz-explanation">Since Poisson is nested within NB (when &alpha; = 0), a likelihood ratio test comparing the two models tests whether the extra parameter is needed.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>11. A zero-inflated Poisson model combines:</p>
+    <label class="quiz-option"><input type="radio" name="qf-10" value="a"> Two Poisson processes</label>
+    <label class="quiz-option"><input type="radio" name="qf-10" value="b"> A logistic model for excess zeros and a Poisson model for counts</label>
+    <label class="quiz-option"><input type="radio" name="qf-10" value="c"> A normal model and a Poisson model</label>
+    <label class="quiz-option"><input type="radio" name="qf-10" value="d"> Two logistic regression models</label>
+    <div class="quiz-explanation">ZIP models have two components: a logistic model determining whether an observation is from the &ldquo;always zero&rdquo; group, and a Poisson model for the count process.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>12. The Vuong test is used to:</p>
+    <label class="quiz-option"><input type="radio" name="qf-11" value="a"> Compare nested models</label>
+    <label class="quiz-option"><input type="radio" name="qf-11" value="b"> Compare zero-inflated models with standard count models</label>
+    <label class="quiz-option"><input type="radio" name="qf-11" value="c"> Test for overdispersion</label>
+    <label class="quiz-option"><input type="radio" name="qf-11" value="d"> Assess goodness of fit</label>
+    <div class="quiz-explanation">The Vuong test is specifically designed to compare non-nested models, particularly zero-inflated models versus their standard counterparts.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="c">
+    <p>13. In a hurdle model, zero counts are generated by:</p>
+    <label class="quiz-option"><input type="radio" name="qf-12" value="a"> The Poisson component only</label>
+    <label class="quiz-option"><input type="radio" name="qf-12" value="b"> Both components</label>
+    <label class="quiz-option"><input type="radio" name="qf-12" value="c"> The binary (logistic) component only</label>
+    <label class="quiz-option"><input type="radio" name="qf-12" value="d"> Neither component</label>
+    <div class="quiz-explanation">In a hurdle model, ALL zeros come from the binary component. Once the &ldquo;hurdle&rdquo; is crossed (event &gt; 0), only positive counts are modelled by the truncated count component.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>14. Zero-truncated models are appropriate when:</p>
+    <label class="quiz-option"><input type="radio" name="qf-13" value="a"> There are excess zeros</label>
+    <label class="quiz-option"><input type="radio" name="qf-13" value="b"> Zeros cannot be observed in the data</label>
+    <label class="quiz-option"><input type="radio" name="qf-13" value="c"> The data are normally distributed</label>
+    <label class="quiz-option"><input type="radio" name="qf-13" value="d"> There is no overdispersion</label>
+    <div class="quiz-explanation">Zero-truncated models are used when the sampling design excludes zeros&mdash;for example, hospital length of stay (minimum 1 day) or number of items purchased by customers.</div>
+  </div>
+
+  <div class="quiz-question" data-correct="b">
+    <p>15. Poisson regression can be used to estimate relative risks directly from binary outcome data because:</p>
+    <label class="quiz-option"><input type="radio" name="qf-14" value="a"> The Poisson and binomial distributions are identical</label>
+    <label class="quiz-option"><input type="radio" name="qf-14" value="b"> With rare outcomes, the Poisson rate approximates the binomial probability</label>
+    <label class="quiz-option"><input type="radio" name="qf-14" value="c"> Binary data always follow a Poisson distribution</label>
+    <label class="quiz-option"><input type="radio" name="qf-14" value="d"> The log link ensures correct estimates</label>
+    <div class="quiz-explanation">When outcomes are rare, Poisson regression with robust standard errors provides valid estimates of the relative risk, which is often more interpretable than odds ratios from logistic regression.</div>
+  </div>
+
+  <div class="quiz-result" id="quizResult-4"></div>
+  <div class="quiz-retry" id="quizRetry-4"><button class="btn btn-outline" onclick="retryQuiz(4)">Retry Quiz</button></div>
+  <button class="btn btn-accent" onclick="checkFinalAssessment()" style="margin-top:12px;">Submit Final Assessment</button>
+</div>
+
+<div class="completion-banner" id="completionBanner">
+  <h2>Lesson 6 Complete!</h2>
+  <p>Congratulations! You have successfully completed the Modelling Count and Rate Data module. Your responses have been downloaded automatically.</p>
+</div>
+
+<div class="section-nav">
+  <button class="btn btn-outline" onclick="goToModule(3)">&larr; Section 4</button>
+  <div></div>
+</div>
+
+</div>
+</div>
+
+</div><!-- /main -->
+
+<!-- Card Modal -->
+<div class="card-modal-overlay" id="cardModalOverlay" onclick="closeCardModal(event)">
+  <div class="card-modal">
+    <button class="card-modal-close" onclick="document.getElementById('cardModalOverlay').classList.remove('show')">&times;</button>
+    <h3 id="cardModalTitle"></h3>
+    <div id="cardModalBody"></div>
+  </div>
+</div>
+
+<script>
+var modules = [
+  { id: -1, short: 'Welcome', title: 'Introduction' },
+  { id: 0, short: 'Section 1', title: 'Introduction & The Poisson Distribution' },
+  { id: 1, short: 'Section 2', title: 'Poisson Regression & Interpretation' },
+  { id: 2, short: 'Section 3', title: 'Evaluating Models & Overdispersion' },
+  { id: 3, short: 'Section 4', title: 'Negative Binomial & Zero-Adjusted Models' },
+  { id: 4, short: 'Section 5', title: 'Final Assessment' }
+];
+var currentModule = -1;
+var completed = new Set();
+var quizPassed = {};
+var reflectionDone = {};
+var modulesWithReflection = { 1: true, 2: true, 3: true, 4: true };
+
+function buildNav() {
+  var nav = document.getElementById('sidebarNav');
+  nav.innerHTML = '';
+  modules.forEach(function(m) {
+    var div = document.createElement('div');
+    div.className = 'nav-item';
+    var key = m.id === -1 ? 'welcome' : m.id;
+    if (completed.has(key)) div.classList.add('completed');
+    if (m.id === currentModule) div.classList.add('active');
+    div.innerHTML = '<div class="dot"></div><span>' + m.short + ': ' + m.title + '</span>';
+    div.onclick = function() { goToModule(m.id); closeSidebarMobile(); };
+    nav.appendChild(div);
+  });
+}
+
+function goToModule(id) {
+  currentModule = id;
+  document.querySelectorAll('.module-page').forEach(function(p) { p.classList.remove('active'); });
+  var pageId = id === -1 ? 'page-welcome' : 'page-' + id;
+  var page = document.getElementById(pageId);
+  if (page) page.classList.add('active');
+  if (id === -1) completed.add('welcome');
+  buildNav();
+  updateProgress();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function updateProgress() {
+  var total = modules.length;
+  var done = completed.size;
+  var pct = Math.round((done / total) * 100);
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressText').textContent = pct + '% complete';
+}
+
+function checkReflection(idx) {
+  var ta = document.getElementById('reflection-' + idx);
+  if (ta && ta.value.trim().length > 0) {
+    reflectionDone[idx === 'final' ? 4 : idx] = true;
+    var status = document.getElementById('reflectionStatus-' + idx);
+    if (status) status.classList.add('show');
+    if (idx !== 'final') updateNextButton(idx);
+  }
+}
+
+function updateNextButton(moduleIdx) {
+  var btn = document.getElementById('nextBtn-' + moduleIdx);
+  var note = document.getElementById('reqNote-' + moduleIdx);
+  if (!btn) return;
+  var quizOk = quizPassed[moduleIdx];
+  var refIdx = moduleIdx + 1;
+  var needsRef = modulesWithReflection[refIdx];
+  var refOk = !needsRef || reflectionDone[refIdx];
+  if (quizOk && refOk) {
+    btn.classList.remove('disabled');
+    completed.add(moduleIdx);
+    buildNav();
+    updateProgress();
+    if (note) note.innerHTML = '<span class="req-check">&#10003;</span> Section complete! You may continue.';
+  }
+}
+
+function checkQuiz(moduleIdx) {
+  var quiz = document.getElementById('quiz-' + moduleIdx);
+  var questions = quiz.querySelectorAll('.quiz-question');
+  var correct = 0;
+  var total = questions.length;
+  var allAnswered = true;
+  questions.forEach(function(q, i) {
+    var correctVal = q.dataset.correct;
+    var selected = quiz.querySelector('input[name="q' + moduleIdx + '-' + i + '"]:checked');
+    q.querySelectorAll('.quiz-option').forEach(function(opt) { opt.classList.remove('correct', 'incorrect'); });
+    if (!selected) { allAnswered = false; return; }
+    q.querySelectorAll('.quiz-option').forEach(function(opt) {
+      var inp = opt.querySelector('input');
+      if (inp.value === correctVal) opt.classList.add('correct');
+      else if (inp === selected && inp.value !== correctVal) opt.classList.add('incorrect');
+    });
+    q.querySelector('.quiz-explanation').classList.add('show');
+    if (selected.value === correctVal) correct++;
+  });
+  if (!allAnswered) { alert('Please answer all questions before checking.'); return; }
+  var result = document.getElementById('quizResult-' + moduleIdx);
+  var retryDiv = document.getElementById('quizRetry-' + moduleIdx);
+  result.style.display = 'block';
+  if (correct === total) {
+    result.className = 'quiz-result pass';
+    result.textContent = 'All correct! Great job.';
+    quizPassed[moduleIdx] = true;
+    if (retryDiv) retryDiv.classList.remove('show');
+    quiz.querySelectorAll('input[type="radio"]').forEach(function(r) { r.disabled = true; });
+    updateNextButton(moduleIdx);
+  } else {
+    result.className = 'quiz-result fail';
+    result.textContent = 'You got ' + correct + ' out of ' + total + ' correct. You need 100% to continue. Review the feedback and try again.';
+    quizPassed[moduleIdx] = false;
+    if (retryDiv) retryDiv.classList.add('show');
+  }
+}
+
+function retryQuiz(moduleIdx) {
+  var quiz = document.getElementById('quiz-' + moduleIdx);
+  quiz.querySelectorAll('.quiz-option').forEach(function(opt) { opt.classList.remove('correct', 'incorrect'); });
+  quiz.querySelectorAll('.quiz-explanation').forEach(function(exp) { exp.classList.remove('show'); });
+  quiz.querySelectorAll('input[type="radio"]').forEach(function(r) { r.checked = false; r.disabled = false; });
+  var result = document.getElementById('quizResult-' + moduleIdx);
+  result.style.display = 'none';
+  var retryDiv = document.getElementById('quizRetry-' + moduleIdx);
+  if (retryDiv) retryDiv.classList.remove('show');
+  quiz.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function checkFinalAssessment() {
+  if (!reflectionDone[4]) {
+    alert('Please complete the final reflection before submitting the assessment.');
+    return;
+  }
+  var quiz = document.getElementById('quiz-4');
+  var questions = quiz.querySelectorAll('.quiz-question');
+  var correct = 0;
+  var total = questions.length;
+  var allAnswered = true;
+  questions.forEach(function(q, i) {
+    var correctVal = q.dataset.correct;
+    var selected = quiz.querySelector('input[name="qf-' + i + '"]:checked');
+    q.querySelectorAll('.quiz-option').forEach(function(opt) { opt.classList.remove('correct', 'incorrect'); });
+    if (!selected) { allAnswered = false; return; }
+    q.querySelectorAll('.quiz-option').forEach(function(opt) {
+      var inp = opt.querySelector('input');
+      if (inp.value === correctVal) opt.classList.add('correct');
+      else if (inp === selected && inp.value !== correctVal) opt.classList.add('incorrect');
+    });
+    q.querySelector('.quiz-explanation').classList.add('show');
+    if (selected.value === correctVal) correct++;
+  });
+  if (!allAnswered) { alert('Please answer all 15 questions before submitting.'); return; }
+  var pct = Math.round((correct / total) * 100);
+  var passed = correct === total;
+  var result = document.getElementById('quizResult-4');
+  var retryDiv = document.getElementById('quizRetry-4');
+  result.style.display = 'block';
+  if (passed) {
+    result.className = 'quiz-result pass';
+    result.innerHTML = 'Congratulations! You scored ' + correct + '/' + total + ' (100%). You have completed Lesson 6!';
+    completed.add(4);
+    updateProgress();
+    buildNav();
+    if (retryDiv) retryDiv.classList.remove('show');
+    quiz.querySelectorAll('input[type="radio"]').forEach(function(r) { r.disabled = true; });
+    document.getElementById('completionBanner').style.display = 'block';
+    document.getElementById('completionBanner').scrollIntoView({ behavior: 'smooth' });
+    downloadResponses();
+  } else {
+    result.className = 'quiz-result fail';
+    result.innerHTML = 'You scored ' + correct + '/' + total + ' (' + pct + '%). You need 100% to complete the lesson. Review the feedback and try again.';
+    if (retryDiv) retryDiv.classList.add('show');
+  }
+}
+
+function toggleAccordion(header) {
+  var item = header.parentElement;
+  var wasOpen = item.classList.contains('open');
+  item.classList.toggle('open');
+  var body = item.querySelector('.accordion-body');
+  if (wasOpen) { body.style.maxHeight = null; }
+  else { body.style.maxHeight = body.scrollHeight + 'px'; }
+}
+
+function switchTab(e, panelId) {
+  var tabRow = e.target.closest('.tab-row');
+  var tabs = tabRow.parentElement;
+  tabs.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+  tabs.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
+  e.target.classList.add('active');
+  document.getElementById(panelId).classList.add('active');
+}
+
+function openCardModal(title, body) {
+  document.getElementById('cardModalTitle').textContent = title;
+  document.getElementById('cardModalBody').innerHTML = body;
+  document.getElementById('cardModalOverlay').classList.add('show');
+}
+
+function closeCardModal(e) {
+  if (!e || e.target === document.getElementById('cardModalOverlay')) {
+    document.getElementById('cardModalOverlay').classList.remove('show');
+  }
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.querySelector('.sidebar-overlay').classList.toggle('show');
+}
+
+function closeSidebarMobile() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.querySelector('.sidebar-overlay').classList.remove('show');
+}
+
+buildNav();
+updateProgress();
+
+function downloadResponses() {
+  var lines = [];
+  lines.push('Exploratory Data Analysis For Epidemiology, Lesson 6');
+  lines.push('Modelling Count and Rate Data');
+  lines.push('');
+  lines.push('Name: ');
+  lines.push('Date: ' + new Date().toLocaleDateString());
+  lines.push('='.repeat(60));
+  lines.push('');
+
+  lines.push('REFLECTIONS');
+  lines.push('-'.repeat(40));
+  for (var r = 1; r <= 4; r++) {
+    var ta = document.getElementById('reflection-' + r);
+    if (ta) {
+      var box = ta.closest('.reflection-box');
+      var prompt = box ? box.querySelector('p') : null;
+      lines.push('');
+      lines.push('Section ' + r + ' Reflection:');
+      if (prompt) lines.push('Q: ' + prompt.textContent.trim());
+      lines.push('A: ' + (ta.value.trim() || '[No response]'));
+    }
+  }
+  var taFinal = document.getElementById('reflection-final');
+  if (taFinal) {
+    var box = taFinal.closest('.reflection-box');
+    var prompt = box ? box.querySelector('p') : null;
+    lines.push('');
+    lines.push('Final Reflection:');
+    if (prompt) lines.push('Q: ' + prompt.textContent.trim());
+    lines.push('A: ' + (taFinal.value.trim() || '[No response]'));
+  }
+  lines.push('');
+  lines.push('='.repeat(60));
+  lines.push('');
+
+  lines.push('SECTION QUIZ RESPONSES');
+  lines.push('-'.repeat(40));
+  for (var s = 0; s <= 3; s++) {
+    var quiz = document.getElementById('quiz-' + s);
+    if (!quiz) continue;
+    lines.push('');
+    lines.push('Section ' + (s + 1) + ' Quiz:');
+    var questions = quiz.querySelectorAll('.quiz-question');
+    questions.forEach(function(q, i) {
+      var qText = q.querySelector('p');
+      var selected = q.querySelector('input[type="radio"]:checked');
+      var selLabel = selected ? selected.closest('.quiz-option') || selected.parentElement : null;
+      lines.push('  Q' + (i + 1) + ': ' + (qText ? qText.textContent.trim() : ''));
+      lines.push('  Selected: ' + (selLabel ? selLabel.textContent.trim() : '[No answer]'));
+      var isCorrect = selected && q.querySelector('.quiz-option.correct input') === selected;
+      lines.push('  Result: ' + (selected ? (isCorrect ? 'Correct' : 'Incorrect') : 'Unanswered'));
+    });
+  }
+  lines.push('');
+  lines.push('='.repeat(60));
+  lines.push('');
+
+  lines.push('FINAL ASSESSMENT RESPONSES');
+  lines.push('-'.repeat(40));
+  var finalQuiz = document.getElementById('quiz-4');
+  if (finalQuiz) {
+    var questions = finalQuiz.querySelectorAll('.quiz-question');
+    questions.forEach(function(q, i) {
+      var qText = q.querySelector('p');
+      var selected = q.querySelector('input[type="radio"]:checked');
+      var selLabel = selected ? selected.closest('.quiz-option') || selected.parentElement : null;
+      lines.push('  Q' + (i + 1) + ': ' + (qText ? qText.textContent.trim() : ''));
+      lines.push('  Selected: ' + (selLabel ? selLabel.textContent.trim() : '[No answer]'));
+      var correctOpt = q.querySelector('.quiz-option.correct');
+      var isCorrect = selected && correctOpt && correctOpt.querySelector('input') === selected;
+      lines.push('  Result: ' + (selected ? (isCorrect ? 'Correct' : 'Incorrect') : 'Unanswered'));
+    });
+  }
+
+  var blob = new Blob([lines.join('\n')], { type: 'text/plain' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'HSCI410_Lesson6_Count_Rate_Data_Responses.txt';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+</script>
+</body>
+</html>

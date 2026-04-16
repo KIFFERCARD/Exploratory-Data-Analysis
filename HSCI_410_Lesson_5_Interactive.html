@@ -1,0 +1,1374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 5: Modelling Ordinal &amp; Multinomial Data &mdash; HSCI 410</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+
+:root {
+  --teal: #0B7B6B;
+  --dark-teal: #065C50;
+  --light-teal: #6BB5A6;
+  --very-light-teal: #E6F3F0;
+  --dark: #042A25;
+  --text: #2D3436;
+  --text-light: #555;
+  --bg: #FFFFFF;
+  --white: #fff;
+  --accent: #CC0033;
+  --accent-dark: #A3002A;
+  --accent-light: #FDEAEF;
+  --amber: #CC0033;
+  --light-amber: #FDEAEF;
+  --green: #0B7B6B;
+  --light-green: #D1F0EA;
+  --blue: #0B7B6B;
+  --light-blue: #E6F3F0;
+  --rose: #CC0033;
+  --light-rose: #FDEAEF;
+  --purple: #065C50;
+  --light-purple: #E6F3F0;
+  --grey: #E8ECEE;
+  --radius: 12px;
+  --shadow: 0 2px 12px rgba(0,0,0,0.08);
+  --shadow-lg: 0 8px 30px rgba(0,0,0,0.12);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { font-family: 'Open Sans', 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; }
+.sidebar {
+  position: fixed; top: 0; left: 0; width: 280px; height: 100vh;
+  background: linear-gradient(180deg, rgba(6,92,80,0.92) 0%, rgba(4,42,37,0.95) 100%), url('bg_texture.jpg') center/cover no-repeat;
+  color: #fff; z-index: 100; display: flex; flex-direction: column;
+  transition: transform 0.3s ease; overflow: hidden;
+}
+.sidebar-header { padding: 24px 20px 16px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+.sidebar-header h2 { font-size: 16px; font-weight: 600; line-height: 1.4; opacity: 0.95; color: #fff; }
+.sidebar-header p { font-size: 11px; opacity: 0.6; margin-top: 4px; }
+.sidebar-nav { flex: 1; overflow-y: auto; padding: 12px 0; }
+.sidebar-nav::-webkit-scrollbar { width: 4px; }
+.sidebar-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 2px; }
+.nav-item {
+  display: flex; align-items: center; gap: 12px; padding: 10px 20px;
+  cursor: pointer; transition: all 0.2s; font-size: 13.5px; position: relative;
+  color: rgba(255,255,255,0.7);
+}
+.nav-item:hover:not(.locked) { background: rgba(255,255,255,0.08); color: #fff; }
+.nav-item.active { background: rgba(255,255,255,0.12); color: #fff; font-weight: 600; }
+.nav-item.active::before {
+  content: ''; position: absolute; left: 0; top: 6px; bottom: 6px; width: 3px;
+  background: var(--accent); border-radius: 0 2px 2px 0;
+}
+.nav-item .dot {
+  width: 22px; height: 22px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.3);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  font-size: 11px; transition: all 0.3s;
+}
+.nav-item.completed .dot { background: var(--green); border-color: var(--green); }
+.nav-item.completed .dot::after { content: '\2713'; color: #fff; font-weight: 700; }
+.nav-item.active .dot { border-color: var(--accent); background: rgba(204,0,51,0.2); }
+.sidebar-footer { padding: 16px 20px; border-top: 1px solid rgba(255,255,255,0.1); }
+.progress-bar-bg { height: 6px; background: rgba(255,255,255,0.15); border-radius: 3px; overflow: hidden; }
+.progress-bar-fill { height: 100%; background: var(--green); border-radius: 3px; transition: width 0.5s ease; }
+.progress-text { font-size: 11px; opacity: 0.6; margin-top: 6px; }
+.main { margin-left: 280px; min-height: 100vh; }
+.module-page { display: none; animation: fadeIn 0.4s ease; }
+.module-page.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.module-header {
+  background: linear-gradient(135deg, rgba(6,92,80,0.88) 0%, rgba(11,123,107,0.85) 100%), url('bg_texture.jpg') center/cover no-repeat;
+  color: #fff; padding: 60px 48px 48px; position: relative; overflow: hidden;
+}
+.module-header::after {
+  content: ''; position: absolute; right: -60px; top: -60px; width: 300px; height: 300px;
+  background: radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 70%); border-radius: 50%;
+}
+.module-tag { display: inline-block; background: var(--accent); padding: 4px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 12px; }
+.module-header h1 { font-size: 32px; font-weight: 700; line-height: 1.3; max-width: 700px; color: #fff; }
+.module-header .time { font-size: 14px; opacity: 0.7; margin-top: 8px; }
+.module-body { max-width: 800px; margin: 0 auto; padding: 40px 48px 80px; }
+h2 { font-size: 22px; color: var(--dark-teal); margin: 36px 0 16px; font-weight: 700; }
+h3 { font-size: 18px; color: var(--teal); margin: 24px 0 12px; font-weight: 600; }
+p { margin-bottom: 16px; }
+ul, ol { margin: 0 0 16px 24px; }
+li { margin-bottom: 8px; }
+.info-box { border-radius: var(--radius); padding: 24px; margin: 24px 0; border-left: 4px solid var(--teal); }
+.info-box.teal { background: var(--very-light-teal); border-color: var(--teal); }
+.info-box.rose { background: var(--light-rose); border-color: var(--accent); }
+.info-box.amber { background: #FFF8E1; border-color: #FFA000; }
+.info-box .box-title { font-weight: 700; margin-bottom: 6px; color: inherit; }
+.flip-card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin: 24px 0; }
+.flip-card {
+  background: var(--white); border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 24px; text-align: center; cursor: pointer; transition: all 0.3s;
+  border: 2px solid var(--grey); position: relative; min-height: 120px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.flip-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); border-color: var(--teal); }
+.flip-card .card-icon { font-size: 28px; margin-bottom: 8px; }
+.flip-card .card-label { font-weight: 600; font-size: 14px; color: var(--dark-teal); }
+.flip-card .card-hint { font-size: 11px; color: var(--text-light); margin-top: 6px; }
+.accordion { margin: 20px 0; }
+.accordion-item { border: 1px solid var(--grey); border-radius: var(--radius); margin-bottom: 8px; overflow: hidden; }
+.accordion-header {
+  padding: 16px 20px; background: var(--white); cursor: pointer; font-weight: 600;
+  display: flex; justify-content: space-between; align-items: center; font-size: 15px;
+  transition: background 0.2s;
+}
+.accordion-header:hover { background: var(--very-light-teal); }
+.accordion-header::after { content: '+'; font-size: 20px; font-weight: 300; color: var(--teal); transition: transform 0.3s; }
+.accordion-item.open .accordion-header::after { content: '\2212'; }
+.accordion-body { max-height: 0; overflow: hidden; transition: max-height 0.4s ease; }
+.accordion-body-inner { padding: 16px 20px 20px; border-top: 1px solid var(--grey); line-height: 1.7; }
+.tabs { margin: 24px 0; }
+.tab-row { display: flex; border-bottom: 2px solid var(--grey); margin-bottom: 0; overflow-x: auto; }
+.tab-btn {
+  padding: 10px 20px; border: none; background: none; cursor: pointer;
+  font-weight: 600; font-size: 14px; color: var(--text-light); border-bottom: 2px solid transparent;
+  margin-bottom: -2px; transition: all 0.2s; white-space: nowrap;
+}
+.tab-btn.active { color: var(--teal); border-bottom-color: var(--teal); }
+.tab-panel { display: none; padding: 20px 0; }
+.tab-panel.active { display: block; }
+.data-table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; }
+.data-table th { background: var(--dark-teal); color: #fff; padding: 12px 16px; text-align: left; font-weight: 600; }
+.data-table td { padding: 10px 16px; border-bottom: 1px solid var(--grey); }
+.data-table tr:nth-child(even) td { background: #f8fafa; }
+.data-table tr:hover td { background: var(--very-light-teal); }
+.formula-box {
+  background: #f8fafc; border: 2px solid var(--grey); border-radius: var(--radius);
+  padding: 20px 24px; margin: 16px 0; text-align: center; font-size: 16px;
+  font-family: 'Georgia', serif;
+}
+.formula-box .formula-label { font-size: 12px; color: var(--text-light); margin-bottom: 6px; font-family: 'Open Sans', sans-serif; }
+.scenario-card {
+  background: linear-gradient(135deg, #f0faf8 0%, #e6f3f0 100%);
+  border-radius: var(--radius); padding: 24px; margin: 20px 0;
+  border: 1px solid rgba(11,123,107,0.15);
+}
+.scenario-card .scenario-title { font-weight: 700; color: var(--dark-teal); margin-bottom: 8px; }
+.quiz-section { background: #f8fafa; border-radius: var(--radius); padding: 32px; margin: 40px 0; border: 2px solid var(--grey); }
+.quiz-section h3 { margin-top: 0; }
+.quiz-question { margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid var(--grey); }
+.quiz-question:last-of-type { border-bottom: none; margin-bottom: 16px; padding-bottom: 0; }
+.quiz-question p { font-weight: 600; margin-bottom: 12px; }
+.quiz-option { display: block; padding: 10px 16px; margin: 6px 0; border-radius: 8px; cursor: pointer; transition: all 0.2s; border: 1px solid var(--grey); }
+.quiz-option:hover { background: var(--very-light-teal); }
+.quiz-option input { margin-right: 10px; }
+.quiz-option.correct { background: var(--light-green); border-color: var(--green); }
+.quiz-option.incorrect { background: var(--light-rose); border-color: var(--accent); }
+.quiz-explanation { display: none; margin-top: 8px; padding: 10px 14px; background: var(--very-light-teal); border-radius: 8px; font-size: 13.5px; }
+.quiz-explanation.show { display: block; }
+.quiz-result { padding: 16px 20px; border-radius: 8px; font-weight: 600; margin-top: 16px; display: none; }
+.quiz-result.pass { background: var(--light-green); color: var(--dark-teal); }
+.quiz-result.fail { background: var(--light-rose); color: var(--accent-dark); }
+.quiz-retry { display: none; margin-top: 12px; }
+.quiz-retry.show { display: block; }
+.btn {
+  display: inline-block; padding: 12px 28px; border-radius: 8px; font-weight: 600;
+  font-size: 15px; border: none; cursor: pointer; transition: all 0.2s;
+}
+.btn-primary { background: var(--teal); color: #fff; }
+.btn-primary:hover { background: var(--dark-teal); }
+.btn-accent { background: var(--accent); color: #fff; }
+.btn-accent:hover { background: var(--accent-dark); }
+.btn-outline { background: transparent; border: 2px solid var(--teal); color: var(--teal); }
+.btn-outline:hover { background: var(--teal); color: #fff; }
+.btn.disabled { opacity: 0.5; pointer-events: none; }
+.reflection-box {
+  background: linear-gradient(135deg, #fdf6ff 0%, #f5f0ff 100%);
+  border: 2px solid #d4bfff; border-radius: var(--radius); padding: 24px; margin: 24px 0;
+}
+.reflection-box h3 { color: #6B21A8; margin-top: 0; }
+.reflection-box textarea {
+  width: 100%; min-height: 100px; border: 1px solid #d4bfff; border-radius: 8px;
+  padding: 12px; font-family: inherit; font-size: 14px; resize: vertical; margin: 8px 0;
+}
+.reflection-box .btn-save { background: #7C3AED; color: #fff; border: none; padding: 8px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; }
+.reflection-box .btn-save:hover { background: #6B21A8; }
+.reflection-status { font-size: 13px; margin-top: 6px; color: #6B21A8; display: none; }
+.reflection-status.show { display: block; }
+.section-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 48px; padding-top: 24px; border-top: 2px solid var(--grey); }
+.req-note { font-size: 13px; margin-top: 12px; }
+.req-check { color: var(--green); }
+.req-pending { color: var(--accent); }
+.completion-banner {
+  display: none; background: linear-gradient(135deg, var(--teal) 0%, var(--dark-teal) 100%);
+  color: #fff; padding: 48px; border-radius: var(--radius); text-align: center; margin: 40px 0;
+}
+.completion-banner h2 { color: #fff; margin: 0 0 12px; font-size: 28px; }
+.sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 99; }
+.card-modal-overlay {
+  display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.6); z-index: 1000; align-items: center; justify-content: center; padding: 20px;
+}
+.card-modal-overlay.show { display: flex; }
+.card-modal {
+  background: #fff; border-radius: var(--radius); max-width: 600px; width: 100%;
+  max-height: 80vh; overflow-y: auto; padding: 32px; position: relative;
+  box-shadow: var(--shadow-lg);
+}
+.card-modal h3 { color: var(--dark-teal); margin: 0 0 16px; padding-right: 30px; }
+.card-modal-close {
+  position: absolute; top: 16px; right: 16px; background: none; border: none;
+  font-size: 24px; cursor: pointer; color: var(--text-light); width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center; border-radius: 50%;
+}
+.card-modal-close:hover { background: var(--grey); }
+.welcome-hero {
+  min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, rgba(6,92,80,0.88) 0%, rgba(4,42,37,0.92) 100%), url('bg_texture.jpg') center/cover no-repeat;
+  color: #fff; text-align: center; padding: 48px 24px; position: relative; overflow: hidden;
+}
+.welcome-hero::before {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(circle at 30% 70%, rgba(11,123,107,0.25) 0%, transparent 50%),
+              radial-gradient(circle at 70% 30%, rgba(107,181,166,0.12) 0%, transparent 40%);
+}
+.welcome-hero > * { position: relative; z-index: 1; }
+.welcome-hero h1 { font-size: 48px; font-weight: 800; margin-bottom: 12px; line-height: 1.2; }
+.welcome-hero .subtitle { font-size: 20px; opacity: 0.8; margin-bottom: 32px; }
+.welcome-hero .start-btn {
+  background: var(--accent); color: #fff; padding: 16px 40px; border-radius: 50px;
+  font-size: 17px; font-weight: 700; border: none; cursor: pointer;
+  transition: all 0.3s; box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+.welcome-hero .start-btn:hover { background: var(--accent-dark); transform: translateY(-2px) scale(1.02); box-shadow: 0 8px 30px rgba(0,0,0,0.3); }
+.welcome-details { max-width: 560px; margin-top: 40px; text-align: left; background: rgba(255,255,255,0.08); border-radius: 16px; padding: 28px; backdrop-filter: blur(10px); }
+.welcome-details h3 { font-size: 16px; margin-bottom: 12px; opacity: 0.9; color: #fff; }
+.welcome-details ul { list-style: none; margin: 0; padding: 0; }
+.welcome-details li { padding: 4px 0; font-size: 14px; opacity: 0.8; }
+.welcome-details li::before { content: '\2726 '; color: #fff; opacity: 0.6; }
+.mobile-header {
+  display: none; position: fixed; top: 0; left: 0; right: 0; height: 56px;
+  background: var(--dark); color: #fff; z-index: 101;
+  padding: 0 16px; align-items: center; gap: 12px;
+}
+.mobile-header button { background: none; border: none; color: #fff; font-size: 24px; cursor: pointer; padding: 4px; }
+.mobile-header h3 { font-size: 14px; font-weight: 600; color: #fff; }
+@media (max-width: 768px) {
+  .sidebar { transform: translateX(-100%); width: 280px; }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar-overlay.show { display: block; }
+  .mobile-header { display: flex; }
+  .main { margin-left: 0; padding-top: 56px; }
+  .module-header { padding: 32px 20px 28px; }
+  .module-header h1 { font-size: 24px; }
+  .module-body { padding: 24px 20px 60px; }
+  .flip-card-grid { grid-template-columns: 1fr; }
+}
+
+</style>
+</head>
+<body>
+<div class="mobile-header">
+  <button onclick="toggleSidebar()">&#9776;</button>
+  <h3>HSCI 410 &mdash; Lesson 5</h3>
+</div>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <img src="sfu_logo_white.webp" alt="SFU &mdash; Simon Fraser University" style="width:100%;max-width:180px;margin-bottom:12px;">
+    <h2>Exploratory Data Analysis For Epidemiology</h2>
+    <p>Kiffer G. Card, PhD</p>
+  </div>
+  <div class="sidebar-nav" id="sidebarNav"></div>
+  <div class="sidebar-footer">
+    <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressFill" style="width:0%"></div></div>
+    <div class="progress-text" id="progressText">0% complete</div>
+  </div>
+</div>
+
+<div class="main" id="mainContent">
+
+<!-- ============ WELCOME ============ -->
+<div class="module-page active" id="page-welcome">
+<div class="welcome-hero">
+  <h1>Modelling Ordinal &amp; Multinomial Data</h1>
+  <p class="subtitle">Exploratory Data Analysis For Epidemiology</p>
+  <p style="font-size:15px;opacity:0.7;margin-bottom:32px;">Kiffer G. Card, PhD, Faculty of Health Sciences, Simon Fraser University</p>
+  <button class="start-btn" onclick="goToModule(0)">Begin Lesson &rarr;</button>
+  <div class="welcome-details">
+    <h3>Learning objectives for this lesson:</h3>
+    <ul>
+      <li>Select an appropriate model (multinomial, proportional-odds, adjacent-category, or continuation-ratio) based on study objectives and data</li>
+      <li>Fit all of the models listed above</li>
+      <li>Evaluate the assumptions on which each model is based</li>
+      <li>Interpret OR estimates from each model</li>
+      <li>Compute predicted probabilities from each model</li>
+    </ul>
+  </div>
+  <p style="font-size:12px;opacity:0.5;margin-top:32px;max-width:560px;text-align:center;line-height:1.5;">This course was developed by Kiffer G. Card, PhD, as a companion to Dohoo, I. R., Martin, S. W., &amp; Stryhn, H. (2012). <em>Methods in Epidemiologic Research.</em> VER Inc.</p>
+</div>
+</div>
+
+<!-- ============ SECTION 1: Introduction & Overview of Models ============ -->
+<div class="module-page" id="page-0">
+<div class="module-header">
+  <div class="module-tag">Section 1</div>
+  <h1>Introduction &amp; Overview of Models</h1>
+  <div class="time">&#9201; Estimated time: 20 minutes</div>
+</div>
+<div class="module-body">
+
+<h2>When Outcomes Have More Than Two Categories</h2>
+<p>In many epidemiological studies the outcome variable has more than two categories. These outcomes fall into two broad types: <strong>nominal</strong> data, where the categories have no natural ordering (e.g., type of disease, preferred clinic), and <strong>ordinal</strong> data, where the categories are ordered (e.g., pain severity: none, mild, moderate, severe).</p>
+<p>The choice of model depends on whether the outcome is nominal or ordinal. Nominal data require <strong>multinomial logistic regression</strong> or log-linear models. Ordinal data can be analysed with the same multinomial model (ignoring the ordering), but more efficient approaches exploit the ordering: <strong>proportional-odds</strong>, <strong>adjacent-category</strong>, and <strong>continuation-ratio</strong> models.</p>
+
+<div class="flip-card-grid">
+  <div class="flip-card" onclick="openCardModal('Nominal Data', 'Nominal outcome data have categories with &lt;strong&gt;no natural ordering&lt;/strong&gt;. Examples include type of cancer diagnosis, preferred mode of transport, or country of origin. Since the categories cannot be ranked, the only appropriate regression approach is &lt;strong&gt;multinomial logistic regression&lt;/strong&gt; (or equivalent log-linear models), which makes no assumptions about ordering.')">
+    <div class="card-icon">&#128200;</div>
+    <div class="card-label">Nominal Data</div>
+    <div class="card-hint">Click to learn more</div>
+  </div>
+  <div class="flip-card" onclick="openCardModal('Ordinal Data', 'Ordinal outcome data have categories with a &lt;strong&gt;meaningful order&lt;/strong&gt;, but the distances between categories are not necessarily equal. Examples include disease severity (mild, moderate, severe), Likert-scale responses, or Apgar score categories. Ordinal models exploit this ordering information to produce more parsimonious and powerful analyses.')">
+    <div class="card-icon">&#128202;</div>
+    <div class="card-label">Ordinal Data</div>
+    <div class="card-hint">Click to learn more</div>
+  </div>
+  <div class="flip-card" onclick="openCardModal('Choosing the Right Model', 'The choice of model depends on several factors: &lt;ul&gt;&lt;li&gt;&lt;strong&gt;Nominal data&lt;/strong&gt; &rarr; Multinomial logistic regression&lt;/li&gt;&lt;li&gt;&lt;strong&gt;Ordinal data (general)&lt;/strong&gt; &rarr; Proportional-odds model (most common)&lt;/li&gt;&lt;li&gt;&lt;strong&gt;Ordinal data (adjacent comparisons)&lt;/strong&gt; &rarr; Adjacent-category model&lt;/li&gt;&lt;li&gt;&lt;strong&gt;Sequential/staged outcomes&lt;/strong&gt; &rarr; Continuation-ratio model&lt;/li&gt;&lt;/ul&gt;Always check model assumptions before finalising your choice.')">
+    <div class="card-icon">&#128161;</div>
+    <div class="card-label">Choosing the Right Model</div>
+    <div class="card-hint">Click to learn more</div>
+  </div>
+</div>
+
+<h2>The Apgar Score Example</h2>
+<p>Throughout Chapter 17, the authors use <strong>Apgar scores</strong> as a running example. Apgar scores (measured at birth) are recoded into four ordinal categories. The research question is whether the number of prenatal visits is associated with Apgar score category.</p>
+
+<div style="overflow-x:auto;">
+<table class="data-table">
+<thead><tr><th>Apgar Category</th><th>Code</th><th>Prenatal Visits &lt; 6</th><th>Prenatal Visits &ge; 6</th><th>Total</th></tr></thead>
+<tbody>
+<tr><td>1&ndash;6 (Low)</td><td>0</td><td>47</td><td>25</td><td>72</td></tr>
+<tr><td>7</td><td>1</td><td>48</td><td>42</td><td>90</td></tr>
+<tr><td>8</td><td>2</td><td>59</td><td>72</td><td>131</td></tr>
+<tr><td>9&ndash;10 (High)</td><td>3</td><td>134</td><td>227</td><td>361</td></tr>
+<tr><td><strong>Total</strong></td><td></td><td><strong>288</strong></td><td><strong>366</strong></td><td><strong>654</strong></td></tr>
+</tbody>
+</table>
+</div>
+
+<h2>Overview of the Four Models</h2>
+<p>Each of the four models for multi-category outcomes uses a different formulation of the logit (log-odds). Understanding the logit structure is the key to understanding each model.</p>
+
+<div class="accordion">
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">Multinomial Logistic Regression (Eq 17.1)</div>
+    <div class="accordion-body"><div class="accordion-body-inner">
+      <p>Compares each outcome category to a <strong>baseline category</strong>. For J categories, the model estimates J&minus;1 sets of coefficients. Each set describes how predictors relate to the log-odds of being in category <em>j</em> versus the baseline.</p>
+      <div class="formula-box">
+        <div class="formula-label">Equation 17.1</div>
+        ln[p(Y = j) / p(Y = 1)] = &beta;<sub>0</sub><sup>(j)</sup> + &beta;<sub>1</sub><sup>(j)</sup>X
+      </div>
+      <p>No assumptions about ordering are made, so this model is appropriate for both nominal and ordinal outcomes (though it is less efficient for ordinal data).</p>
+    </div></div>
+  </div>
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">Proportional-Odds Model (Eq 17.2)</div>
+    <div class="accordion-body"><div class="accordion-body-inner">
+      <p>Based on <strong>cumulative probabilities</strong>. The logit compares the probability of being at or above category <em>j</em> versus below it. A single coefficient per predictor applies at every cutpoint&mdash;the <strong>proportional-odds assumption</strong>.</p>
+      <div class="formula-box">
+        <div class="formula-label">Equation 17.2</div>
+        ln[p(Y &ge; j) / p(Y &lt; j)] = &beta;<sub>0</sub><sup>(j)</sup> + &beta;<sub>1</sub>X
+      </div>
+      <p>This is the most common ordinal logistic model and is more parsimonious than the multinomial model.</p>
+    </div></div>
+  </div>
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">Adjacent-Category Model (Eq 17.3)</div>
+    <div class="accordion-body"><div class="accordion-body-inner">
+      <p>Compares each category to the <strong>adjacent (next lower) category</strong>. This model is a constrained version of the multinomial model where the coefficient for categories <em>n</em> levels apart equals <em>n</em> times the coefficient for adjacent categories.</p>
+      <div class="formula-box">
+        <div class="formula-label">Equation 17.3</div>
+        ln[p(Y = j) / p(Y = j&minus;1)] = &beta;<sub>0</sub><sup>(j)</sup> + &beta;<sub>1</sub>X
+      </div>
+      <p>Like the proportional-odds model, it estimates a single &beta;<sub>1</sub> per predictor.</p>
+    </div></div>
+  </div>
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">Continuation-Ratio Model (Eq 17.4)</div>
+    <div class="accordion-body"><div class="accordion-body-inner">
+      <p>Compares each category to <strong>all lower categories combined</strong>. This model is especially appropriate when the outcome represents sequential stages that must be &ldquo;passed through&rdquo; to reach higher levels (e.g., number of attempts to achieve certification).</p>
+      <div class="formula-box">
+        <div class="formula-label">Equation 17.4</div>
+        ln[p(Y = j) / p(Y &lt; j)] = &beta;<sub>0</sub><sup>(j)</sup> + &beta;<sub>1</sub>X
+      </div>
+      <p>Can be fit as a series of separate binary logistic regressions with appropriately recoded outcome variables.</p>
+    </div></div>
+  </div>
+</div>
+
+<!-- Quiz Section 1 -->
+<div class="quiz-section" id="quiz-0">
+<h3>&#10004; Check Your Understanding</h3>
+
+<div class="quiz-question" data-correct="b">
+  <p>1. Nominal outcome data differ from ordinal outcome data in that:</p>
+  <label class="quiz-option"><input type="radio" name="q0-0" value="a"> Nominal data always have more categories than ordinal data</label>
+  <label class="quiz-option"><input type="radio" name="q0-0" value="b"> Nominal categories have no natural ordering</label>
+  <label class="quiz-option"><input type="radio" name="q0-0" value="c"> Ordinal data cannot be analysed with logistic regression</label>
+  <label class="quiz-option"><input type="radio" name="q0-0" value="d"> Nominal data require fewer model parameters</label>
+  <div class="quiz-explanation">Nominal data have categories with no inherent ranking or ordering (e.g., type of disease), while ordinal data have categories that can be meaningfully ordered (e.g., disease severity). The number of categories is not related to the distinction.</div>
+</div>
+
+<div class="quiz-question" data-correct="c">
+  <p>2. How many sets of coefficients does a multinomial logistic model estimate for J outcome categories?</p>
+  <label class="quiz-option"><input type="radio" name="q0-1" value="a"> J sets</label>
+  <label class="quiz-option"><input type="radio" name="q0-1" value="b"> 1 set</label>
+  <label class="quiz-option"><input type="radio" name="q0-1" value="c"> J&minus;1 sets</label>
+  <label class="quiz-option"><input type="radio" name="q0-1" value="d"> 2 sets regardless of J</label>
+  <div class="quiz-explanation">A multinomial logistic model compares each of the J&minus;1 non-baseline categories to the baseline category. Each comparison requires its own set of coefficients, yielding J&minus;1 sets in total.</div>
+</div>
+
+<div class="quiz-question" data-correct="a">
+  <p>3. Which model assumes the effect of a predictor is the same across all cutpoints?</p>
+  <label class="quiz-option"><input type="radio" name="q0-2" value="a"> Proportional-odds model</label>
+  <label class="quiz-option"><input type="radio" name="q0-2" value="b"> Multinomial logistic model</label>
+  <label class="quiz-option"><input type="radio" name="q0-2" value="c"> Continuation-ratio model (unconstrained)</label>
+  <label class="quiz-option"><input type="radio" name="q0-2" value="d"> Log-linear model</label>
+  <div class="quiz-explanation">The proportional-odds model estimates a single coefficient per predictor that applies at every cutpoint of the outcome. This is the &ldquo;proportional odds&rdquo; assumption&mdash;the OR is the same regardless of where you divide the outcome categories.</div>
+</div>
+
+<div id="quizResult-0" class="quiz-result"></div>
+<div id="quizRetry-0" class="quiz-retry"><button class="btn btn-outline" onclick="retryQuiz(0)">Retry Quiz</button></div>
+<button class="btn btn-primary" onclick="checkQuiz(0)" style="margin-top:12px;">Check Answers</button>
+</div>
+
+<!-- Reflection 1 -->
+<div class="reflection-box">
+  <h3>&#9998; Reflection</h3>
+  <p>Think of an ordinal outcome variable from your own field of study. What are the categories, and which of the four models introduced here do you think would be most appropriate? Why?</p>
+  <textarea id="reflection-1" placeholder="Type your reflection here..."></textarea>
+  <button class="btn-save" onclick="checkReflection(1)">Save Reflection</button>
+  <div class="reflection-status" id="reflectionStatus-1">&#10003; Reflection saved!</div>
+</div>
+
+<div class="section-nav">
+  <div></div>
+  <div style="text-align:right;">
+    <button id="nextBtn-0" class="btn btn-accent disabled" onclick="goToModule(1)">Next Section &rarr;</button>
+    <div id="reqNote-0" class="req-note"><span class="req-pending">&#9679;</span> Complete the quiz and reflection to continue.</div>
+  </div>
+</div>
+
+</div>
+</div>
+
+<!-- ============ SECTION 2: Multinomial Logistic Regression ============ -->
+<div class="module-page" id="page-1">
+<div class="module-header">
+  <div class="module-tag">Section 2</div>
+  <h1>Multinomial Logistic Regression</h1>
+  <div class="time">&#9201; Estimated time: 25 minutes</div>
+</div>
+<div class="module-body">
+
+<h2>The Multinomial Logistic Model</h2>
+<p>The multinomial logistic model simultaneously fits <strong>J&minus;1 separate logistic models</strong>, each comparing one category to a chosen baseline. All parameters are estimated jointly, so the model accounts for the correlation among the comparisons.</p>
+
+<h3>Predicted Probabilities</h3>
+<p>The predicted probability for each outcome category is computed from the set of linear predictors. Let X&beta;<sup>(j)</sup> denote the linear predictor for category <em>j</em>.</p>
+
+<div class="formula-box">
+  <div class="formula-label">Equation 17.5 &mdash; Probability for the baseline category</div>
+  p(Y = 0) = 1 / [1 + exp(X&beta;<sup>(1)</sup>) + exp(X&beta;<sup>(2)</sup>) + exp(X&beta;<sup>(3)</sup>)]
+</div>
+
+<div class="formula-box">
+  <div class="formula-label">Equation 17.6 &mdash; Probability for category j</div>
+  p(Y = j) = exp(X&beta;<sup>(j)</sup>) / [1 + exp(X&beta;<sup>(1)</sup>) + exp(X&beta;<sup>(2)</sup>) + exp(X&beta;<sup>(3)</sup>)]
+</div>
+
+<p>These probabilities always sum to 1 across all categories. Each predicted probability depends on <em>all</em> sets of coefficients, not just the coefficients for that category.</p>
+
+<div class="tabs">
+  <div class="tab-row">
+    <button class="tab-btn active" onclick="switchTab(event, 'tab-or')">OR Interpretation</button>
+    <button class="tab-btn" onclick="switchTab(event, 'tab-pred')">Predicted Probabilities</button>
+    <button class="tab-btn" onclick="switchTab(event, 'tab-iia')">IIA Assumption</button>
+  </div>
+  <div class="tab-panel active" id="tab-or">
+    <h3>Interpreting Odds Ratios</h3>
+    <p>Exponentiated coefficients from a multinomial model are technically <strong>ratios of relative risks</strong> (RRR), not true odds ratios. Each exp(&beta;<sup>(j)</sup>) gives the ratio of the probability of being in category <em>j</em> relative to the baseline, for a one-unit change in the predictor.</p>
+    <p>Because the multinomial model estimates separate coefficients for each comparison, the effects can differ across categories. For ordinal outcomes, you would typically expect a gradient&mdash;more pronounced effects for the categories furthest from the baseline.</p>
+  </div>
+  <div class="tab-panel" id="tab-pred">
+    <h3>Predicted Probabilities</h3>
+    <p>Predicted probabilities from a multinomial model vary by the values of all predictors. To communicate results, it is often useful to compute predicted probabilities at specific covariate patterns (e.g., prenatal visits &lt; 6 vs &ge; 6) and present them in a table or graph.</p>
+    <p>Testing significance can be done with <strong>Wald tests</strong> (for individual coefficients) or <strong>likelihood-ratio tests</strong> (for overall effects). Because the multinomial model has J&minus;1 coefficients per predictor, an overall LRT that tests all J&minus;1 simultaneously is generally preferred over examining individual coefficients.</p>
+  </div>
+  <div class="tab-panel" id="tab-iia">
+    <h3>Independence of Irrelevant Alternatives (IIA)</h3>
+    <p>The multinomial logistic model assumes <strong>IIA</strong>: the odds of choosing one category over another are independent of what other categories are available. If this assumption is violated, adding or removing a category would change the odds between the remaining categories.</p>
+    <p>Two tests are available: the <strong>Hausman-McFadden test</strong> and the <strong>Small-Hsiao test</strong>. However, these tests often give conflicting results, and IIA violations are primarily a concern for <em>nominal</em> data where alternatives are genuinely substitutable (e.g., choosing a mode of transport). For ordinal data, IIA is rarely a practical concern.</p>
+  </div>
+</div>
+
+<div class="scenario-card">
+  <div class="scenario-title">&#128203; Example: Apgar Scores and Prenatal Visits</div>
+  <p>In the Apgar score example, the multinomial model (with category 3 [9&ndash;10] as baseline) produced the following key results for prenatal visits (&ge;6 vs &lt;6):</p>
+  <ul>
+    <li>Category 0 vs 3: OR = <strong>0.24</strong> &mdash; those with &ge;6 visits have 76% lower relative risk of a low Apgar score</li>
+    <li>Category 1 vs 3: OR = <strong>0.65</strong> &mdash; 35% lower relative risk of Apgar = 7</li>
+    <li>Category 2 vs 3: OR = <strong>0.72</strong> &mdash; 28% lower relative risk of Apgar = 8</li>
+  </ul>
+  <p>The gradient (0.24 &rarr; 0.65 &rarr; 0.72) shows the strongest effect for the lowest Apgar category, as expected for an ordinal outcome.</p>
+</div>
+
+<div class="info-box teal">
+  <div class="box-title">Note on IIA Tests</div>
+  <p>The Hausman-McFadden and Small-Hsiao tests for IIA often give conflicting results and are not always reliable. In practice, IIA is mainly a concern for nominal (unordered) outcomes with genuinely substitutable alternatives. For ordinal outcomes, it is rarely problematic. Regression diagnostics can be performed by fitting ordinary logistic models for pairs of categories and using standard diagnostic techniques.</p>
+</div>
+
+<h3>Alternative-Specific Data</h3>
+<p>In some situations, predictors may vary across alternatives rather than (or in addition to) varying across observations. For example, in a study of clinic choice, the distance to each clinic varies by alternative. Special formulations of the multinomial model (conditional logit or mixed logit) accommodate such <strong>alternative-specific</strong> data.</p>
+
+<!-- Quiz Section 2 -->
+<div class="quiz-section" id="quiz-1">
+<h3>&#10004; Check Your Understanding</h3>
+
+<div class="quiz-question" data-correct="b">
+  <p>1. In multinomial logistic regression, the exponentiated coefficients represent:</p>
+  <label class="quiz-option"><input type="radio" name="q1-0" value="a"> True odds ratios for each outcome category</label>
+  <label class="quiz-option"><input type="radio" name="q1-0" value="b"> Ratios of relative risks compared to the baseline category</label>
+  <label class="quiz-option"><input type="radio" name="q1-0" value="c"> Hazard ratios</label>
+  <label class="quiz-option"><input type="radio" name="q1-0" value="d"> Risk differences</label>
+  <div class="quiz-explanation">The exponentiated coefficients in a multinomial logistic model are ratios of relative risks (RRR), not true odds ratios. Each RRR compares the probability of being in a given category relative to the baseline for a one-unit change in the predictor.</div>
+</div>
+
+<div class="quiz-question" data-correct="d">
+  <p>2. The IIA assumption states that:</p>
+  <label class="quiz-option"><input type="radio" name="q1-1" value="a"> All outcome categories must be ordered</label>
+  <label class="quiz-option"><input type="radio" name="q1-1" value="b"> Predictors must be independent of each other</label>
+  <label class="quiz-option"><input type="radio" name="q1-1" value="c"> The model must include all possible predictors</label>
+  <label class="quiz-option"><input type="radio" name="q1-1" value="d"> The odds of one outcome level vs another are independent of other available alternatives</label>
+  <div class="quiz-explanation">The Independence of Irrelevant Alternatives (IIA) assumption states that the relative odds of choosing one category over another do not depend on what other categories are available. Violation of IIA means that adding or removing a category would change the estimated odds between remaining categories.</div>
+</div>
+
+<div class="quiz-question" data-correct="a">
+  <p>3. How are predicted probabilities computed from a multinomial model?</p>
+  <label class="quiz-option"><input type="radio" name="q1-2" value="a"> Using the exp of each linear predictor divided by 1 plus the sum of all exp linear predictors</label>
+  <label class="quiz-option"><input type="radio" name="q1-2" value="b"> By squaring the coefficients and normalising</label>
+  <label class="quiz-option"><input type="radio" name="q1-2" value="c"> By fitting separate logistic regressions and averaging</label>
+  <label class="quiz-option"><input type="radio" name="q1-2" value="d"> By dividing each coefficient by the total number of categories</label>
+  <div class="quiz-explanation">The predicted probability for category j is exp(X&beta;<sup>(j)</sup>) divided by [1 + &Sigma; exp(X&beta;<sup>(k)</sup>)] for all non-baseline categories k. For the baseline category, the probability is 1 divided by the same denominator. This ensures all probabilities sum to 1.</div>
+</div>
+
+<div id="quizResult-1" class="quiz-result"></div>
+<div id="quizRetry-1" class="quiz-retry"><button class="btn btn-outline" onclick="retryQuiz(1)">Retry Quiz</button></div>
+<button class="btn btn-primary" onclick="checkQuiz(1)" style="margin-top:12px;">Check Answers</button>
+</div>
+
+<!-- Reflection 2 -->
+<div class="reflection-box">
+  <h3>&#9998; Reflection</h3>
+  <p>Consider the Apgar score example. Why do you think the OR for the lowest Apgar category (0.24) is more extreme than for the middle categories? What does this gradient tell us about prenatal care and birth outcomes?</p>
+  <textarea id="reflection-2" placeholder="Type your reflection here..."></textarea>
+  <button class="btn-save" onclick="checkReflection(2)">Save Reflection</button>
+  <div class="reflection-status" id="reflectionStatus-2">&#10003; Reflection saved!</div>
+</div>
+
+<div class="section-nav">
+  <button class="btn btn-outline" onclick="goToModule(0)">&larr; Previous Section</button>
+  <div style="text-align:right;">
+    <button id="nextBtn-1" class="btn btn-accent disabled" onclick="goToModule(2)">Next Section &rarr;</button>
+    <div id="reqNote-1" class="req-note"><span class="req-pending">&#9679;</span> Complete the quiz and reflection to continue.</div>
+  </div>
+</div>
+
+</div>
+</div>
+
+<!-- ============ SECTION 3: Proportional-Odds Model ============ -->
+<div class="module-page" id="page-2">
+<div class="module-header">
+  <div class="module-tag">Section 3</div>
+  <h1>Proportional-Odds Model</h1>
+  <div class="time">&#9201; Estimated time: 25 minutes</div>
+</div>
+<div class="module-body">
+
+<h2>The Most Common Ordinal Model</h2>
+<p>The <strong>proportional-odds model</strong> (also called the cumulative logit model or ordinal logistic regression) is the most widely used model for ordinal outcomes. It is based on the idea of an underlying <strong>continuous latent variable</strong> that is divided into the observed ordinal categories by a series of cutpoints.</p>
+
+<div class="formula-box">
+  <div class="formula-label">Equation 17.7 &mdash; Latent Variable</div>
+  S<sub>i</sub> = &beta;<sub>1</sub>X<sub>1i</sub> + &beta;<sub>2</sub>X<sub>2i</sub> + &hellip; + &beta;<sub>k</sub>X<sub>ki</sub> + &epsilon;<sub>i</sub>
+</div>
+
+<p>The latent variable S<sub>i</sub> is divided by <strong>cutpoints</strong> (&tau;<sub>1</sub>, &tau;<sub>2</sub>, &hellip;, &tau;<sub>J&minus;1</sub>) into J observed categories. If S<sub>i</sub> falls between &tau;<sub>j&minus;1</sub> and &tau;<sub>j</sub>, the observation is classified into category j.</p>
+
+<h3>The Proportional-Odds Logit</h3>
+<p>The model takes the form of a cumulative logit: logit(p(Y &ge; j)) = &beta;<sub>0j</sub> + &beta;X. The key feature is that the intercept varies across cutpoints (giving parallel lines on a logit scale) but the <strong>slope coefficients are the same</strong> for every cutpoint. This means a single OR summarises the effect of each predictor across all levels of the outcome.</p>
+
+<div class="formula-box">
+  <div class="formula-label">Equation 17.9 &mdash; Predicted Probability from Latent Variable</div>
+  p(Y = j) = p(S &le; &tau;<sub>j</sub>) &minus; p(S &le; &tau;<sub>j&minus;1</sub>)
+</div>
+
+<div class="scenario-card">
+  <div class="scenario-title">&#128203; Example: Apgar Scores &mdash; Proportional-Odds Model</div>
+  <p>In the Apgar score example, the proportional-odds model yields an OR of <strong>1.59</strong> for prenatal visits (&ge;6 vs &lt;6). This means that individuals with 6 or more prenatal visits have <strong>1.59 times the odds</strong> of being at or above any given Apgar category, compared to those with fewer visits. This single OR applies at every cutpoint (0 vs 1+, 0&ndash;1 vs 2+, and 0&ndash;2 vs 3).</p>
+</div>
+
+<h2>Testing the Proportional-Odds Assumption</h2>
+<p>The proportional-odds assumption is that the effect of each predictor is the same at every cutpoint. If violated, the model may give misleading results. Several tests are available:</p>
+
+<div class="accordion">
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">Testing Proportional Odds</div>
+    <div class="accordion-body"><div class="accordion-body-inner">
+      <p>Three main approaches exist:</p>
+      <ul>
+        <li><strong>Approximate LRT:</strong> Compare the log-likelihoods of the proportional-odds model and the multinomial model. A significant difference suggests the proportional-odds assumption is violated.</li>
+        <li><strong>Wolfe-Gould approximate LRT:</strong> Based on J&minus;1 separate binary logistic models at each cutpoint. Sum the log-likelihoods and compare to the proportional-odds model.</li>
+        <li><strong>Brant (Wald) test:</strong> Provides both an overall test and individual tests for each predictor, showing which specific variables violate the assumption.</li>
+      </ul>
+    </div></div>
+  </div>
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">Generalised Ordinal Logistic Regression</div>
+    <div class="accordion-body"><div class="accordion-body-inner">
+      <p>If the proportional-odds assumption is violated, a <strong>generalised ordinal logistic regression model</strong> allows separate coefficients at each cutpoint. This model is equivalent to fitting J&minus;1 separate binary logistic regressions simultaneously. It is more flexible but less parsimonious than the proportional-odds model.</p>
+    </div></div>
+  </div>
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">Partial Proportional-Odds Model</div>
+    <div class="accordion-body"><div class="accordion-body-inner">
+      <p>A compromise approach is the <strong>partial proportional-odds model</strong>, which relaxes the proportional-odds assumption for <em>selected predictors only</em> (those that fail the Brant test) while maintaining it for the rest. This provides a good balance between flexibility and parsimony. Other alternatives include the <strong>stereotype logistic model</strong> and the <strong>heterogeneous choice logistic model</strong>.</p>
+    </div></div>
+  </div>
+</div>
+
+<div class="info-box amber">
+  <div class="box-title">&#9888; The Proportional-Odds Assumption in Practice</div>
+  <p>The proportional-odds assumption is <strong>often violated in practice</strong>, especially with many predictors or when the outcome categories represent very different phenomena. Always test this assumption before reporting results from a proportional-odds model. If violated, consider a partial proportional-odds model or generalised ordinal logistic regression.</p>
+</div>
+
+<h3>Brant Test Results Example</h3>
+<p>The Brant test provides both an overall test and predictor-specific tests. Here is an example of how results might be presented:</p>
+
+<div style="overflow-x:auto;">
+<table class="data-table">
+<thead><tr><th>Predictor</th><th>&chi;&sup2;</th><th>df</th><th>P-value</th><th>Assumption Holds?</th></tr></thead>
+<tbody>
+<tr><td>Prenatal visits</td><td>2.14</td><td>2</td><td>0.343</td><td>Yes</td></tr>
+<tr><td>Maternal age</td><td>8.92</td><td>2</td><td>0.012</td><td>No</td></tr>
+<tr><td>Parity</td><td>1.03</td><td>2</td><td>0.598</td><td>Yes</td></tr>
+<tr><td><strong>Overall</strong></td><td><strong>12.45</strong></td><td><strong>6</strong></td><td><strong>0.053</strong></td><td><strong>Borderline</strong></td></tr>
+</tbody>
+</table>
+</div>
+
+<p>In this example, only maternal age violates the assumption. A <strong>partial proportional-odds model</strong> that allows maternal age to have different effects at each cutpoint (while constraining prenatal visits and parity) would be appropriate.</p>
+
+<h3>Regression Diagnostics</h3>
+<p>Regression diagnostics for the proportional-odds model can be conducted by fitting <strong>binary logistic models at each cutpoint</strong> and applying the diagnostic techniques from Chapter 16 (residual analysis, influence measures, goodness-of-fit tests).</p>
+
+<!-- Quiz Section 3 -->
+<div class="quiz-section" id="quiz-2">
+<h3>&#10004; Check Your Understanding</h3>
+
+<div class="quiz-question" data-correct="c">
+  <p>1. The proportional-odds model assumes:</p>
+  <label class="quiz-option"><input type="radio" name="q2-0" value="a"> The outcome categories are equally spaced</label>
+  <label class="quiz-option"><input type="radio" name="q2-0" value="b"> Each predictor has a different effect at each cutpoint</label>
+  <label class="quiz-option"><input type="radio" name="q2-0" value="c"> The effect of each predictor is the same at every cutpoint of the outcome</label>
+  <label class="quiz-option"><input type="radio" name="q2-0" value="d"> The outcome is normally distributed</label>
+  <div class="quiz-explanation">The proportional-odds (or parallel lines) assumption states that the coefficients for each predictor are the same regardless of which cutpoint is used to dichotomise the outcome. This means the OR is the same at every cutpoint.</div>
+</div>
+
+<div class="quiz-question" data-correct="b">
+  <p>2. If the proportional-odds assumption is violated for some but not all predictors, which model can be used?</p>
+  <label class="quiz-option"><input type="radio" name="q2-1" value="a"> Standard multinomial logistic regression</label>
+  <label class="quiz-option"><input type="radio" name="q2-1" value="b"> Partial proportional-odds model</label>
+  <label class="quiz-option"><input type="radio" name="q2-1" value="c"> Ordinary least squares regression</label>
+  <label class="quiz-option"><input type="radio" name="q2-1" value="d"> Cox proportional hazards model</label>
+  <div class="quiz-explanation">The partial proportional-odds model relaxes the proportional-odds assumption for specific predictors (those that violate it) while maintaining the constraint for the rest. This provides a balance between the fully constrained proportional-odds model and the unconstrained multinomial model.</div>
+</div>
+
+<div class="quiz-question" data-correct="a">
+  <p>3. The latent variable in a proportional-odds model represents:</p>
+  <label class="quiz-option"><input type="radio" name="q2-2" value="a"> An unobserved continuous variable underlying the ordinal categories</label>
+  <label class="quiz-option"><input type="radio" name="q2-2" value="b"> The observed outcome variable itself</label>
+  <label class="quiz-option"><input type="radio" name="q2-2" value="c"> The residual error term</label>
+  <label class="quiz-option"><input type="radio" name="q2-2" value="d"> The predicted probability of the baseline category</label>
+  <div class="quiz-explanation">The proportional-odds model assumes an underlying continuous latent variable (S<sub>i</sub>) that is divided into the observed ordinal categories by cutpoints (&tau;). The latent variable represents the true continuous quantity that we observe only in categorised form.</div>
+</div>
+
+<div id="quizResult-2" class="quiz-result"></div>
+<div id="quizRetry-2" class="quiz-retry"><button class="btn btn-outline" onclick="retryQuiz(2)">Retry Quiz</button></div>
+<button class="btn btn-primary" onclick="checkQuiz(2)" style="margin-top:12px;">Check Answers</button>
+</div>
+
+<!-- Reflection 3 -->
+<div class="reflection-box">
+  <h3>&#9998; Reflection</h3>
+  <p>Why do you think the proportional-odds assumption is so often violated in practice? Can you think of a scenario in your own research where you would expect the effect of a predictor to differ across cutpoints?</p>
+  <textarea id="reflection-3" placeholder="Type your reflection here..."></textarea>
+  <button class="btn-save" onclick="checkReflection(3)">Save Reflection</button>
+  <div class="reflection-status" id="reflectionStatus-3">&#10003; Reflection saved!</div>
+</div>
+
+<div class="section-nav">
+  <button class="btn btn-outline" onclick="goToModule(1)">&larr; Previous Section</button>
+  <div style="text-align:right;">
+    <button id="nextBtn-2" class="btn btn-accent disabled" onclick="goToModule(3)">Next Section &rarr;</button>
+    <div id="reqNote-2" class="req-note"><span class="req-pending">&#9679;</span> Complete the quiz and reflection to continue.</div>
+  </div>
+</div>
+
+</div>
+</div>
+
+<!-- ============ SECTION 4: Adjacent-Category & Continuation-Ratio Models ============ -->
+<div class="module-page" id="page-3">
+<div class="module-header">
+  <div class="module-tag">Section 4</div>
+  <h1>Adjacent-Category &amp; Continuation-Ratio Models</h1>
+  <div class="time">&#9201; Estimated time: 20 minutes</div>
+</div>
+<div class="module-body">
+
+<h2>Adjacent-Category Model</h2>
+<p>The <strong>adjacent-category model</strong> compares the probability of being in category <em>j</em> versus category <em>j&minus;1</em> (the next lower category). It is a <strong>constrained version of the multinomial logistic model</strong>: the constraint is that the coefficient for categories <em>n</em> levels apart equals <em>n</em> times the coefficient for adjacent categories.</p>
+<p>Like the proportional-odds model, the adjacent-category model estimates a <strong>single &beta;<sub>1</sub></strong> per predictor, making it more parsimonious than the unconstrained multinomial model. The validity of this constraint can be tested by comparing the adjacent-category model to the unconstrained multinomial model using a <strong>likelihood-ratio test (LRT)</strong>.</p>
+
+<div class="scenario-card">
+  <div class="scenario-title">&#128203; Example: Apgar Scores &mdash; Adjacent-Category Model</div>
+  <p>For the Apgar score data, the LRT comparing the adjacent-category model to the unconstrained multinomial model yielded &chi;&sup2; = 6.76, df = 5, P = 0.239. Since this is not significant, the adjacent-category model is a <strong>valid simplification</strong> of the multinomial model for these data.</p>
+</div>
+
+<h2>Continuation-Ratio Model</h2>
+<p>The <strong>continuation-ratio model</strong> compares the probability of being in category <em>j</em> versus all lower categories combined. It is particularly useful when the outcome represents <strong>sequential stages</strong> that must be &ldquo;passed through&rdquo; to reach higher levels.</p>
+
+<div class="info-box teal">
+  <div class="box-title">When Is the Continuation-Ratio Model Appropriate?</div>
+  <p>The continuation-ratio model is ideal for outcomes where each level must be reached before the next can be attained. Examples include: number of attempts to pass an exam, stages of disease progression where remission must occur before relapse, or sequential rounds of a selection process. It is <strong>NOT</strong> appropriate when movements between categories are not sequential (e.g., Apgar scores, where a baby does not &ldquo;pass through&rdquo; each score level).</p>
+</div>
+
+<h3>Fitting the Continuation-Ratio Model</h3>
+<p>The continuation-ratio model can be fit as a <strong>series of separate binary logistic regressions</strong> with a recoded outcome variable. For each comparison:</p>
+<ul>
+  <li>Y = 1 for the level of interest</li>
+  <li>Y = 0 for all lower levels</li>
+  <li>Observations at higher levels are <strong>excluded (treated as missing)</strong></li>
+</ul>
+
+<p>Consider an example with 4 categories representing the number of attempts to gain admission to medical school (1, 2, 3, 4+):</p>
+
+<div style="overflow-x:auto;">
+<table class="data-table">
+<thead><tr><th>Original Category</th><th>Y<sub>1</sub> (1 vs 0)</th><th>Y<sub>2</sub> (2 vs 0&ndash;1)</th><th>Y<sub>3</sub> (3 vs 0&ndash;2)</th></tr></thead>
+<tbody>
+<tr><td>0 (1 attempt)</td><td>0</td><td>0</td><td>0</td></tr>
+<tr><td>1 (2 attempts)</td><td>1</td><td>0</td><td>0</td></tr>
+<tr><td>2 (3 attempts)</td><td>&mdash;</td><td>1</td><td>0</td></tr>
+<tr><td>3 (4+ attempts)</td><td>&mdash;</td><td>&mdash;</td><td>1</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>You can fit either a <strong>constrained</strong> version (equal ORs across levels, tested by LRT) or an <strong>unconstrained</strong> version (separate ORs at each level). The constrained version is more parsimonious and can be compared to the unconstrained version using a likelihood-ratio test.</p>
+
+<div class="flip-card-grid">
+  <div class="flip-card" onclick="openCardModal('Adjacent-Category Model', 'The adjacent-category model compares each category to its immediate neighbour. It is a constrained multinomial model where the log-odds for categories &lt;em&gt;n&lt;/em&gt; levels apart is &lt;em&gt;n&lt;/em&gt; times the log-odds for adjacent categories. Best used when the comparison of interest is between neighbouring categories of an ordinal outcome.')">
+    <div class="card-icon">&#8596;</div>
+    <div class="card-label">Adjacent-Category Model</div>
+    <div class="card-hint">Click to learn more</div>
+  </div>
+  <div class="flip-card" onclick="openCardModal('Continuation-Ratio Model', 'The continuation-ratio model compares each category to all lower categories combined. It is ideal for sequential or staged outcomes where each level must be &ldquo;passed through.&rdquo; It can be fit as a series of binary logistic regressions with appropriately recoded outcomes. Not suitable when categories are not sequential.')">
+    <div class="card-icon">&#8599;</div>
+    <div class="card-label">Continuation-Ratio Model</div>
+    <div class="card-hint">Click to learn more</div>
+  </div>
+  <div class="flip-card" onclick="openCardModal('Choosing Between Models', '&lt;strong&gt;Decision guide:&lt;/strong&gt;&lt;ul&gt;&lt;li&gt;&lt;strong&gt;Nominal outcome&lt;/strong&gt; &rarr; Multinomial logistic regression&lt;/li&gt;&lt;li&gt;&lt;strong&gt;Ordinal outcome, proportional odds holds&lt;/strong&gt; &rarr; Proportional-odds model (most parsimonious)&lt;/li&gt;&lt;li&gt;&lt;strong&gt;Ordinal outcome, comparing neighbours&lt;/strong&gt; &rarr; Adjacent-category model&lt;/li&gt;&lt;li&gt;&lt;strong&gt;Sequential/staged outcome&lt;/strong&gt; &rarr; Continuation-ratio model&lt;/li&gt;&lt;li&gt;&lt;strong&gt;Proportional odds violated&lt;/strong&gt; &rarr; Generalised or partial proportional-odds model, or multinomial&lt;/li&gt;&lt;/ul&gt;Always compare nested models using LRT.')">
+    <div class="card-icon">&#128295;</div>
+    <div class="card-label">Choosing Between Models</div>
+    <div class="card-hint">Click to learn more</div>
+  </div>
+</div>
+
+<div class="accordion">
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">When to Use the Adjacent-Category Model</div>
+    <div class="accordion-body"><div class="accordion-body-inner">
+      <p>The adjacent-category model is appropriate when the comparison of interest is between <strong>neighbouring categories</strong> of an ordinal outcome. It is a natural choice when you believe the effect of a predictor operates by shifting individuals one category at a time. The model can be validated by comparing it to the unconstrained multinomial model via LRT.</p>
+    </div></div>
+  </div>
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">When to Use the Continuation-Ratio Model</div>
+    <div class="accordion-body"><div class="accordion-body-inner">
+      <p>The continuation-ratio model is most appropriate when the outcome represents <strong>sequential stages</strong> that must be passed through in order. Each category must be reached before the next can be attained. Examples include: successive attempts at an exam, sequential rounds of treatment, or stages of career advancement. If categories can be reached without passing through lower levels, this model is not appropriate.</p>
+    </div></div>
+  </div>
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">Comparing Models with LRT</div>
+    <div class="accordion-body"><div class="accordion-body-inner">
+      <p>When one model is a constrained (nested) version of another, the <strong>likelihood-ratio test</strong> can be used to compare them. The test statistic is &minus;2(lnL<sub>constrained</sub> &minus; lnL<sub>unconstrained</sub>), which follows a &chi;&sup2; distribution with degrees of freedom equal to the difference in the number of parameters. A significant result suggests the constraint is not valid and the more complex model is needed.</p>
+    </div></div>
+  </div>
+</div>
+
+<div class="info-box teal">
+  <div class="box-title">Decision Guide: Choosing Among the Four Models</div>
+  <p><strong>Step 1:</strong> Is the outcome nominal or ordinal? If nominal, use multinomial logistic regression.<br>
+  <strong>Step 2:</strong> If ordinal, does the outcome represent sequential stages? If yes, consider the continuation-ratio model.<br>
+  <strong>Step 3:</strong> If not sequential, fit the proportional-odds model and test the assumption. If it holds, use proportional-odds.<br>
+  <strong>Step 4:</strong> If the proportional-odds assumption fails, consider the adjacent-category model, partial proportional-odds, or generalised ordinal logistic regression.<br>
+  <strong>Step 5:</strong> Compare nested models using LRT to select the most parsimonious adequate model.</p>
+</div>
+
+<!-- Quiz Section 4 -->
+<div class="quiz-section" id="quiz-3">
+<h3>&#10004; Check Your Understanding</h3>
+
+<div class="quiz-question" data-correct="c">
+  <p>1. In the adjacent-category model, the coefficient for categories n levels apart is:</p>
+  <label class="quiz-option"><input type="radio" name="q3-0" value="a"> The same as the coefficient for adjacent categories</label>
+  <label class="quiz-option"><input type="radio" name="q3-0" value="b"> The square of the coefficient for adjacent categories</label>
+  <label class="quiz-option"><input type="radio" name="q3-0" value="c"> n times the coefficient for adjacent categories</label>
+  <label class="quiz-option"><input type="radio" name="q3-0" value="d"> Unrelated to the coefficient for adjacent categories</label>
+  <div class="quiz-explanation">The adjacent-category model is a constrained multinomial model. The key constraint is that the log-odds (coefficient) for categories n levels apart equals n times the log-odds for adjacent categories. This is what makes it more parsimonious than the unconstrained multinomial model.</div>
+</div>
+
+<div class="quiz-question" data-correct="b">
+  <p>2. The continuation-ratio model is most appropriate when:</p>
+  <label class="quiz-option"><input type="radio" name="q3-1" value="a"> The outcome categories are nominal</label>
+  <label class="quiz-option"><input type="radio" name="q3-1" value="b"> The outcome represents sequential stages that must be passed through</label>
+  <label class="quiz-option"><input type="radio" name="q3-1" value="c"> The proportional-odds assumption holds perfectly</label>
+  <label class="quiz-option"><input type="radio" name="q3-1" value="d"> There are exactly two outcome categories</label>
+  <div class="quiz-explanation">The continuation-ratio model is designed for outcomes where each category represents a stage that must be reached before moving to the next. Each comparison asks: given that you reached at least this level, what are the odds of reaching the next level? This is inappropriate when categories can be reached without passing through lower levels.</div>
+</div>
+
+<div class="quiz-question" data-correct="a">
+  <p>3. If an LRT comparing the adjacent-category model to the multinomial model is NOT significant, this suggests:</p>
+  <label class="quiz-option"><input type="radio" name="q3-2" value="a"> The adjacent-category model is a valid simplification</label>
+  <label class="quiz-option"><input type="radio" name="q3-2" value="b"> The multinomial model should be used instead</label>
+  <label class="quiz-option"><input type="radio" name="q3-2" value="c"> The data are not ordinal</label>
+  <label class="quiz-option"><input type="radio" name="q3-2" value="d"> Both models fit the data poorly</label>
+  <div class="quiz-explanation">A non-significant LRT means the constrained (adjacent-category) model does not fit significantly worse than the unconstrained (multinomial) model. Therefore, the simpler adjacent-category model is a valid simplification and should be preferred on grounds of parsimony.</div>
+</div>
+
+<div id="quizResult-3" class="quiz-result"></div>
+<div id="quizRetry-3" class="quiz-retry"><button class="btn btn-outline" onclick="retryQuiz(3)">Retry Quiz</button></div>
+<button class="btn btn-primary" onclick="checkQuiz(3)" style="margin-top:12px;">Check Answers</button>
+</div>
+
+<!-- Reflection 4 -->
+<div class="reflection-box">
+  <h3>&#9998; Reflection</h3>
+  <p>Can you think of an example from public health or epidemiology where a continuation-ratio model would be more appropriate than a proportional-odds model? What makes the outcome sequential in your example?</p>
+  <textarea id="reflection-4" placeholder="Type your reflection here..."></textarea>
+  <button class="btn-save" onclick="checkReflection(4)">Save Reflection</button>
+  <div class="reflection-status" id="reflectionStatus-4">&#10003; Reflection saved!</div>
+</div>
+
+<div class="section-nav">
+  <button class="btn btn-outline" onclick="goToModule(2)">&larr; Previous Section</button>
+  <div style="text-align:right;">
+    <button id="nextBtn-3" class="btn btn-accent disabled" onclick="goToModule(4)">Final Assessment &rarr;</button>
+    <div id="reqNote-3" class="req-note"><span class="req-pending">&#9679;</span> Complete the quiz and reflection to continue.</div>
+  </div>
+</div>
+
+</div>
+</div>
+
+<!-- ============ FINAL ASSESSMENT ============ -->
+<div class="module-page" id="page-4">
+<div class="module-header">
+  <div class="module-tag">Final Assessment</div>
+  <h1>Lesson 5 &mdash; Final Assessment</h1>
+  <div class="time">15 questions &bull; 100% required to pass</div>
+</div>
+<div class="module-body">
+
+<p>This assessment covers all sections of Lesson 5. You must answer all 15 questions correctly to complete the lesson. Read each question carefully and review the feedback for any incorrect answers before retrying.</p>
+
+<!-- Final Reflection -->
+<div class="reflection-box">
+  <h3>&#9998; Final Reflection</h3>
+  <p>Now that you have completed all four sections, summarise the key differences among the four models for multi-category outcomes. When would you choose each one, and what assumptions would you need to verify?</p>
+  <textarea id="reflection-final" placeholder="Type your final reflection here..."></textarea>
+  <button class="btn-save" onclick="checkReflection('final')">Save Reflection</button>
+  <div class="reflection-status" id="reflectionStatus-final">&#10003; Reflection saved!</div>
+</div>
+
+<div class="quiz-section" id="quiz-4">
+<h3>&#10004; Final Assessment</h3>
+
+<div class="quiz-question" data-correct="a">
+  <p>1. What type of outcome data has categories with no natural ordering?</p>
+  <label class="quiz-option"><input type="radio" name="qf-0" value="a"> Nominal</label>
+  <label class="quiz-option"><input type="radio" name="qf-0" value="b"> Ordinal</label>
+  <label class="quiz-option"><input type="radio" name="qf-0" value="c"> Continuous</label>
+  <label class="quiz-option"><input type="radio" name="qf-0" value="d"> Dichotomous</label>
+  <div class="quiz-explanation">Nominal data have categories with no inherent ordering or ranking. Examples include type of disease, ethnicity, or mode of transport. Ordinal data, by contrast, have a meaningful ordering among categories.</div>
+</div>
+
+<div class="quiz-question" data-correct="c">
+  <p>2. How many sets of coefficients does a multinomial model with 4 outcome categories estimate?</p>
+  <label class="quiz-option"><input type="radio" name="qf-1" value="a"> 1 set</label>
+  <label class="quiz-option"><input type="radio" name="qf-1" value="b"> 4 sets</label>
+  <label class="quiz-option"><input type="radio" name="qf-1" value="c"> 3 sets (J&minus;1)</label>
+  <label class="quiz-option"><input type="radio" name="qf-1" value="d"> 2 sets</label>
+  <div class="quiz-explanation">A multinomial logistic model with J = 4 categories estimates J&minus;1 = 3 sets of coefficients, each comparing one non-baseline category to the baseline category.</div>
+</div>
+
+<div class="quiz-question" data-correct="b">
+  <p>3. In a proportional-odds model, the OR for a predictor represents:</p>
+  <label class="quiz-option"><input type="radio" name="qf-2" value="a"> A different odds ratio at each cutpoint</label>
+  <label class="quiz-option"><input type="radio" name="qf-2" value="b"> The same odds ratio at every cutpoint</label>
+  <label class="quiz-option"><input type="radio" name="qf-2" value="c"> The odds ratio for the baseline category only</label>
+  <label class="quiz-option"><input type="radio" name="qf-2" value="d"> A ratio of predicted probabilities</label>
+  <div class="quiz-explanation">The proportional-odds assumption means that a single OR applies at every cutpoint. Regardless of where you dichotomise the ordinal outcome, the estimated OR for each predictor is the same.</div>
+</div>
+
+<div class="quiz-question" data-correct="d">
+  <p>4. The logit in a proportional-odds model is based on:</p>
+  <label class="quiz-option"><input type="radio" name="qf-3" value="a"> The probability of each individual category</label>
+  <label class="quiz-option"><input type="radio" name="qf-3" value="b"> The probability of the baseline category vs all others</label>
+  <label class="quiz-option"><input type="radio" name="qf-3" value="c"> Adjacent category probabilities</label>
+  <label class="quiz-option"><input type="radio" name="qf-3" value="d"> Cumulative probabilities: p(Y &ge; j) vs p(Y &lt; j)</label>
+  <div class="quiz-explanation">The proportional-odds model uses a cumulative logit: the log-odds of being at or above category j versus being below it. This cumulative formulation is what allows a single coefficient to apply at every cutpoint.</div>
+</div>
+
+<div class="quiz-question" data-correct="a">
+  <p>5. The IIA assumption in multinomial logistic regression means:</p>
+  <label class="quiz-option"><input type="radio" name="qf-4" value="a"> The ratio of probabilities for any two outcomes is independent of other alternatives</label>
+  <label class="quiz-option"><input type="radio" name="qf-4" value="b"> All predictors must be independent of each other</label>
+  <label class="quiz-option"><input type="radio" name="qf-4" value="c"> The outcome must have at least 3 categories</label>
+  <label class="quiz-option"><input type="radio" name="qf-4" value="d"> The model residuals are independent</label>
+  <div class="quiz-explanation">The Independence of Irrelevant Alternatives (IIA) assumption states that the relative probability (odds) of any two outcomes does not change when other alternatives are added to or removed from the choice set.</div>
+</div>
+
+<div class="quiz-question" data-correct="c">
+  <p>6. If the proportional-odds assumption is clearly violated, a good alternative is:</p>
+  <label class="quiz-option"><input type="radio" name="qf-5" value="a"> Ordinary least squares regression</label>
+  <label class="quiz-option"><input type="radio" name="qf-5" value="b"> Standard binary logistic regression</label>
+  <label class="quiz-option"><input type="radio" name="qf-5" value="c"> A generalised ordinal logistic regression model</label>
+  <label class="quiz-option"><input type="radio" name="qf-5" value="d"> A paired t-test</label>
+  <div class="quiz-explanation">The generalised ordinal logistic regression model allows different coefficients at each cutpoint, relaxing the proportional-odds assumption entirely. It is equivalent to fitting J&minus;1 binary logistic models simultaneously and is a flexible alternative when the assumption is violated.</div>
+</div>
+
+<div class="quiz-question" data-correct="b">
+  <p>7. In a multinomial model, exponentiated coefficients are technically:</p>
+  <label class="quiz-option"><input type="radio" name="qf-6" value="a"> True odds ratios</label>
+  <label class="quiz-option"><input type="radio" name="qf-6" value="b"> Ratios of relative risks, not true odds ratios</label>
+  <label class="quiz-option"><input type="radio" name="qf-6" value="c"> Hazard ratios</label>
+  <label class="quiz-option"><input type="radio" name="qf-6" value="d"> Correlation coefficients</label>
+  <div class="quiz-explanation">Exponentiated coefficients from a multinomial logistic model are ratios of relative risks (RRR). They compare the probability of being in one category relative to the baseline, but they are not true odds ratios as in standard binary logistic regression.</div>
+</div>
+
+<div class="quiz-question" data-correct="d">
+  <p>8. The Brant test evaluates:</p>
+  <label class="quiz-option"><input type="radio" name="qf-7" value="a"> Whether the outcome categories are properly ordered</label>
+  <label class="quiz-option"><input type="radio" name="qf-7" value="b"> Whether the IIA assumption holds</label>
+  <label class="quiz-option"><input type="radio" name="qf-7" value="c"> Whether the model fits better than a null model</label>
+  <label class="quiz-option"><input type="radio" name="qf-7" value="d"> Whether the proportional-odds assumption holds for each predictor</label>
+  <div class="quiz-explanation">The Brant test is a Wald-type test that evaluates the proportional-odds assumption. It provides both an overall test and individual tests for each predictor, identifying which specific variables violate the assumption of equal effects across cutpoints.</div>
+</div>
+
+<div class="quiz-question" data-correct="a">
+  <p>9. The adjacent-category model is a constrained version of:</p>
+  <label class="quiz-option"><input type="radio" name="qf-8" value="a"> The multinomial logistic model</label>
+  <label class="quiz-option"><input type="radio" name="qf-8" value="b"> The proportional-odds model</label>
+  <label class="quiz-option"><input type="radio" name="qf-8" value="c"> The continuation-ratio model</label>
+  <label class="quiz-option"><input type="radio" name="qf-8" value="d"> The binary logistic model</label>
+  <div class="quiz-explanation">The adjacent-category model is a constrained version of the multinomial logistic model. The constraint is that the coefficient for categories n levels apart equals n times the coefficient for adjacent categories. This can be tested by comparing the two models with a likelihood-ratio test.</div>
+</div>
+
+<div class="quiz-question" data-correct="c">
+  <p>10. Continuation-ratio models are best suited for:</p>
+  <label class="quiz-option"><input type="radio" name="qf-9" value="a"> Nominal outcomes with many categories</label>
+  <label class="quiz-option"><input type="radio" name="qf-9" value="b"> Ordinal outcomes where the proportional-odds assumption holds</label>
+  <label class="quiz-option"><input type="radio" name="qf-9" value="c"> Outcomes where levels represent sequential stages</label>
+  <label class="quiz-option"><input type="radio" name="qf-9" value="d"> Binary outcomes with rare events</label>
+  <div class="quiz-explanation">Continuation-ratio models are designed for outcomes where each level must be &ldquo;passed through&rdquo; to reach higher levels. The model asks: given that you reached at least level j, what are the odds of reaching level j+1? This is ideal for sequential or staged processes.</div>
+</div>
+
+<div class="quiz-question" data-correct="b">
+  <p>11. The latent variable in a proportional-odds model has cutpoints (&tau;) that:</p>
+  <label class="quiz-option"><input type="radio" name="qf-10" value="a"> Are estimated from separate binary logistic regressions</label>
+  <label class="quiz-option"><input type="radio" name="qf-10" value="b"> Divide the continuous latent variable into the observed ordinal categories</label>
+  <label class="quiz-option"><input type="radio" name="qf-10" value="c"> Represent the predicted probabilities at each category</label>
+  <label class="quiz-option"><input type="radio" name="qf-10" value="d"> Are fixed by the researcher before model fitting</label>
+  <div class="quiz-explanation">The cutpoints (&tau;) divide the underlying continuous latent variable into the observed ordinal categories. An observation is classified into category j if its latent variable score falls between &tau;<sub>j&minus;1</sub> and &tau;<sub>j</sub>. These cutpoints are estimated from the data along with the regression coefficients.</div>
+</div>
+
+<div class="quiz-question" data-correct="d">
+  <p>12. To compare nested ordinal models, you should use:</p>
+  <label class="quiz-option"><input type="radio" name="qf-11" value="a"> A paired t-test</label>
+  <label class="quiz-option"><input type="radio" name="qf-11" value="b"> Pearson&rsquo;s chi-squared test</label>
+  <label class="quiz-option"><input type="radio" name="qf-11" value="c"> AIC only</label>
+  <label class="quiz-option"><input type="radio" name="qf-11" value="d"> A likelihood ratio test</label>
+  <div class="quiz-explanation">The likelihood ratio test (LRT) is the standard approach for comparing nested models. The test statistic is &minus;2 times the difference in log-likelihoods, which follows a chi-squared distribution with degrees of freedom equal to the difference in the number of parameters.</div>
+</div>
+
+<div class="quiz-question" data-correct="a">
+  <p>13. If the LRT comparing proportional-odds to multinomial models is significant:</p>
+  <label class="quiz-option"><input type="radio" name="qf-12" value="a"> The proportional-odds assumption may not hold</label>
+  <label class="quiz-option"><input type="radio" name="qf-12" value="b"> The proportional-odds model is definitely preferred</label>
+  <label class="quiz-option"><input type="radio" name="qf-12" value="c"> Both models are equally good</label>
+  <label class="quiz-option"><input type="radio" name="qf-12" value="d"> The data should be treated as nominal</label>
+  <div class="quiz-explanation">A significant LRT means the constrained (proportional-odds) model fits significantly worse than the unconstrained (multinomial) model. This suggests the proportional-odds constraint is too restrictive and the assumption may be violated. You should consider a more flexible model.</div>
+</div>
+
+<div class="quiz-question" data-correct="c">
+  <p>14. In a continuation-ratio model, observations at higher levels than the one being modelled are:</p>
+  <label class="quiz-option"><input type="radio" name="qf-13" value="a"> Coded as Y = 0</label>
+  <label class="quiz-option"><input type="radio" name="qf-13" value="b"> Coded as Y = 1</label>
+  <label class="quiz-option"><input type="radio" name="qf-13" value="c"> Treated as missing/excluded</label>
+  <label class="quiz-option"><input type="radio" name="qf-13" value="d"> Used as the reference group</label>
+  <div class="quiz-explanation">In a continuation-ratio model, each binary regression compares level j (Y = 1) to all lower levels (Y = 0). Observations at levels higher than j are excluded from that particular comparison because they have already &ldquo;passed through&rdquo; the level being modelled.</div>
+</div>
+
+<div class="quiz-question" data-correct="b">
+  <p>15. Which model is most parsimonious for ordinal data when the proportional-odds assumption holds?</p>
+  <label class="quiz-option"><input type="radio" name="qf-14" value="a"> Multinomial logistic regression</label>
+  <label class="quiz-option"><input type="radio" name="qf-14" value="b"> The proportional-odds model</label>
+  <label class="quiz-option"><input type="radio" name="qf-14" value="c"> The generalised ordinal logistic model</label>
+  <label class="quiz-option"><input type="radio" name="qf-14" value="d"> The continuation-ratio model</label>
+  <div class="quiz-explanation">When the proportional-odds assumption holds, the proportional-odds model is the most parsimonious because it estimates only one coefficient per predictor (compared to J&minus;1 per predictor in the multinomial or generalised ordinal models). Parsimony leads to more precise estimates and more powerful tests.</div>
+</div>
+
+<div id="quizResult-4" class="quiz-result"></div>
+<div id="quizRetry-4" class="quiz-retry"><button class="btn btn-outline" onclick="retryQuiz(4)">Retry Quiz</button></div>
+<button class="btn btn-accent" onclick="checkFinalAssessment()" style="margin-top:12px;">Submit Assessment</button>
+</div>
+
+<div class="completion-banner" id="completionBanner">
+  <h2>&#127942; Congratulations!</h2>
+  <p>You have successfully completed Lesson 5: Modelling Ordinal &amp; Multinomial Data.</p>
+  <p style="opacity:0.8;margin-top:8px;">Your responses have been downloaded automatically.</p>
+</div>
+
+<div class="section-nav">
+  <button class="btn btn-outline" onclick="goToModule(3)">&larr; Previous Section</button>
+  <div></div>
+</div>
+
+</div>
+</div>
+
+</div><!-- end main -->
+
+<!-- Card Modal -->
+<div class="card-modal-overlay" id="cardModalOverlay" onclick="closeCardModal(event)">
+  <div class="card-modal">
+    <button class="card-modal-close" onclick="document.getElementById('cardModalOverlay').classList.remove('show');">&times;</button>
+    <h3 id="cardModalTitle"></h3>
+    <div id="cardModalBody"></div>
+  </div>
+</div>
+
+<script>
+var modules = [
+  { id: -1, short: 'Welcome', title: 'Introduction' },
+  { id: 0, short: 'Section 1', title: 'Introduction & Overview of Models' },
+  { id: 1, short: 'Section 2', title: 'Multinomial Logistic Regression' },
+  { id: 2, short: 'Section 3', title: 'Proportional-Odds Model' },
+  { id: 3, short: 'Section 4', title: 'Adjacent-Category & Continuation-Ratio' },
+  { id: 4, short: 'Section 5', title: 'Final Assessment' }
+];
+var currentModule = -1;
+var completed = new Set();
+var quizPassed = {};
+var reflectionDone = {};
+var modulesWithReflection = { 1: true, 2: true, 3: true, 4: true };
+
+function buildNav() {
+  var nav = document.getElementById('sidebarNav');
+  nav.innerHTML = '';
+  modules.forEach(function(m) {
+    var div = document.createElement('div');
+    div.className = 'nav-item';
+    var key = m.id === -1 ? 'welcome' : m.id;
+    if (completed.has(key)) div.classList.add('completed');
+    if (m.id === currentModule) div.classList.add('active');
+    div.innerHTML = '<div class="dot"></div><span>' + m.short + ': ' + m.title + '</span>';
+    div.onclick = function() { goToModule(m.id); closeSidebarMobile(); };
+    nav.appendChild(div);
+  });
+}
+
+function goToModule(id) {
+  currentModule = id;
+  document.querySelectorAll('.module-page').forEach(function(p) { p.classList.remove('active'); });
+  var pageId = id === -1 ? 'page-welcome' : 'page-' + id;
+  var page = document.getElementById(pageId);
+  if (page) page.classList.add('active');
+  if (id === -1) completed.add('welcome');
+  buildNav();
+  updateProgress();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function updateProgress() {
+  var total = modules.length;
+  var done = completed.size;
+  var pct = Math.round((done / total) * 100);
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressText').textContent = pct + '% complete';
+}
+
+function checkReflection(idx) {
+  var ta = document.getElementById('reflection-' + idx);
+  if (ta && ta.value.trim().length > 0) {
+    reflectionDone[idx === 'final' ? 4 : idx] = true;
+    var status = document.getElementById('reflectionStatus-' + idx);
+    if (status) status.classList.add('show');
+    if (idx !== 'final') updateNextButton(idx);
+  }
+}
+
+function updateNextButton(moduleIdx) {
+  var btn = document.getElementById('nextBtn-' + moduleIdx);
+  var note = document.getElementById('reqNote-' + moduleIdx);
+  if (!btn) return;
+  var quizOk = quizPassed[moduleIdx];
+  var refIdx = moduleIdx + 1;
+  var needsRef = modulesWithReflection[refIdx];
+  var refOk = !needsRef || reflectionDone[refIdx];
+  if (quizOk && refOk) {
+    btn.classList.remove('disabled');
+    completed.add(moduleIdx);
+    buildNav();
+    updateProgress();
+    if (note) note.innerHTML = '<span class="req-check">&#10003;</span> Section complete! You may continue.';
+  }
+}
+
+function checkQuiz(moduleIdx) {
+  var quiz = document.getElementById('quiz-' + moduleIdx);
+  var questions = quiz.querySelectorAll('.quiz-question');
+  var correct = 0;
+  var total = questions.length;
+  var allAnswered = true;
+  questions.forEach(function(q, i) {
+    var correctVal = q.dataset.correct;
+    var selected = quiz.querySelector('input[name="q' + moduleIdx + '-' + i + '"]:checked');
+    q.querySelectorAll('.quiz-option').forEach(function(opt) { opt.classList.remove('correct', 'incorrect'); });
+    if (!selected) { allAnswered = false; return; }
+    q.querySelectorAll('.quiz-option').forEach(function(opt) {
+      var inp = opt.querySelector('input');
+      if (inp.value === correctVal) opt.classList.add('correct');
+      else if (inp === selected && inp.value !== correctVal) opt.classList.add('incorrect');
+    });
+    q.querySelector('.quiz-explanation').classList.add('show');
+    if (selected.value === correctVal) correct++;
+  });
+  if (!allAnswered) { alert('Please answer all questions before checking.'); return; }
+  var result = document.getElementById('quizResult-' + moduleIdx);
+  var retryDiv = document.getElementById('quizRetry-' + moduleIdx);
+  result.style.display = 'block';
+  if (correct === total) {
+    result.className = 'quiz-result pass';
+    result.textContent = 'All correct! Great job.';
+    quizPassed[moduleIdx] = true;
+    if (retryDiv) retryDiv.classList.remove('show');
+    quiz.querySelectorAll('input[type="radio"]').forEach(function(r) { r.disabled = true; });
+    updateNextButton(moduleIdx);
+  } else {
+    result.className = 'quiz-result fail';
+    result.textContent = 'You got ' + correct + ' out of ' + total + ' correct. You need 100% to continue. Review the feedback and try again.';
+    quizPassed[moduleIdx] = false;
+    if (retryDiv) retryDiv.classList.add('show');
+  }
+}
+
+function retryQuiz(moduleIdx) {
+  var quiz = document.getElementById('quiz-' + moduleIdx);
+  quiz.querySelectorAll('.quiz-option').forEach(function(opt) { opt.classList.remove('correct', 'incorrect'); });
+  quiz.querySelectorAll('.quiz-explanation').forEach(function(exp) { exp.classList.remove('show'); });
+  quiz.querySelectorAll('input[type="radio"]').forEach(function(r) { r.checked = false; r.disabled = false; });
+  var result = document.getElementById('quizResult-' + moduleIdx);
+  result.style.display = 'none';
+  var retryDiv = document.getElementById('quizRetry-' + moduleIdx);
+  if (retryDiv) retryDiv.classList.remove('show');
+  quiz.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function checkFinalAssessment() {
+  if (!reflectionDone[4]) {
+    alert('Please complete the final reflection before submitting the assessment.');
+    return;
+  }
+  var quiz = document.getElementById('quiz-4');
+  var questions = quiz.querySelectorAll('.quiz-question');
+  var correct = 0;
+  var total = questions.length;
+  var allAnswered = true;
+  questions.forEach(function(q, i) {
+    var correctVal = q.dataset.correct;
+    var selected = quiz.querySelector('input[name="qf-' + i + '"]:checked');
+    q.querySelectorAll('.quiz-option').forEach(function(opt) { opt.classList.remove('correct', 'incorrect'); });
+    if (!selected) { allAnswered = false; return; }
+    q.querySelectorAll('.quiz-option').forEach(function(opt) {
+      var inp = opt.querySelector('input');
+      if (inp.value === correctVal) opt.classList.add('correct');
+      else if (inp === selected && inp.value !== correctVal) opt.classList.add('incorrect');
+    });
+    q.querySelector('.quiz-explanation').classList.add('show');
+    if (selected.value === correctVal) correct++;
+  });
+  if (!allAnswered) { alert('Please answer all 15 questions before submitting.'); return; }
+  var pct = Math.round((correct / total) * 100);
+  var passed = correct === total;
+  var result = document.getElementById('quizResult-4');
+  var retryDiv = document.getElementById('quizRetry-4');
+  result.style.display = 'block';
+  if (passed) {
+    result.className = 'quiz-result pass';
+    result.innerHTML = 'Congratulations! You scored ' + correct + '/' + total + ' (100%). You have completed Lesson 5!';
+    completed.add(4);
+    updateProgress();
+    buildNav();
+    if (retryDiv) retryDiv.classList.remove('show');
+    quiz.querySelectorAll('input[type="radio"]').forEach(function(r) { r.disabled = true; });
+    document.getElementById('completionBanner').style.display = 'block';
+    document.getElementById('completionBanner').scrollIntoView({ behavior: 'smooth' });
+    downloadResponses();
+  } else {
+    result.className = 'quiz-result fail';
+    result.innerHTML = 'You scored ' + correct + '/' + total + ' (' + pct + '%). You need 100% to complete the lesson. Review the feedback and try again.';
+    if (retryDiv) retryDiv.classList.add('show');
+  }
+}
+
+function toggleAccordion(header) {
+  var item = header.parentElement;
+  var wasOpen = item.classList.contains('open');
+  item.classList.toggle('open');
+  var body = item.querySelector('.accordion-body');
+  if (wasOpen) { body.style.maxHeight = null; }
+  else { body.style.maxHeight = body.scrollHeight + 'px'; }
+}
+
+function switchTab(e, panelId) {
+  var tabRow = e.target.closest('.tab-row');
+  var tabs = tabRow.parentElement;
+  tabs.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+  tabs.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
+  e.target.classList.add('active');
+  document.getElementById(panelId).classList.add('active');
+}
+
+function openCardModal(title, body) {
+  document.getElementById('cardModalTitle').textContent = title;
+  document.getElementById('cardModalBody').innerHTML = body;
+  document.getElementById('cardModalOverlay').classList.add('show');
+}
+
+function closeCardModal(e) {
+  if (!e || e.target === document.getElementById('cardModalOverlay')) {
+    document.getElementById('cardModalOverlay').classList.remove('show');
+  }
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.querySelector('.sidebar-overlay').classList.toggle('show');
+}
+
+function closeSidebarMobile() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.querySelector('.sidebar-overlay').classList.remove('show');
+}
+
+buildNav();
+updateProgress();
+
+function downloadResponses() {
+  var lines = [];
+  lines.push('Exploratory Data Analysis For Epidemiology, Lesson 5');
+  lines.push('Modelling Ordinal and Multinomial Data');
+  lines.push('');
+  lines.push('Name: ');
+  lines.push('Date: ' + new Date().toLocaleDateString());
+  lines.push('='.repeat(60));
+  lines.push('');
+
+  lines.push('REFLECTIONS');
+  lines.push('-'.repeat(40));
+  for (var r = 1; r <= 4; r++) {
+    var ta = document.getElementById('reflection-' + r);
+    if (ta) {
+      var box = ta.closest('.reflection-box');
+      var prompt = box ? box.querySelector('p') : null;
+      lines.push('');
+      lines.push('Section ' + r + ' Reflection:');
+      if (prompt) lines.push('Q: ' + prompt.textContent.trim());
+      lines.push('A: ' + (ta.value.trim() || '[No response]'));
+    }
+  }
+  var taFinal = document.getElementById('reflection-final');
+  if (taFinal) {
+    var box = taFinal.closest('.reflection-box');
+    var prompt = box ? box.querySelector('p') : null;
+    lines.push('');
+    lines.push('Final Reflection:');
+    if (prompt) lines.push('Q: ' + prompt.textContent.trim());
+    lines.push('A: ' + (taFinal.value.trim() || '[No response]'));
+  }
+  lines.push('');
+  lines.push('='.repeat(60));
+  lines.push('');
+
+  lines.push('SECTION QUIZ RESPONSES');
+  lines.push('-'.repeat(40));
+  for (var s = 0; s <= 3; s++) {
+    var quiz = document.getElementById('quiz-' + s);
+    if (!quiz) continue;
+    lines.push('');
+    lines.push('Section ' + (s + 1) + ' Quiz:');
+    var questions = quiz.querySelectorAll('.quiz-question');
+    questions.forEach(function(q, i) {
+      var qText = q.querySelector('p');
+      var selected = q.querySelector('input[type="radio"]:checked');
+      var selLabel = selected ? selected.closest('.quiz-option') || selected.parentElement : null;
+      lines.push('  Q' + (i + 1) + ': ' + (qText ? qText.textContent.trim() : ''));
+      lines.push('  Selected: ' + (selLabel ? selLabel.textContent.trim() : '[No answer]'));
+      var isCorrect = selected && q.querySelector('.quiz-option.correct input') === selected;
+      lines.push('  Result: ' + (selected ? (isCorrect ? 'Correct' : 'Incorrect') : 'Unanswered'));
+    });
+  }
+  lines.push('');
+  lines.push('='.repeat(60));
+  lines.push('');
+
+  lines.push('FINAL ASSESSMENT RESPONSES');
+  lines.push('-'.repeat(40));
+  var finalQuiz = document.getElementById('quiz-4');
+  if (finalQuiz) {
+    var questions = finalQuiz.querySelectorAll('.quiz-question');
+    questions.forEach(function(q, i) {
+      var qText = q.querySelector('p');
+      var selected = q.querySelector('input[type="radio"]:checked');
+      var selLabel = selected ? selected.closest('.quiz-option') || selected.parentElement : null;
+      lines.push('  Q' + (i + 1) + ': ' + (qText ? qText.textContent.trim() : ''));
+      lines.push('  Selected: ' + (selLabel ? selLabel.textContent.trim() : '[No answer]'));
+      var correctOpt = q.querySelector('.quiz-option.correct');
+      var isCorrect = selected && correctOpt && correctOpt.querySelector('input') === selected;
+      lines.push('  Result: ' + (selected ? (isCorrect ? 'Correct' : 'Incorrect') : 'Unanswered'));
+    });
+  }
+
+  var blob = new Blob([lines.join('\n')], { type: 'text/plain' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'HSCI410_Lesson5_Ordinal_Multinomial_Data_Responses.txt';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+</script>
+</body>
+</html>

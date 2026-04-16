@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HSCI 410 — Exploratory Data Analysis For Epidemiology</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --teal: #0B7B6B;
+  --dark-teal: #065C50;
+  --light-teal: #6BB5A6;
+  --very-light-teal: #E6F3F0;
+  --dark: #042A25;
+  --text: #2D3436;
+  --text-light: #555;
+  --bg: #FFFFFF;
+  --white: #fff;
+  --accent: #CC0033;
+  --accent-dark: #A3002A;
+  --grey: #E8ECEE;
+  --radius: 12px;
+  --shadow: 0 2px 12px rgba(0,0,0,0.08);
+  --shadow-lg: 0 8px 30px rgba(0,0,0,0.12);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Open Sans', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: linear-gradient(180deg, rgba(6,92,80,0.92) 0%, rgba(4,42,37,0.97) 100%), url('bg_texture.jpg') center/cover no-repeat fixed;
+  color: var(--white);
+  line-height: 1.7;
+  min-height: 100vh;
+}
+
+/* Hero */
+.hero {
+  background: linear-gradient(135deg, rgba(6,92,80,0.88) 0%, rgba(4,42,37,0.92) 100%), url('bg_texture.jpg') center/cover no-repeat;
+  color: var(--white);
+  padding: 72px 32px 60px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  opacity: 0.5;
+}
+.hero::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 80px;
+  background: linear-gradient(to bottom, transparent, rgba(4,42,37,0.6));
+}
+.hero h1 {
+  font-size: 2.4rem;
+  font-weight: 800;
+  margin-bottom: 8px;
+  position: relative;
+  z-index: 1;
+}
+.hero .subtitle {
+  font-size: 1.1rem;
+  opacity: 0.8;
+  font-weight: 400;
+  position: relative;
+  z-index: 1;
+}
+.hero-logo {
+  position: absolute;
+  top: 24px;
+  left: 28px;
+  width: 160px;
+  opacity: 0.9;
+  z-index: 2;
+}
+.hero .author {
+  margin-top: 20px;
+  font-size: 0.9rem;
+  opacity: 0.6;
+  position: relative;
+  z-index: 1;
+}
+
+/* Main */
+.main {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 40px 24px 64px;
+}
+.intro {
+  text-align: center;
+  margin-bottom: 36px;
+  color: rgba(255,255,255,0.7);
+  font-size: 0.95rem;
+  max-width: 680px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Lesson cards */
+.lessons {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  justify-content: center;
+}
+/* Center last cards: 11 items = 3 full rows + 2 leftover */
+.lesson-card:nth-last-child(2) {
+  grid-column: 1 / 2;
+  justify-self: end;
+  width: calc(100% - 7px);
+}
+.lesson-card:last-child {
+  grid-column: 2 / 3;
+  justify-self: start;
+  width: calc(100% - 7px);
+}
+.lesson-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 12px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: var(--radius);
+  padding: 24px 20px 22px;
+  text-decoration: none;
+  color: var(--white);
+  transition: all 0.25s ease;
+  backdrop-filter: blur(4px);
+}
+.lesson-card:hover {
+  background: rgba(255,255,255,0.12);
+  border-color: rgba(255,255,255,0.25);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+  transform: translateY(-2px);
+}
+.lesson-card:hover .lesson-num {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--white);
+}
+.lesson-num {
+  flex-shrink: 0;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.08);
+  border: 2px solid rgba(255,255,255,0.2);
+  color: rgba(255,255,255,0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 1.05rem;
+  transition: all 0.25s ease;
+}
+.lesson-info { flex: 1; min-width: 0; }
+.lesson-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--white);
+  margin-bottom: 4px;
+  line-height: 1.3;
+}
+.lesson-desc {
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.5);
+  line-height: 1.45;
+}
+.lesson-card:hover .lesson-desc {
+  color: rgba(255,255,255,0.75);
+}
+.lesson-arrow { display: none; }
+
+/* Footer */
+.footer {
+  text-align: center;
+  padding: 32px 24px 48px;
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.35);
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+/* Responsive */
+@media (max-width: 860px) {
+  .lessons { grid-template-columns: repeat(2, 1fr); }
+  .lesson-card:nth-last-child(2),
+  .lesson-card:last-child { grid-column: auto; justify-self: auto; width: 100%; }
+}
+@media (max-width: 560px) {
+  .hero { padding: 44px 20px 40px; }
+  .hero h1 { font-size: 1.6rem; }
+  .main { padding: 28px 16px 48px; }
+  .lessons { grid-template-columns: 1fr; }
+  .lesson-card { padding: 16px; gap: 10px; }
+  .lesson-num { width: 40px; height: 40px; font-size: 0.95rem; }
+}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <img src="sfu_logo_white.webp" alt="SFU — Simon Fraser University" class="hero-logo">
+  <h1>Exploratory Data Analysis For Epidemiology</h1>
+
+
+</div>
+
+<div class="main">
+  <p class="intro">Select a lesson below to begin. Each module includes interactive content, knowledge checks, reflections, and a final assessment.</p>
+
+  <div class="lessons">
+
+    <a class="lesson-card" href="HSCI_410_Lesson_1_Interactive.html">
+      <div class="lesson-num">1</div>
+      <div class="lesson-info">
+        <div class="lesson-title">Modelling Concepts</div>
+        <div class="lesson-desc">Introduction to statistical modelling, general linear models, maximum likelihood estimation, and model-building foundations.</div>
+      </div>
+      <div class="lesson-arrow">&rarr;</div>
+    </a>
+
+    <a class="lesson-card" href="HSCI_410_Lesson_2_Interactive.html">
+      <div class="lesson-num">2</div>
+      <div class="lesson-info">
+        <div class="lesson-title">Linear Regression</div>
+        <div class="lesson-desc">Regression analysis, hypothesis testing, X-variable coding, collinearity detection, and interaction effects.</div>
+      </div>
+      <div class="lesson-arrow">&rarr;</div>
+    </a>
+
+    <a class="lesson-card" href="HSCI_410_Lesson_3_Interactive.html">
+      <div class="lesson-num">3</div>
+      <div class="lesson-info">
+        <div class="lesson-title">Model-Building Strategies</div>
+        <div class="lesson-desc">Purposeful selection, change-in-estimate, stepwise procedures, and multi-level model building for epidemiologic research.</div>
+      </div>
+      <div class="lesson-arrow">&rarr;</div>
+    </a>
+
+    <a class="lesson-card" href="HSCI_410_Lesson_4_Interactive.html">
+      <div class="lesson-num">4</div>
+      <div class="lesson-info">
+        <div class="lesson-title">Logistic Regression</div>
+        <div class="lesson-desc">Binary outcomes, odds ratios, maximum likelihood estimation, goodness-of-fit, and ROC analysis.</div>
+      </div>
+      <div class="lesson-arrow">&rarr;</div>
+    </a>
+
+    <a class="lesson-card" href="HSCI_410_Lesson_5_Interactive.html">
+      <div class="lesson-num">5</div>
+      <div class="lesson-info">
+        <div class="lesson-title">Ordinal &amp; Multinomial Models</div>
+        <div class="lesson-desc">Proportional odds models, multinomial logistic regression, and methods for multi-category outcomes.</div>
+      </div>
+      <div class="lesson-arrow">&rarr;</div>
+    </a>
+
+    <a class="lesson-card" href="HSCI_410_Lesson_6_Interactive.html">
+      <div class="lesson-num">6</div>
+      <div class="lesson-info">
+        <div class="lesson-title">Count &amp; Rate Data</div>
+        <div class="lesson-desc">Poisson regression, overdispersion, negative binomial models, and zero-adjusted count models.</div>
+      </div>
+      <div class="lesson-arrow">&rarr;</div>
+    </a>
+
+    <a class="lesson-card" href="HSCI_410_Lesson_7_Interactive.html">
+      <div class="lesson-num">7</div>
+      <div class="lesson-info">
+        <div class="lesson-title">Survival Data</div>
+        <div class="lesson-desc">Kaplan-Meier estimation, Cox proportional hazards, parametric survival models, and frailty models.</div>
+      </div>
+      <div class="lesson-arrow">&rarr;</div>
+    </a>
+
+    <a class="lesson-card" href="HSCI_410_Lesson_8_Interactive.html">
+      <div class="lesson-num">8</div>
+      <div class="lesson-info">
+        <div class="lesson-title">Introduction to Clustered Data</div>
+        <div class="lesson-desc">Hierarchical data structures, ICC, design effects, and methods for handling clustering in epidemiologic analyses.</div>
+      </div>
+      <div class="lesson-arrow">&rarr;</div>
+    </a>
+
+    <a class="lesson-card" href="HSCI_410_Lesson_9_Interactive.html">
+      <div class="lesson-num">9</div>
+      <div class="lesson-info">
+        <div class="lesson-title">Mixed Models for Continuous Data</div>
+        <div class="lesson-desc">Random intercepts, random slopes, contextual effects, REML estimation, and model diagnostics.</div>
+      </div>
+      <div class="lesson-arrow">&rarr;</div>
+    </a>
+
+    <a class="lesson-card" href="HSCI_410_Lesson_10_Interactive.html">
+      <div class="lesson-num">10</div>
+      <div class="lesson-info">
+        <div class="lesson-title">Mixed Models for Discrete Data</div>
+        <div class="lesson-desc">GLMMs, logistic and Poisson random effects models, SS vs PA interpretation, and estimation methods.</div>
+      </div>
+      <div class="lesson-arrow">&rarr;</div>
+    </a>
+
+    <a class="lesson-card" href="HSCI_410_Lesson_11_Interactive.html">
+      <div class="lesson-num">11</div>
+      <div class="lesson-info">
+        <div class="lesson-title">Repeated Measures Data</div>
+        <div class="lesson-desc">Correlation structures, trend models, transition models, GEE, and analysis of longitudinal data.</div>
+      </div>
+      <div class="lesson-arrow">&rarr;</div>
+    </a>
+
+  </div>
+</div>
+
+<div class="footer">
+  This course was developed by Kiffer G. Card, PhD, as a companion to Dohoo, I. R., Martin, S. W., &amp; Stryhn, H. (2012). <em>Methods in Epidemiologic Research</em>. VER Inc.
+</div>
+
+</body>
+</html>
